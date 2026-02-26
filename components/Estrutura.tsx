@@ -92,7 +92,7 @@ export const BottomNav: React.FC<{ activeView: ViewState; setView: (view: ViewSt
             <div className="flex justify-around items-center max-w-2xl mx-auto">
                 <NavItem id={ViewState.DIAGNOSTIC} icon="fa-solid fa-headset" label="Suporte" isActive={activeView === ViewState.DIAGNOSTIC} onClick={setView} />
                 <NavItem id={ViewState.ERRORS} icon="fa-solid fa-triangle-exclamation" label="Erros" isActive={activeView === ViewState.ERRORS} onClick={setView} />
-                <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="Cálculo SH" isActive={activeView === ViewState.CALCULATOR} onClick={setView} />
+                <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="Cálculo Superaquecimento" isActive={activeView === ViewState.CALCULATOR} onClick={setView} />
                 <NavItem id={ViewState.SIZING} icon="fa-solid fa-ruler-combined" label="Dimensionamento" isActive={activeView === ViewState.SIZING} onClick={setView} />
                 <NavItem id={ViewState.REPORT} icon="fa-solid fa-file-signature" label="Serviços" isActive={activeView === ViewState.REPORT} onClick={setView} />
                 <NavItem id={ViewState.TECH_DATA} icon="fa-solid fa-boxes-stacked" label="Dados" isActive={activeView === ViewState.TECH_DATA} onClick={setView} />

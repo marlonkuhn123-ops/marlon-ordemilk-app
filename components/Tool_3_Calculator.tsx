@@ -39,8 +39,8 @@ export const Tool_Calculator: React.FC = () => {
                 </div>
                 
                 <Select label="Modo de Cálculo" value={mode} onChange={e => setMode(e.target.value as CalcMode)}>
-                    <option value="SH">Superaquecimento (Baixa/Sucção)</option>
-                    <option value="SR">Sub-resfriamento (Alta/Líquido)</option>
+                    <option value="Superaquecimento">Superaquecimento (Baixa/Sucção)</option>
+                    <option value="Sub-resfriamento">Sub-resfriamento (Alta/Líquido)</option>
                 </Select>
 
                 <div className="mb-4 p-3 rounded-lg border text-[10px] font-medium leading-relaxed flex items-start gap-2 transition-colors bg-blue-900/20 border-blue-800 text-blue-200">
@@ -48,7 +48,7 @@ export const Tool_Calculator: React.FC = () => {
                     <span>
                         {mode === 'SH' 
                             ? "SUPER AQUECIMENTO (SH): Meça a temperatura na tubulação de sucção, a 10cm do compressor."
-                            : "SUB RESFRIAMENTO (SC): Meça a temperatura na linha de líquido, na saída do condensador."}
+                            : "SUB-RESFRIAMENTO (SR): Meça a temperatura na linha de líquido, na saída do condensador."}
                     </span>
                 </div>
 

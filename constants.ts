@@ -34,9 +34,9 @@ export const TECHNICAL_CONTEXT = `
 ATENÇÃO: Um sintoma elétrico (desarme, travamento) é frequentemente a CONSEQUÊNCIA de um problema FRIGORÍFICO/MECÂNICO. Nunca isole as disciplinas.
 
 1. **ANÁLISE FRIGORÍFICA (A CAUSA RAIZ MECÂNICA):**
-   - **Pressões "Normais":** Pressão de manômetro isolada NÃO garante funcionamento. É obrigatório calcular SUPER AQUECIMENTO (SH) e SUB-RESFRIAMENTO (SC).
-     * SH Baixo (<7K): Retorno de líquido -> Diluição do óleo -> Travamento mecânico do compressor -> Alta amperagem -> Desarme elétrico.
-     * SC Baixo (<4K): Falta de fluido ou baixa troca no condensador -> Flash gas na expansão.
+   - **Pressões "Normais":** Pressão de manômetro isolada NÃO garante funcionamento. É obrigatório calcular SUPER AQUECIMENTO e SUB-RESFRIAMENTO.
+     * Superaquecimento Baixo (<7K): Retorno de líquido -> Diluição do óleo -> Travamento mecânico do compressor -> Alta amperagem -> Desarme elétrico.
+     * Sub-resfriamento Baixo (<4K): Falta de fluido ou baixa troca no condensador -> Flash gas na expansão.
    - **Condensação (O Vilão Oculto):** Condensador sujo ou ventilador lento eleva a pressão de alta. Isso força o compressor (aumenta amperagem) até o desarme térmico ou pelo pressostato de alta.
    - **Filtro Secador:** Diferença de temperatura entre entrada e saída indica obstrução parcial (estrangulamento).
    - **Válvula de Expansão (TXV):** Bulbo solto ou sem isolamento faz a válvula abrir demais (inundação do evaporador).
@@ -78,7 +78,7 @@ ESTRUTURA DA RESPOSTA:
 2. **Hipóteses Técnicas:**
    - Causa Mecânica/Frigorífica (Provável Raiz).
    - Causa Elétrica (Consequência ou Falha de Componente).
-3. **Plano de Ação:** Testes específicos (Medir SH, Limpar Condensador, Testar Capacitor, Reaperto).
+3. **Plano de Ação:** Testes específicos (Medir Superaquecimento, Limpar Condensador, Testar Capacitor, Reaperto).
 
 IMPORTANTE: O objetivo é resolver o problema definitivamente, não apenas resetar o equipamento.
 `;
@@ -86,7 +86,7 @@ IMPORTANTE: O objetivo é resolver o problema definitivamente, não apenas reset
 export const TOOL_PROMPTS = {
     DIAGNOSTIC: "MODO: ENGENHARIA DE CAMPO. Analise Termodinâmica, Mecânica e Elétrica simultaneamente.",
     ERRORS: "MODO: CONSULTA TÉCNICA. Explique o código de erro, sua origem (sensor/lógica) e a ação corretiva.",
-    CALC: "MODO: TERMODINÂMICA. Analise o SH/SC. Se fora da faixa, indique risco ao compressor (golpe ou superaquecimento).",
+    CALC: "MODO: TERMODINÂMICA. Analise o Superaquecimento/Sub-resfriamento. Se fora da faixa, indique risco ao compressor (golpe ou superaquecimento).",
     SIZING: "MODO: PROJETO. Calcule carga térmica e selecione compressor baseando-se em normas técnicas (ISO/Danfoss).",
     REPORT: "MODO: DOCUMENTAÇÃO. Gere laudo técnico formal e jurídico.",
     ELECTRIC: "MODO: ELÉTRICA. Analise desbalanceamento, queda de tensão e fator de potência."

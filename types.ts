@@ -36,7 +36,7 @@ export interface ElectricReading {
     nominal?: string;
 }
 
-export type CalcMode = 'SH' | 'SR';
+export type CalcMode = 'Superaquecimento' | 'Sub-resfriamento';
 
 export enum Refrigerant {
     R22 = 'R-22',
