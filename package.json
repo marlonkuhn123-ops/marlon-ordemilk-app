@@ -4,9 +4,9 @@
   "description": "Assistente técnico especializado para resfriadores de leite Ordemilk.",
   "main": "dist/index.js",
   "scripts": {
-    "start": "serve -s dist -l 3000",
+    "start": "npm run clean && npm run build && serve -s dist -l 3000",
     "build": "node esbuild.config.js",
-    "clean": "rm -rf dist node_modules"
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "Ordemilk",
