@@ -1,0 +1,33 @@
+{
+  "name": "ordemilk-tech-assist",
+  "version": "1.0.0",
+  "description": "Assistente técnico especializado para resfriadores de leite Ordemilk.",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "serve -s dist -l 3000",
+    "build": "node esbuild.config.js",
+    "clean": "rm -rf dist node_modules"
+  },
+  "keywords": [
+    "Ordemilk",
+    "Tech Assist",
+    "Gemini",
+    "AI",
+    "React",
+    "TypeScript"
+  ],
+  "author": "Ordemilk Engineering",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^1.40.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "serve": "^14.2.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.79",
+    "@types/react-dom": "^18.2.25",
+    "dotenv": "^16.4.5",
+    "esbuild": "^0.20.2"
+  }
+}
