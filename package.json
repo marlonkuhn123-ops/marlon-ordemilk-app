@@ -8,7 +8,14 @@
     "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
     "start": "npm run clean && npm run build && serve -s dist -l 3000"
   },
-  "keywords": ["Ordemilk", "Tech Assist", "Gemini", "AI", "React", "TypeScript"],
+  "keywords": [
+    "Ordemilk",
+    "Tech Assist",
+    "Gemini",
+    "AI",
+    "React",
+    "TypeScript"
+  ],
   "author": "Ordemilk Engineering",
   "license": "ISC",
   "dependencies": {

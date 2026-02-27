@@ -5,7 +5,7 @@ require('dotenv').config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// ✅ Usa qualquer um dos nomes, mas injeta os DOIS
+// ✅ pega de qualquer nome e injeta OS DOIS no bundle
 const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
 
 const define = {
@@ -17,7 +17,7 @@ const define = {
 const buildOptions = {
   entryPoints: [path.resolve(__dirname, 'index.tsx')],
   bundle: true,
-  outfile: path.resolve(__dirname, 'dist/index.js'), // ✅ nome fixo
+  outfile: path.resolve(__dirname, 'dist/index.js'), // ✅ fixo
   minify: isProduction,
   sourcemap: !isProduction,
   platform: 'browser',
@@ -40,13 +40,13 @@ function copyHtmlToDist() {
 
   let html = fs.readFileSync(htmlPath, 'utf8');
 
-  // ✅ garante script sempre no /index.js
+  // ✅ sempre aponta pro index.js que existe
   html = html.replace(
     /<script\s+type="module"\s+src="[^"]+"><\/script>/i,
     '<script type="module" src="/index.js"></script>'
   );
 
-  // ✅ manifest na raiz (evita 404)
+  // ✅ manifest sempre na raiz
   html = html.replace(
     /<link\s+rel="manifest"\s+href="[^"]+"\s*>/i,
     '<link rel="manifest" href="/manifest.json">'

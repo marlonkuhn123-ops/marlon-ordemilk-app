@@ -20,6 +20,7 @@ export interface ChatMessage {
     text: string;
     image?: string; 
     audio?: string; // Base64 do audio
+    files?: { data: string; mime: string; type: 'image' | 'audio' }[]; // Suporte a múltiplos arquivos
     fileMimeType?: string; // Tipo do arquivo (ex: audio/mp3, image/jpeg)
     isError?: boolean;
     isToolCall?: boolean;

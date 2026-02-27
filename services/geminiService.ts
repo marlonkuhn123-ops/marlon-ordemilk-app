@@ -3,62 +3,63 @@ import { SYSTEM_PROMPT_BASE, TOOL_PROMPTS, TECHNICAL_CONTEXT, EXTERNAL_MANUALS }
 import { knowledgeService } from "./knowledgeService";
 
 const handleApiError = (error: any) => {
-    console.error("Gemini API Error:", error);
-    const msg = error?.message || "";
-    
-    if (msg.includes("429") || msg.toLowerCase().includes("quota")) {
-        return "⚠️ LIMITE DE USO EXCEDIDO: O sistema atingiu o limite de consultas. Aguarde 60 segundos.";
-    }
-    return `⚠️ ERRO DE CONEXÃO: ${error?.message || 'Verifique sua internet e a chave de API.'}`;
+  console.error("Gemini API Error:", error);
+  const msg = error?.message || "";
+
+  if (msg.includes("429") || msg.toLowerCase().includes("quota")) {
+    return "⚠️ LIMITE DE USO EXCEDIDO: O sistema atingiu o limite de consultas. Aguarde 60 segundos.";
+  }
+  return `⚠️ ERRO DE CONEXÃO: ${error?.message || "Verifique internet e chave de API."}`;
 };
 
-// --- LÓGICA DE INJEÇÃO DINÂMICA DE MANUAL ---
 const getDynamicBrandContext = (userPrompt: string) => {
-    const upperPrompt = userPrompt.toUpperCase();
-    let specificManual = "";
-
-    for (const brand of Object.keys(EXTERNAL_MANUALS)) {
-        if (upperPrompt.includes(brand)) {
-            specificManual += `\n\n🚨 [ATENÇÃO: MANUAL ESPECÍFICO DETECTADO PARA: ${brand}]\nUse os dados abaixo com prioridade sobre a lógica Ordemilk:\n${EXTERNAL_MANUALS[brand]}\n`;
-        }
+  const upper = userPrompt.toUpperCase();
+  let manual = "";
+  for (const brand of Object.keys(EXTERNAL_MANUALS)) {
+    if (upper.includes(brand)) {
+      manual += `\n\n🚨 [MANUAL ESPECÍFICO DETECTADO: ${brand}]\n${EXTERNAL_MANUALS[brand]}\n`;
     }
-    return specificManual;
+  }
+  return manual;
 };
 
 const getFullSystemInstruction = (toolType: string, userPrompt: string = "") => {
-    const fieldKnowledge = knowledgeService.getKnowledgeContext();
-    const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
-    const brandManual = getDynamicBrandContext(userPrompt);
+  const fieldKnowledge = knowledgeService.getKnowledgeContext();
+  const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
+  const brandManual = getDynamicBrandContext(userPrompt);
 
-    return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n\n${fieldKnowledge}\n\n${toolPrompt}`;
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n\n${fieldKnowledge}\n\n${toolPrompt}`;
 };
 
-// ✅ ÚNICO ponto para pegar a chave (funciona com ambos nomes)
 const getApiKeyOrThrow = () => {
-    const apiKey = (process.env.GEMINI_API_KEY || process.env.API_KEY) as string;
-    if (!apiKey) throw new Error("Chave não configurada.");
-    return apiKey;
+  // ✅ agora funciona com os dois nomes
+  const apiKey = (process.env.GEMINI_API_KEY || process.env.API_KEY) as string;
+  if (!apiKey) throw new Error("Chave não configurada.");
+  return apiKey;
 };
 
-export const generateTechResponse = async (userPrompt: string, toolType: keyof typeof TOOL_PROMPTS | "ASSISTANT") => {
-    const apiKey = getApiKeyOrThrow();
-    const ai = new GoogleGenAI({ apiKey });
+export const generateTechResponse = async (
+  userPrompt: string,
+  toolType: keyof typeof TOOL_PROMPTS | "ASSISTANT"
+) => {
+  const apiKey = getApiKeyOrThrow();
+  const ai = new GoogleGenAI({ apiKey });
 
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: userPrompt,
-            config: {
-                systemInstruction: getFullSystemInstruction(toolType, userPrompt),
-                temperature: 0.1,
-                tools: [{ googleSearch: {} }]
-            }
-        });
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: userPrompt,
+      config: {
+        systemInstruction: getFullSystemInstruction(toolType, userPrompt),
+        temperature: 0.1,
+        tools: [{ googleSearch: {} }],
+      },
+    });
 
-        return response.text || "";
-    } catch (error: any) {
-        throw new Error(handleApiError(error));
-    }
+    return response.text || "";
+  } catch (error: any) {
+    throw new Error(handleApiError(error));
+  }
 };
 
 export const generateChatResponseStream = async (
@@ -70,9 +71,6 @@ export const generateChatResponseStream = async (
     const ai = new GoogleGenAI({ apiKey });
 
     try {
-        // BUGFIX: O 'history' já contém a conversa completa, incluindo a última mensagem.
-        // A lógica anterior duplicava a mensagem, causando um erro na API.
-        // Agora, usamos o 'history' diretamente como o conteúdo ('contents').
         const contents = history;
 
         const fullConversationText = history
