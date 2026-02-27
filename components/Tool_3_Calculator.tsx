@@ -9,7 +9,7 @@ export const Tool_Calculator: React.FC = () => {
     const [fluid, setFluid] = useState<Refrigerant>(Refrigerant.R22);
     const [press, setPress] = useState('');
     const [temp, setTemp] = useState('');
-    const [mode, setMode] = useState<CalcMode>('SH');
+    const [mode, setMode] = useState<CalcMode>('Superaquecimento');
     const [result, setResult] = useState('');
     const [loading, setLoading] = useState(false);
 

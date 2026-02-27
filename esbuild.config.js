@@ -4,21 +4,20 @@ const fs = require('fs');
 require('dotenv').config();
 
 const isProduction = process.env.NODE_ENV === 'production';
-const serve = process.argv.includes('--serve');
+
+// ✅ Usa qualquer um dos nomes, mas injeta os DOIS
+const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
 
 const define = {
-  'process.env.API_KEY': JSON.stringify(process.env.GEMINI_API_KEY || ''),
-  'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+  'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+  'process.env.GEMINI_API_KEY': JSON.stringify(apiKey),
+  'process.env.API_KEY': JSON.stringify(apiKey),
 };
-
-// DEBUG: Log the API Key value as seen by esbuild
-console.log('DEBUG: API Key (from esbuild define) =', define['process.env.API_KEY']);
-
 
 const buildOptions = {
   entryPoints: [path.resolve(__dirname, 'index.tsx')],
   bundle: true,
-  outfile: path.resolve(__dirname, 'dist/index.js'),
+  outfile: path.resolve(__dirname, 'dist/index.js'), // ✅ nome fixo
   minify: isProduction,
   sourcemap: !isProduction,
   platform: 'browser',
@@ -31,59 +30,52 @@ const buildOptions = {
     '.jsx': 'jsx',
     '.json': 'json',
   },
-  define: define,
+  define,
   logLevel: 'info',
-  color: true,
-  external: [],
 };
 
-// Production build
-esbuild.build({
-  ...buildOptions,
-  entryNames: isProduction ? '[dir]/[name]-[hash]' : '[name]',
-  metafile: true,
-}).then((result) => {
-  // --- Injetar o nome do arquivo com hash no HTML ---
-  const meta = result.metafile;
-  const outputKey = Object.keys(meta.outputs).find(key => key.endsWith('.js'));
-  const newJsFile = outputKey ? path.basename(outputKey) : 'index.js';
-  console.log('Build finished successfully.');
-  
-  // Copy index.html to dist after build
+function copyHtmlToDist() {
   const htmlPath = path.resolve(__dirname, 'index.html');
-  const destPath = path.resolve(__dirname, 'dist/index.html');
-  
-  if (fs.existsSync(htmlPath)) {
-    let htmlContent = fs.readFileSync(htmlPath, 'utf8');
-    
-    // Ensure the script tag points to the new hashed JS file
-    htmlContent = htmlContent.replace(/<script type="module" src="\/index\.js"><\/script>|<script[^>]*index\.tsx[^>]*>[\s\S]*?<\/script>/, `<script type="module" src="/${newJsFile}"></script>`);
-    
-    // Remove the importmap for production
-    htmlContent = htmlContent.replace(/<script type="importmap">[\s\S]*?<\/script>/, '');
-    
-    // Remove any development-only inline Tailwind style tag that might have been accidentally inserted
-    htmlContent = htmlContent.replace(/<style>@tailwind base; @tailwind components; @tailwind utilities;<\/style>/, '');
+  const distHtmlPath = path.resolve(__dirname, 'dist/index.html');
 
-    // Crucial: Ensure the Tailwind CSS CDN link remains in the production build.
-    // No replacement for tailwind CDN link, it stays as is from original index.html.
-    
-    fs.writeFileSync(destPath, htmlContent);
+  let html = fs.readFileSync(htmlPath, 'utf8');
 
-  } else {
-    console.error('index.html not found!');
-    process.exit(1);
-  }
+  // ✅ garante script sempre no /index.js
+  html = html.replace(
+    /<script\s+type="module"\s+src="[^"]+"><\/script>/i,
+    '<script type="module" src="/index.js"></script>'
+  );
 
-  // --- Copiar assets da pasta public ---
+  // ✅ manifest na raiz (evita 404)
+  html = html.replace(
+    /<link\s+rel="manifest"\s+href="[^"]+"\s*>/i,
+    '<link rel="manifest" href="/manifest.json">'
+  );
+
+  fs.mkdirSync(path.resolve(__dirname, 'dist'), { recursive: true });
+  fs.writeFileSync(distHtmlPath, html);
+}
+
+function copyPublicAssets() {
   const publicDir = path.resolve(__dirname, 'public');
   const distDir = path.resolve(__dirname, 'dist');
-  if (fs.existsSync(publicDir)) {
-      const files = fs.readdirSync(publicDir);
-      files.forEach(file => {
-          fs.copyFileSync(path.join(publicDir, file), path.join(distDir, file));
-      });
-      console.log('Public assets copied successfully.');
-  }
+  if (!fs.existsSync(publicDir)) return;
 
-}).catch(() => process.exit(1));
+  for (const file of fs.readdirSync(publicDir)) {
+    const src = path.join(publicDir, file);
+    const dst = path.join(distDir, file);
+    if (fs.statSync(src).isFile()) fs.copyFileSync(src, dst);
+  }
+}
+
+esbuild
+  .build(buildOptions)
+  .then(() => {
+    copyHtmlToDist();
+    copyPublicAssets();
+    console.log('Build OK: dist/index.html + dist/index.js');
+  })
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });

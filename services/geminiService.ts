@@ -6,10 +6,10 @@ const handleApiError = (error: any) => {
     console.error("Gemini API Error:", error);
     const msg = error?.message || "";
     
-    if (msg.includes("429") || msg.includes("quota")) {
-        return "⚠️ LIMITE DE USO EXCEDIDO: O sistema atingiu o limite de consultas gratuitas. Aguarde 60 segundos.";
+    if (msg.includes("429") || msg.toLowerCase().includes("quota")) {
+        return "⚠️ LIMITE DE USO EXCEDIDO: O sistema atingiu o limite de consultas. Aguarde 60 segundos.";
     }
-    return `⚠️ ERRO DE CONEXÃO: ${error.message || 'Verifique sua internet e a chave de API.'}`;
+    return `⚠️ ERRO DE CONEXÃO: ${error?.message || 'Verifique sua internet e a chave de API.'}`;
 };
 
 // --- LÓGICA DE INJEÇÃO DINÂMICA DE MANUAL ---
@@ -17,7 +17,6 @@ const getDynamicBrandContext = (userPrompt: string) => {
     const upperPrompt = userPrompt.toUpperCase();
     let specificManual = "";
 
-    // Varre as chaves da biblioteca externa (ex: REAFRIO, DELAVAL)
     for (const brand of Object.keys(EXTERNAL_MANUALS)) {
         if (upperPrompt.includes(brand)) {
             specificManual += `\n\n🚨 [ATENÇÃO: MANUAL ESPECÍFICO DETECTADO PARA: ${brand}]\nUse os dados abaixo com prioridade sobre a lógica Ordemilk:\n${EXTERNAL_MANUALS[brand]}\n`;
@@ -29,18 +28,22 @@ const getDynamicBrandContext = (userPrompt: string) => {
 const getFullSystemInstruction = (toolType: string, userPrompt: string = "") => {
     const fieldKnowledge = knowledgeService.getKnowledgeContext();
     const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
-    
-    // Injeção Condicional: Só adiciona o manual se a marca foi citada
     const brandManual = getDynamicBrandContext(userPrompt);
 
     return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n\n${fieldKnowledge}\n\n${toolPrompt}`;
 };
 
-export const generateTechResponse = async (userPrompt: string, toolType: keyof typeof TOOL_PROMPTS | "ASSISTANT") => {
-    const apiKey = process.env.GEMINI_API_KEY;
+// ✅ ÚNICO ponto para pegar a chave (funciona com ambos nomes)
+const getApiKeyOrThrow = () => {
+    const apiKey = (process.env.GEMINI_API_KEY || process.env.API_KEY) as string;
     if (!apiKey) throw new Error("Chave não configurada.");
-    const ai = new GoogleGenAI({ apiKey: apiKey });
-    
+    return apiKey;
+};
+
+export const generateTechResponse = async (userPrompt: string, toolType: keyof typeof TOOL_PROMPTS | "ASSISTANT") => {
+    const apiKey = getApiKeyOrThrow();
+    const ai = new GoogleGenAI({ apiKey });
+
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-3-flash-preview',
@@ -60,34 +63,25 @@ export const generateTechResponse = async (userPrompt: string, toolType: keyof t
 
 export const generateChatResponseStream = async (
     history: { role: string; parts: any[] }[],
-    newMessage: string,
-    fileData?: { mimeType: string, data: string }, // Updated signature to generic file
     onChunk?: (text: string) => void,
     onFinished?: (text: string, sources?: {title: string, uri: string}[]) => void
 ) => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("Chave não configurada.");
-    const ai = new GoogleGenAI({ apiKey: apiKey });
+    const apiKey = getApiKeyOrThrow();
+    const ai = new GoogleGenAI({ apiKey });
 
     try {
-        const contents = [...history];
-        const currentParts: any[] = [{ text: newMessage }];
-        
-        if (fileData) {
-            currentParts.push({
-                inlineData: { data: fileData.data, mimeType: fileData.mimeType },
-            });
-        }
-        
-        contents.push({ role: 'user', parts: currentParts });
+        // BUGFIX: O 'history' já contém a conversa completa, incluindo a última mensagem.
+        // A lógica anterior duplicava a mensagem, causando um erro na API.
+        // Agora, usamos o 'history' diretamente como o conteúdo ('contents').
+        const contents = history;
 
-        // Concatena todo o histórico para verificar menções a marcas antigas, 
-        // mas prioriza a mensagem atual.
-        const fullConversationText = history.map(h => h.parts[0]?.text).join(' ') + " " + newMessage;
+        const fullConversationText = history
+            .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
+            .join(' ');
 
         const responseStream = await ai.models.generateContentStream({
-            model: 'gemini-3-flash-preview', // Supports multimodal (audio/image)
-            contents: contents,
+            model: 'gemini-3-flash-preview',
+            contents,
             config: {
                 systemInstruction: getFullSystemInstruction("DIAGNOSTIC", fullConversationText),
                 temperature: 0.2,
@@ -101,7 +95,7 @@ export const generateChatResponseStream = async (
         for await (const chunk of responseStream) {
             const chunkText = chunk.text || "";
             fullText += chunkText;
-            
+
             const groundingChunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
             if (groundingChunks) {
                 groundingChunks.forEach((c: any) => {
@@ -120,9 +114,8 @@ export const generateChatResponseStream = async (
 };
 
 export const analyzePlateImage = async (imageBase64: string) => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("Chave não configurada.");
-    const ai = new GoogleGenAI({ apiKey: apiKey });
+    const apiKey = getApiKeyOrThrow();
+    const ai = new GoogleGenAI({ apiKey });
 
     try {
         const response = await ai.models.generateContent({
@@ -133,7 +126,7 @@ export const analyzePlateImage = async (imageBase64: string) => {
             ],
             config: { temperature: 0.1, responseMimeType: "application/json" }
         });
-        
+
         const rawText = response.text || "{}";
         const cleanJson = rawText.replace(/```json|```/g, '').trim();
         return cleanJson;

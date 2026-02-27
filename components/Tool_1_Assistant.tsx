@@ -154,7 +154,9 @@ export const Tool_Assistant: React.FC = () => {
         setMessages(prev => [...prev, { id: modelMessageId, role: 'model', text: '', isStreaming: true }]);
 
         try {
-            const apiHistory = messages.map(m => {
+            // BUGFIX: Construir o histórico COMPLETO para a API aqui, incluindo a nova mensagem.
+            // Isso garante que não haja duplicação e que a fonte da verdade seja única.
+            const historyForApi = [...messages, userMsg].map(m => {
                 const parts: any[] = [{ text: m.text }];
                 if (m.image) {
                     parts.push({ inlineData: { mimeType: m.fileMimeType || 'image/jpeg', data: m.image.split(',')[1] } });
@@ -165,17 +167,8 @@ export const Tool_Assistant: React.FC = () => {
                 return { role: m.role, parts };
             });
 
-            const filePayload = userMsg.image || userMsg.audio 
-                ? { 
-                    data: (userMsg.image || userMsg.audio)!.split(',')[1], 
-                    mimeType: userMsg.fileMimeType! 
-                  } 
-                : undefined;
-            
             await generateChatResponseStream(
-                apiHistory, 
-                userMsg.text, 
-                filePayload,
+                historyForApi,
                 (chunkText: string) => {
                     setMessages(prev => 
                         prev.map(msg => 
