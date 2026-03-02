@@ -58,13 +58,11 @@ export const generateTechResponse = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-flash-latest",
       contents: userPrompt,
       config: {
         systemInstruction: getFullSystemInstruction(toolType, userPrompt),
         temperature: 0.1,
-        // Removemos googleSearch de ferramentas específicas para evitar erros de quota/região
-        tools: toolType === "ASSISTANT" ? [{ googleSearch: {} }] : undefined,
       },
     });
 
@@ -90,12 +88,11 @@ export const generateChatResponseStream = async (
             .join(' ');
 
         const responseStream = await ai.models.generateContentStream({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-flash-latest',
             contents,
             config: {
                 systemInstruction: getFullSystemInstruction("DIAGNOSTIC", fullConversationText),
                 temperature: 0.2,
-                tools: [{ googleSearch: {} }]
             }
         });
 
