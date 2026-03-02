@@ -32,26 +32,21 @@ const getFullSystemInstruction = (toolType: string, userPrompt: string = "") => 
 };
 
 const getApiKeyOrThrow = () => {
-  // ✅ Tenta ler de múltiplas fontes injetadas pelo esbuild/Vercel
-  let apiKey = "";
+  let key = "";
+
+  try {
+    // @ts-ignore
+    key = GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY || "";
+  } catch (e) {
+    // @ts-ignore
+    key = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
+  }
+
+  if (!key || key === "" || key.includes("PLACEHOLDER")) {
+    throw new Error(`CHAVE NÃO ENCONTRADA NO BUILD. Verifique se o nome na Vercel é exatamente GEMINI_API_KEY.`);
+  }
   
-  // @ts-ignore
-  if (typeof process !== 'undefined' && process.env) {
-    apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
-  }
-
-  // Fallback para globais se o esbuild injetou via define direto
-  if (!apiKey || apiKey.includes("PLACEHOLDER")) {
-    try {
-      // @ts-ignore
-      if (typeof GEMINI_API_KEY !== 'undefined') apiKey = GEMINI_API_KEY;
-    } catch (e) {}
-  }
-
-  if (!apiKey || apiKey === "" || apiKey.includes("__GEMINI_API_KEY_PLACEHOLDER__")) {
-    throw new Error("CHAVE DE API NÃO ENCONTRADA. Verifique as Variáveis de Ambiente na Vercel e faça um 'Redeploy'.");
-  }
-  return apiKey;
+  return key;
 };
 
 export const generateTechResponse = async (
