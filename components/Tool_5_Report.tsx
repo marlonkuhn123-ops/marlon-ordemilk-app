@@ -154,8 +154,8 @@ export const Tool_Report: React.FC = () => {
             const finalDoc = await generateTechResponse(prompt, "REPORT");
             setReport(finalDoc);
 
-        } catch (e) {
-            setReport("Erro ao gerar documento. Tente novamente.");
+        } catch (e: any) {
+            setReport(`ERRO AO GERAR DOCUMENTO: ${e.message || "Falha na comunicação com a IA."}`);
         } finally {
             setLoading(false);
         }

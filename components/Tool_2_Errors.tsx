@@ -24,7 +24,9 @@ export const Tool_Errors: React.FC = () => {
             `;
             const text = await generateTechResponse(prompt, "ERRORS");
             setResult(text);
-        } catch (e) { setResult("Erro ao processar."); }
+        } catch (e: any) { 
+            setResult(`ERRO NA ANÁLISE: ${e.message || "Falha ao decodificar erro."}`); 
+        }
         setLoading(false);
     };
 

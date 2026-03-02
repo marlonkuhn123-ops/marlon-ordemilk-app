@@ -20,7 +20,9 @@ export const Tool_Calculator: React.FC = () => {
             const prompt = logicService.formatCalculatorPrompt(fluid, press as any, temp, mode);
             const text = await generateTechResponse(prompt, "CALC");
             setResult(text);
-        } catch (e) { setResult("Erro ao calcular."); }
+        } catch (e: any) { 
+            setResult(`ERRO TÉCNICO: ${e.message || "Falha na comunicação com a IA."}`); 
+        }
         setLoading(false);
     };
 

@@ -32,33 +32,24 @@ const getFullSystemInstruction = (toolType: string, userPrompt: string = "") => 
 };
 
 const getApiKeyOrThrow = () => {
-  // ✅ Tenta ler a chave global injetada pela plataforma ou pelo esbuild
+  // ✅ Tenta ler de múltiplas fontes injetadas pelo esbuild/Vercel
   let apiKey = "";
   
-  try {
-    // @ts-ignore
-    if (typeof GEMINI_API_KEY !== 'undefined' && GEMINI_API_KEY && !GEMINI_API_KEY.includes("PLACEHOLDER")) {
-      // @ts-ignore
-      apiKey = GEMINI_API_KEY;
-    }
-  } catch (e) {}
+  // @ts-ignore
+  if (typeof process !== 'undefined' && process.env) {
+    apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
+  }
 
-  if (!apiKey) {
+  // Fallback para globais se o esbuild injetou via define direto
+  if (!apiKey || apiKey.includes("PLACEHOLDER")) {
     try {
       // @ts-ignore
-      if (typeof window !== 'undefined' && window.GEMINI_API_KEY && !window.GEMINI_API_KEY.includes("PLACEHOLDER")) {
-        // @ts-ignore
-        apiKey = window.GEMINI_API_KEY;
-      }
+      if (typeof GEMINI_API_KEY !== 'undefined') apiKey = GEMINI_API_KEY;
     } catch (e) {}
   }
 
-  if (!apiKey) {
-    apiKey = (process.env.GEMINI_API_KEY || process.env.API_KEY) as string;
-  }
-  
   if (!apiKey || apiKey === "" || apiKey.includes("__GEMINI_API_KEY_PLACEHOLDER__")) {
-    throw new Error("Chave de API não encontrada ou não injetada. Certifique-se de configurar GEMINI_API_KEY no painel do Cloud Run.");
+    throw new Error("CHAVE DE API NÃO ENCONTRADA. Verifique as Variáveis de Ambiente na Vercel e faça um 'Redeploy'.");
   }
   return apiKey;
 };
@@ -77,7 +68,8 @@ export const generateTechResponse = async (
       config: {
         systemInstruction: getFullSystemInstruction(toolType, userPrompt),
         temperature: 0.1,
-        tools: [{ googleSearch: {} }],
+        // Removemos googleSearch de ferramentas específicas para evitar erros de quota/região
+        tools: toolType === "ASSISTANT" ? [{ googleSearch: {} }] : undefined,
       },
     });
 
