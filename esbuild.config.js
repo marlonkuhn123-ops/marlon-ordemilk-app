@@ -12,6 +12,7 @@ const define = {
   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
   'process.env.GEMINI_API_KEY': JSON.stringify(apiKey),
   'process.env.API_KEY': JSON.stringify(apiKey),
+  'GEMINI_API_KEY': JSON.stringify(apiKey),
 };
 
 const buildOptions = {
