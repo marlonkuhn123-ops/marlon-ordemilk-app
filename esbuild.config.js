@@ -5,8 +5,8 @@ require('dotenv').config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// ✅ pega de qualquer nome e injeta OS DOIS no bundle
-const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+// ✅ Pega a chave de API de múltiplas fontes possíveis ou usa um placeholder para injeção posterior
+const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '__GEMINI_API_KEY_PLACEHOLDER__';
 
 const define = {
   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),

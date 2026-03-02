@@ -183,7 +183,7 @@ export const Tool_Report: React.FC = () => {
                     <p className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-2 flex items-center gap-2">
                         <i className="fa-solid fa-id-card"></i> Identificação
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <Input 
                             label="Cliente" 
                             value={client} 
@@ -222,7 +222,7 @@ export const Tool_Report: React.FC = () => {
                             <i className="fa-solid fa-gauge-high"></i> Parâmetros
                         </p>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <Input label="SH (K)" type="number" value={superHeat} onChange={e => setSuperHeat(e.target.value)} placeholder="0" className="!p-2 text-xs !mb-0 border-orange-500/30" />
                         <Input label="SC (K)" type="number" value={subCooling} onChange={e => setSubCooling(e.target.value)} placeholder="0" className="!p-2 text-xs !mb-0 border-orange-500/30" />
                         <Input label="Temp Final" type="number" value={finalTemp} onChange={e => setFinalTemp(e.target.value)} placeholder="°C" className="!p-2 text-xs !mb-0" />

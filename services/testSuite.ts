@@ -29,7 +29,7 @@ export const runSystemDiagnostics = () => {
 
     // --- TESTES DA CALCULADORA ---
     test("Calculadora: Deve gerar prompt com fluido correto", () => {
-        const p = logicService.formatCalculatorPrompt(Refrigerant.R22, "60", "10", "SH");
+        const p = logicService.formatCalculatorPrompt(Refrigerant.R22, "60", "10", "Superaquecimento");
         assert(p.includes("Fluido R-22"), "Fluido não identificado no prompt");
         assert(p.includes("60 PSI"), "Pressão incorreta no prompt");
     });

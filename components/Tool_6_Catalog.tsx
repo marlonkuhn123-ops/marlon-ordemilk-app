@@ -79,17 +79,19 @@ export const Tool_Catalog: React.FC = () => {
                     <span className="text-emerald-400 font-bold ml-1">Ela usará isso para te dar respostas melhores no Suporte.</span>
                 </p>
                 <div className="flex gap-2 mb-4">
-                    <Input 
-                        placeholder="Ex: No modelo X, o capacitor deve ser de 35uF..." 
-                        value={newTip} 
-                        onChange={e => setNewTip(e.target.value)}
-                        className="!mb-0 !p-3 text-xs"
-                    />
+                    <div className="flex-1">
+                        <Input 
+                            placeholder="Ex: No modelo X, capacitor 35uF..." 
+                            value={newTip} 
+                            onChange={e => setNewTip(e.target.value)}
+                            className="!mb-0 !p-3 text-xs"
+                        />
+                    </div>
                     <button 
                         onClick={handleAddTip}
-                        className="bg-emerald-600 text-white px-4 rounded-lg hover:bg-emerald-500 transition-colors"
+                        className="bg-emerald-600 text-white w-11 h-11 sm:w-12 sm:h-12 rounded-lg hover:bg-emerald-500 transition-colors shrink-0 flex items-center justify-center shadow-lg active:scale-95"
                     >
-                        <i className="fa-solid fa-plus"></i>
+                        <i className="fa-solid fa-plus text-sm"></i>
                     </button>
                 </div>
 

@@ -46,7 +46,7 @@ export const Tool_Calculator: React.FC = () => {
                 <div className="mb-4 p-3 rounded-lg border text-[10px] font-medium leading-relaxed flex items-start gap-2 transition-colors bg-blue-900/20 border-blue-800 text-blue-200">
                     <i className="fa-solid fa-circle-info mt-0.5 text-xs text-blue-400"></i>
                     <span>
-                        {mode === 'SH' 
+                        {mode === 'Superaquecimento' 
                             ? "SUPER AQUECIMENTO (SH): Meça a temperatura na tubulação de sucção, a 10cm do compressor."
                             : "SUB-RESFRIAMENTO (SR): Meça a temperatura na linha de líquido, na saída do condensador."}
                     </span>

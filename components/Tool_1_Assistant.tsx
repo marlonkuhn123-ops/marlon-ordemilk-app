@@ -86,14 +86,20 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = ({ 
 // --- FERRAMENTA 1: ASSISTENTE (CHAT + ELÉTRICA) ---
 export const Tool_Assistant: React.FC = () => {
     const { techData } = useGlobal(); 
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([
+        {
+            id: 'welcome',
+            role: 'model',
+            text: 'Olá! Sou o Assistente Técnico Ordemilk. Como posso ajudar você hoje? Descreva o problema ou envie fotos/áudios para análise.'
+        }
+    ]);
     const [input, setInput] = useState('');
     
-    // Estado unificado para arquivo (Imagem ou Audio)
-    const [selectedFiles, setSelectedFiles] = useState<{data: string, mime: string, type: 'image' | 'audio'}[]>([]);
+    // Estado unificado para múltiplos arquivos (Imagem ou Audio) com ID para chaves únicas
+    const [selectedFiles, setSelectedFiles] = useState<{id: string, data: string, mime: string, type: 'image' | 'audio'}[]>([]);
     
     const [isLoadingChat, setIsLoadingChat] = useState(false);
-    const [isStarted, setIsStarted] = useState(false);
+    const [isStarted, setIsStarted] = useState(true);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -168,10 +174,19 @@ export const Tool_Assistant: React.FC = () => {
         setMessages(prev => [...prev, { id: modelMessageId, role: 'model', text: '', isStreaming: true }]);
 
         try {
-            // BUGFIX: Construir o histórico COMPLETO para a API aqui, incluindo a nova mensagem.
-            // Isso garante que não haja duplicação e que a fonte da verdade seja única.
+            // BUGFIX: Construir o histórico COMPLETO e LIMPO para a API.
+            // Evita enviar partes de texto vazias quando há apenas arquivos, o que causa erro na API.
             const historyForApi = [...messages, userMsg].map(m => {
-                const parts: any[] = [{ text: m.text }];
+                const parts: any[] = [];
+                
+                // Só adiciona texto se ele não for apenas o marcador de arquivos ou se houver texto real
+                if (m.text && !m.text.startsWith('[')) {
+                    parts.push({ text: m.text });
+                } else if (m.text && m.text.startsWith('[') && (!m.files || m.files.length === 0)) {
+                    // Se por algum motivo for o marcador mas não tiver arquivos, envia o texto
+                    parts.push({ text: m.text });
+                }
+                
                 m.files?.forEach(file => {
                     parts.push({
                         inlineData: {
@@ -180,6 +195,10 @@ export const Tool_Assistant: React.FC = () => {
                         }
                     });
                 });
+
+                // Garantia: Gemini exige ao menos uma parte por mensagem
+                if (parts.length === 0) parts.push({ text: m.text || "Análise de arquivo." });
+                
                 return { role: m.role, parts };
             });
 
@@ -203,9 +222,10 @@ export const Tool_Assistant: React.FC = () => {
 
         } catch (error: any) {
             console.error("CAUGHT IN COMPONENT:", error);
+            const errorMessage = error.message || "FALHA DE CONEXÃO. Tente novamente.";
             setMessages(prev => 
                 prev.map(msg => 
-                    msg.id === modelMessageId ? { ...msg, text: "⚠️ FALHA DE CONEXÃO. Tente novamente.", isError: true, isStreaming: false } : msg
+                    msg.id === modelMessageId ? { ...msg, text: `${errorMessage}`, isError: true, isStreaming: false } : msg
                 )
             );
         } finally {
@@ -215,10 +235,16 @@ export const Tool_Assistant: React.FC = () => {
 
     const resetMessages = () => {
         setIsLoadingChat(false);
-        setMessages([]);
+        setMessages([
+            {
+                id: 'welcome',
+                role: 'model',
+                text: 'Olá! Sou o Assistente Técnico Ordemilk. Como posso ajudar você hoje? Descreva o problema ou envie fotos/áudios para análise.'
+            }
+        ]);
         setInput('');
         setSelectedFiles([]);
-        setIsStarted(false);
+        setIsStarted(true);
     };
 
     const shareChatWhatsapp = () => {
@@ -264,102 +290,57 @@ export const Tool_Assistant: React.FC = () => {
             <SectionTitle icon="fa-solid fa-headset" title="1. SUPORTE DIRETO" />
             
             <Card className="min-h-[65vh] flex flex-col border-t-4 border-t-[#1abc9c] !bg-[#121212]">
-                {!isStarted ? (
-                    <div className="flex flex-col gap-4 py-4 animate-fadeIn">
-                        <div className="bg-[#1a1a1a] p-4 rounded-lg border border-[#333]">
-                            <p className="text-xs text-gray-300 leading-relaxed font-bold">
-                                "Sistema de suporte técnico pronto. Descreva o problema, envie FOTOS ou ÁUDIOS do equipamento (ruídos, relatos). EM CASO DE DÚVIDA, PROCURE SEMPRE A AJUDA DE UM PROFISSIONAL QUALIFICADO."
-                            </p>
-                        </div>
-                        <textarea 
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            rows={4} 
-                            className="w-full p-4 rounded-xl outline-none border bg-[#0a0a0a] border-[#333] text-white focus:border-[#1abc9c] text-sm"
-                            placeholder="Descreva o problema ou envie áudio..."
-                        />
-                        
-                        <label className="group relative flex items-center justify-center gap-3 w-full py-3 px-4 rounded-lg border cursor-pointer transition-all duration-300 mb-2 overflow-hidden active:scale-[0.98] bg-[#2a2a2a] border-[#4d4d4d] hover:border-[#1abc9c]/50 hover:bg-[#333333]">
-                            <div className="absolute left-0 top-0 bottom-0 w-[3px] transition-colors duration-300 bg-[#4d4d4d] group-hover:bg-[#1abc9c]"></div>
-                            <div className="flex items-center justify-center transition-colors duration-300 text-white/60 group-hover:text-[#1abc9c]">
-                                <i className={`fa-solid ${selectedFiles.length > 0 ? 'fa-check' : 'fa-paperclip'} text-sm`}></i>
-                            </div>
-                            <span className="text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-300 text-white group-hover:text-white">
-                                {selectedFiles.length > 0 
-                                    ? `${selectedFiles.length} ARQUIVO(S) ANEXADO(S)` 
-                                    : 'ANEXAR FOTO OU ÁUDIO'}
-                            </span>
-                            <input type="file" accept="image/*,audio/*" className="hidden" onChange={handleFileUpload} multiple />
-                        </label>
-
-                        {/* PREVIEW DE MÚLTIPLOS ARQUIVOS */}
-                        {selectedFiles.length > 0 && (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4 p-2 bg-[#1a1a1a] rounded border border-[#333]">
-                                {selectedFiles.map((file) => (
-                                    <div key={file.id} className="relative group">
-                                        {file.type === 'image' ? (
-                                            <img src={file.data} alt="Preview" className="w-full h-24 object-cover rounded" />
-                                        ) : (
-                                            <div className="w-full h-24 bg-black rounded flex flex-col items-center justify-center">
-                                                <i className="fa-solid fa-file-audio text-3xl text-[#1abc9c]"></i>
-                                                <span className="text-[10px] mt-2 text-gray-400">Áudio</span>
-                                            </div>
-                                        )}
-                                        <button onClick={() => setSelectedFiles(prev => prev.filter(f => f.id !== file.id))} className="absolute top-1 right-1 bg-red-600/80 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-md opacity-0 group-hover:opacity-100 transition-opacity"><i className="fa-solid fa-xmark"></i></button>
+                <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1 max-h-[500px] flex flex-col">
+                    {messages.map((m, i) => <ChatBubble key={m.id || i} msg={m} onImageLoad={scrollToBottom} />)}
+                    {isLoadingChat && <div className="p-4 bg-[#1a1a1a] rounded-xl w-16 h-8 animate-pulse self-start">...</div>}
+                    <div ref={bottomRef} />
+                </div>
+                
+                {/* PREVIEW DE MÚLTIPLOS ARQUIVOS NO CHAT */}
+                {selectedFiles.length > 0 && (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 mb-2 p-1 bg-[#1a1a1a] rounded border border-[#1abc9c]">
+                        {selectedFiles.map((file) => (
+                            <div key={file.id} className="relative group">
+                                {file.type === 'image' ? (
+                                    <img src={file.data} alt="Preview" className="w-full h-16 object-cover rounded" />
+                                ) : (
+                                    <div className="w-full h-16 bg-black rounded flex items-center justify-center">
+                                        <i className="fa-solid fa-file-audio text-2xl text-[#1abc9c]"></i>
                                     </div>
-                                ))}
+                                )}
+                                <button onClick={() => setSelectedFiles(prev => prev.filter(f => f.id !== file.id))} className="absolute top-0 right-0 bg-red-600/80 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] shadow-md opacity-0 group-hover:opacity-100 transition-opacity"><i className="fa-solid fa-xmark"></i></button>
                             </div>
-                        )}
-
-                        <Button onClick={handleStartChat} disabled={!input.trim() && selectedFiles.length === 0}>ACIONAR SUPORTE</Button>
+                        ))}
                     </div>
-                ) : (
-                    <>
-                        <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1 max-h-[500px] flex flex-col">
-                            {messages.map((m, i) => <ChatBubble key={m.id || i} msg={m} onImageLoad={scrollToBottom} />)}
-                            {isLoadingChat && <div className="p-4 bg-[#1a1a1a] rounded-xl w-16 h-8 animate-pulse self-start">...</div>}
-                            <div ref={bottomRef} />
-                        </div>
-                        
-                        {/* PREVIEW DE MÚLTIPLOS ARQUIVOS NO CHAT */}
-                        {selectedFiles.length > 0 && (
-                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 mb-2 p-1 bg-[#1a1a1a] rounded border border-[#1abc9c]">
-                                {selectedFiles.map((file) => (
-                                    <div key={file.id} className="relative group">
-                                        {file.type === 'image' ? (
-                                            <img src={file.data} alt="Preview" className="w-full h-16 object-cover rounded" />
-                                        ) : (
-                                            <div className="w-full h-16 bg-black rounded flex items-center justify-center">
-                                                <i className="fa-solid fa-file-audio text-2xl text-[#1abc9c]"></i>
-                                            </div>
-                                        )}
-                                        <button onClick={() => setSelectedFiles(prev => prev.filter(f => f.id !== file.id))} className="absolute top-0 right-0 bg-red-600/80 text-white w-4 h-4 rounded-full flex items-center justify-center text-[8px] shadow-md opacity-0 group-hover:opacity-100 transition-opacity"><i className="fa-solid fa-xmark"></i></button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <div className="flex gap-2 mt-auto pt-4 border-t border-[#333]">
-                            <button onClick={resetMessages} className="w-12 h-12 rounded-xl bg-[#1a1a1a] border border-[#333] hover:text-red-500"><i className="fa-solid fa-trash"></i></button>
-                            
-                            <button onClick={() => fileInputRef.current?.click()} className={`w-12 h-12 rounded-xl bg-[#1a1a1a] border border-[#333] transition-colors ${selectedFiles.length > 0 ? 'text-[#1abc9c] border-[#1abc9c]' : 'text-gray-500 hover:text-[#1abc9c]'}`}>
-                                <i className="fa-solid fa-paperclip"></i>
-                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
-                            </button>
-                            
-                            <input 
-                                type="text"
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                                className="flex-1 rounded-xl px-4 text-sm bg-[#0a0a0a] border border-[#333] text-white focus:border-[#1abc9c] outline-none"
-                                placeholder="Digite..."
-                            />
-                            <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-12 h-12 rounded-xl bg-[#1abc9c] text-white flex items-center justify-center"><i className="fa-solid fa-paper-plane"></i></button>
-                            <button onClick={shareChatWhatsapp} className="w-12 h-12 rounded-xl bg-[#25D366] text-white flex items-center justify-center"><i className="fa-brands fa-whatsapp"></i></button>
-                        </div>
-                    </>
                 )}
+
+                <div className="flex gap-1.5 sm:gap-2 mt-auto pt-3 sm:pt-4 border-t border-[#333]">
+                    <button onClick={resetMessages} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1a1a1a] border border-[#333] hover:text-red-500 shrink-0 flex items-center justify-center">
+                        <i className="fa-solid fa-trash text-xs sm:text-base"></i>
+                    </button>
+                    
+                    <button onClick={() => fileInputRef.current?.click()} className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1a1a1a] border border-[#333] transition-colors shrink-0 flex items-center justify-center ${selectedFiles.length > 0 ? 'text-[#1abc9c] border-[#1abc9c]' : 'text-gray-500 hover:text-[#1abc9c]'}`}>
+                        <i className="fa-solid fa-paperclip text-xs sm:text-base"></i>
+                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
+                    </button>
+                    
+                    <input 
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                        className="flex-1 min-w-0 rounded-xl px-3 sm:px-4 text-xs sm:text-sm bg-[#0a0a0a] border border-[#333] text-white focus:border-[#1abc9c] outline-none"
+                        placeholder="Digite sua mensagem..."
+                    />
+                    
+                    <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1abc9c] text-white flex items-center justify-center shrink-0">
+                        <i className="fa-solid fa-paper-plane text-xs sm:text-base"></i>
+                    </button>
+                    
+                    <button onClick={shareChatWhatsapp} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#25D366] text-white flex items-center justify-center shrink-0">
+                        <i className="fa-brands fa-whatsapp text-xs sm:text-base"></i>
+                    </button>
+                </div>
             </Card>
         </div>
     );

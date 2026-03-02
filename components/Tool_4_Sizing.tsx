@@ -73,20 +73,20 @@ export const Tool_Sizing: React.FC = () => {
             <SectionTitle icon="fa-solid fa-ruler-combined" title="4. DIMENSIONAMENTO" />
             
             {/* SWITCH DE MODO */}
-            <div className="flex bg-[#252525] p-1 rounded-lg mb-4 border border-[#404040]">
+            <div className="flex bg-[#252525] p-1 rounded-lg mb-4 border border-[#404040] gap-1">
                 <button 
                     onClick={() => { setInputMode('ordenha'); setInputRaw(''); setVolumeOrdenha(''); setResult(''); }}
-                    className={`flex-1 py-2 rounded-md text-[9px] font-bold uppercase tracking-widest transition-all ${
+                    className={`flex-1 py-2.5 rounded-md text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-all leading-tight ${
                         inputMode === 'ordenha' 
                         ? 'bg-[#1abc9c] text-white shadow-md' 
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
                 >
-                    Por Ordenha (Litros)
+                    Por Ordenha
                 </button>
                 <button 
                     onClick={() => { setInputMode('tanque'); setInputRaw(''); setVolumeOrdenha(''); setResult(''); }}
-                    className={`flex-1 py-2 rounded-md text-[9px] font-bold uppercase tracking-widest transition-all ${
+                    className={`flex-1 py-2.5 rounded-md text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-all leading-tight ${
                         inputMode === 'tanque' 
                         ? 'bg-[#1abc9c] text-white shadow-md' 
                         : 'text-gray-500 hover:text-gray-300'
@@ -108,7 +108,7 @@ export const Tool_Sizing: React.FC = () => {
                     />
                     
                     {volumeOrdenha && inputMode === 'tanque' && (
-                        <div className="text-right text-[10px] text-[#1abc9c] font-bold -mt-2 mb-2 px-1">
+                        <div className="text-right text-[9px] sm:text-[10px] text-[#1abc9c] font-bold -mt-2 mb-2 px-1">
                             Considerando 2 ordenhas/dia: {volumeOrdenha} L/ordenha
                         </div>
                     )}
@@ -118,13 +118,13 @@ export const Tool_Sizing: React.FC = () => {
                 <div className="mb-4 p-3 rounded-lg border flex flex-col gap-2 bg-[#1a1a1a] border-[#333]">
                     <div className="flex items-center gap-2 border-b border-[#333] pb-2">
                         <i className="fa-solid fa-temperature-low text-[#1abc9c] text-xs"></i>
-                        <span className="text-[10px] font-bold text-gray-300 uppercase">Parâmetros de Projeto (Danfoss)</span>
+                        <span className="text-[9px] sm:text-[10px] font-bold text-gray-300 uppercase">Parâmetros de Projeto (Danfoss)</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-[10px] text-gray-400">
-                        <div>Evaporação (SST): <span className="text-white font-bold">-10°C</span></div>
-                        <div>Condensação (SDT): <span className="text-white font-bold">40°C</span></div>
-                        <div>Delta T (Leite): <span className="text-white font-bold">31°C</span></div>
-                        <div>Tempo Limite: <span className="text-white font-bold">3 Horas</span></div>
+                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1.5 text-[9px] sm:text-[10px] text-gray-400">
+                        <div className="flex justify-between xs:block">Evaporação (SST): <span className="text-white font-bold">-10°C</span></div>
+                        <div className="flex justify-between xs:block">Condensação (SDT): <span className="text-white font-bold">40°C</span></div>
+                        <div className="flex justify-between xs:block">Delta T (Leite): <span className="text-white font-bold">31°C</span></div>
+                        <div className="flex justify-between xs:block">Tempo Limite: <span className="text-white font-bold">3 Horas</span></div>
                     </div>
                 </div>
                 

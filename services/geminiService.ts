@@ -32,9 +32,34 @@ const getFullSystemInstruction = (toolType: string, userPrompt: string = "") => 
 };
 
 const getApiKeyOrThrow = () => {
-  // ✅ agora funciona com os dois nomes
-  const apiKey = (process.env.GEMINI_API_KEY || process.env.API_KEY) as string;
-  if (!apiKey) throw new Error("Chave não configurada.");
+  // ✅ Tenta ler a chave global injetada pela plataforma ou pelo esbuild
+  let apiKey = "";
+  
+  try {
+    // @ts-ignore
+    if (typeof GEMINI_API_KEY !== 'undefined' && GEMINI_API_KEY && !GEMINI_API_KEY.includes("PLACEHOLDER")) {
+      // @ts-ignore
+      apiKey = GEMINI_API_KEY;
+    }
+  } catch (e) {}
+
+  if (!apiKey) {
+    try {
+      // @ts-ignore
+      if (typeof window !== 'undefined' && window.GEMINI_API_KEY && !window.GEMINI_API_KEY.includes("PLACEHOLDER")) {
+        // @ts-ignore
+        apiKey = window.GEMINI_API_KEY;
+      }
+    } catch (e) {}
+  }
+
+  if (!apiKey) {
+    apiKey = (process.env.GEMINI_API_KEY || process.env.API_KEY) as string;
+  }
+  
+  if (!apiKey || apiKey === "" || apiKey.includes("__GEMINI_API_KEY_PLACEHOLDER__")) {
+    throw new Error("Chave de API não encontrada ou não injetada. Certifique-se de configurar GEMINI_API_KEY no painel do Cloud Run.");
+  }
   return apiKey;
 };
 

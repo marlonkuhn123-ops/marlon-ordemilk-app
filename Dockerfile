@@ -1,36 +1,22 @@
-# Etapa 1: Construir o aplicativo React
-FROM node:18-alpine AS build
-
-# Define o diretório de trabalho
+# Estágio 1: Build
+FROM node:20-slim AS builder
 WORKDIR /app
-
-# Copia os arquivos de dependência
-COPY package.json package-lock.json ./
-
-# Instala as dependências
+COPY package*.json ./
 RUN npm install
-
-# Copia o restante do código do aplicativo
 COPY . .
-
-# Constrói o aplicativo para produção
 RUN npm run build
 
-# Etapa 2: Servir o aplicativo com Nginx
-FROM nginx:stable-alpine
+# Estágio 2: Runtime
+FROM node:20-slim
+WORKDIR /app
+RUN npm install -g serve
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/inject-key.js ./
+COPY --from=builder /app/package.json ./
 
-# Instala 'gettext' para ter 'envsubst' que substitui variáveis de ambiente
-RUN apk --no-cache add gettext
+# Expõe a porta que o Cloud Run vai usar
+EXPOSE 3000
 
-# Copia os arquivos construídos da aplicação
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copia o template de configuração do Nginx
-COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
-
-# Expõe a porta 8080 como padrão (o Cloud Run vai sobrescrever com a variável PORT)
-EXPOSE 8080
-
-# Inicia o Nginx. O 'envsubst' irá substituir ${PORT} no template
-# com o valor da variável de ambiente PORT fornecida pelo Cloud Run.
-CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'" ]
+# Comando para rodar a injeção da chave e subir o servidor
+# Usamos a porta 3000 como padrão do Cloud Run
+CMD node inject-key.js && serve -s dist -l 3000

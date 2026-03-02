@@ -132,7 +132,7 @@ export const Tool_Report: React.FC = () => {
             
             let procedureText = "";
             if (serviceMode === 'installation') {
-                const completedSteps = [];
+                const completedSteps: string[] = [];
                 INSTALL_STEPS.forEach((step, sIdx) => {
                     step.points.forEach((pt, pIdx) => {
                         if (installChecked.has(`${sIdx}-${pIdx}`)) {

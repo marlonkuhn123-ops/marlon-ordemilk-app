@@ -10,7 +10,7 @@ export const logicService = {
     // Formata o prompt da calculadora (Coração do diagnóstico de gás)
     formatCalculatorPrompt: (fluid: Refrigerant, press: string, temp: string, mode: CalcMode) => {
         return `
-        COMANDO: CALCULAR ${mode === 'SH' ? 'Superaquecimento (SH)' : 'Sub-resfriamento (SC)'}.
+        COMANDO: CALCULAR ${mode === 'Superaquecimento' ? 'Superaquecimento (SH)' : 'Sub-resfriamento (SC)'}.
         DADOS: Fluido ${fluid}, Pressão ${press} PSI, Temperatura ${temp} °C.
         
         CONTEXTO DE REFERÊNCIA:
