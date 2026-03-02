@@ -5,14 +5,20 @@ require('dotenv').config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-// ✅ Pega a chave de API de múltiplas fontes possíveis ou usa um placeholder para injeção posterior
-const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '__GEMINI_API_KEY_PLACEHOLDER__';
+// ✅ Pega a chave de API de múltiplas fontes possíveis
+const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
+
+if (apiKey) {
+  console.log('✅ CHAVE DE API DETECTADA DURANTE O BUILD (Iniciando com: ' + apiKey.substring(0, 6) + '...)');
+} else {
+  console.log('❌ ALERTA: NENHUMA CHAVE DE API ENCONTRADA DURANTE O BUILD!');
+}
 
 const define = {
   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
-  'process.env.GEMINI_API_KEY': JSON.stringify(apiKey),
-  'process.env.API_KEY': JSON.stringify(apiKey),
-  'GEMINI_API_KEY': JSON.stringify(apiKey),
+  'process.env.GEMINI_API_KEY': JSON.stringify(apiKey || '__GEMINI_API_KEY_PLACEHOLDER__'),
+  'process.env.API_KEY': JSON.stringify(apiKey || '__GEMINI_API_KEY_PLACEHOLDER__'),
+  'GEMINI_API_KEY': JSON.stringify(apiKey || '__GEMINI_API_KEY_PLACEHOLDER__'),
 };
 
 const buildOptions = {
