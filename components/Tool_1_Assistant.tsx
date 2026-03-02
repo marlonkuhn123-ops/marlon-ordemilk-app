@@ -1,9 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Card, SectionTitle, Button, FileUpload, Select, Input, AIOutputBox } from './UI';
-import { generateChatResponseStream, analyzePlateImage, generateTechResponse } from '../services/geminiService';
-import { ChatMessage, ElectricReading } from '../types';
-import { useGlobal } from '../contexts/GlobalContext';
+import { Card, SectionTitle } from './UI';
+import { generateChatResponseStream } from '../services/geminiService';
+import { ChatMessage } from '../types';
 
 // --- SUB-COMPONENTE: BALÃO DE CHAT ---
 const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = ({ msg, onImageLoad }) => {
@@ -85,7 +84,6 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = ({ 
 
 // --- FERRAMENTA 1: ASSISTENTE (CHAT + ELÉTRICA) ---
 export const Tool_Assistant: React.FC = () => {
-    const { techData } = useGlobal(); 
     const [messages, setMessages] = useState<ChatMessage[]>([
         {
             id: 'welcome',
@@ -103,16 +101,6 @@ export const Tool_Assistant: React.FC = () => {
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const [reading, setReading] = useState<ElectricReading>({ phase: 'tri' });
-    const [voltR, setVoltR] = useState('');
-    const [voltS, setVoltS] = useState('');
-    const [voltT, setVoltT] = useState('');
-    const [ampNow, setAmpNow] = useState('');
-    const [ampNominal, setAmpNominal] = useState('');
-    const [electricResult, setElectricResult] = useState('');
-    const [isLoadingElectric, setIsLoadingElectric] = useState(false);
-    const [isReadingPlate, setIsReadingPlate] = useState(false);
 
     const scrollToBottom = () => {
         setTimeout(() => {
@@ -254,35 +242,6 @@ export const Tool_Assistant: React.FC = () => {
             return `*[${sender}]*: ${m.text.replace(/\*\*/g, '')}`;
         }).join('\n\n');
         window.open(`https://wa.me/?text=${encodeURIComponent(`*DIAGNÓSTICO ORDEMILK*\n\n${historyText}`)}`, '_blank');
-    };
-
-    const handlePlateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        setIsReadingPlate(true);
-        try {
-            const reader = new FileReader();
-            reader.onloadend = async () => {
-                const base64 = (reader.result as string).split(',')[1];
-                const jsonStr = await analyzePlateImage(base64);
-                try {
-                    const data = JSON.parse(jsonStr);
-                    if (data.volts) setVoltR(data.volts.toString());
-                    if (data.amps) setAmpNominal(data.amps.toString());
-                    if (data.phase) setReading(prev => ({ ...prev, phase: data.phase }));
-                } catch (e) { alert("Leitura manual necessária."); }
-            };
-            reader.readAsDataURL(file);
-        } finally { setIsReadingPlate(false); }
-    };
-
-    const analyzeElectric = async () => {
-        setIsLoadingElectric(true);
-        const prompt = `Fase: ${reading.phase}. R=${voltR}, S=${voltS}, T=${voltT}. Corrente: ${ampNow}A (Nom: ${ampNominal}A).`;
-        try {
-            const text = await generateTechResponse(prompt, "ELECTRIC");
-            setElectricResult(text);
-        } finally { setIsLoadingElectric(false); }
     };
 
     return (

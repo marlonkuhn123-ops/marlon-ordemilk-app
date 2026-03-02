@@ -28,15 +28,6 @@ export interface ChatMessage {
     sources?: { title: string; uri: string }[];
 }
 
-export interface ElectricReading {
-    phase: 'tri' | 'bi' | 'mono' | 'mrt';
-    voltsR?: string;
-    voltsS?: string;
-    voltsT?: string;
-    amps?: string;
-    nominal?: string;
-}
-
 export type CalcMode = 'Superaquecimento' | 'Sub-resfriamento';
 
 export enum Refrigerant {

@@ -145,7 +145,7 @@ export const analyzePlateImage = async (imageBase64: string) => {
             model: 'gemini-3-flash-preview',
             contents: [
                 { inlineData: { data: imageBase64, mimeType: 'image/jpeg' } },
-                { text: "Analise esta placa e retorne APENAS JSON: {volts: number, amps: number, phase: 'tri'|'bi'|'mono'}." }
+                { text: "Analise esta placa e retorne APENAS JSON: {volts: number, corrente: number, phase: 'tri'|'bi'|'mono'}." }
             ],
             config: { temperature: 0.1, responseMimeType: "application/json" }
         });
