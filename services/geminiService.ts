@@ -34,9 +34,10 @@ const getElectricalContext = async (userPrompt: string) => {
     ];
     const upper = userPrompt.toUpperCase();
     if (keywords.some(k => upper.includes(k))) {
-        // Carrega a base apenas se necessário (Lazy Loading)
+        // Carrega as bases apenas se necessário (Lazy Loading)
         const { ELECTRICAL_DATABASE } = await import("../data/electrical_data");
-        return `\n\n⚡ [BASE DE DADOS ELÉTRICA ATIVADA]\nUse as informações abaixo para responder dúvidas técnicas sobre ligações e esquemas:\n${ELECTRICAL_DATABASE}\n`;
+        const { SCHEMATICS_DATABASE } = await import("../data/schematics_data");
+        return `\n\n⚡ [BASE DE DADOS ELÉTRICA E ESQUEMAS ATIVADA]\nUse as informações abaixo para responder dúvidas técnicas sobre ligações e esquemas:\n${ELECTRICAL_DATABASE}\n\n${SCHEMATICS_DATABASE}\n`;
     }
     return "";
 };
@@ -79,7 +80,7 @@ export const generateTechResponse = async (
   try {
     const systemInstruction = await getFullSystemInstruction(toolType, userPrompt);
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-flash-preview",
       contents: userPrompt,
       config: {
         systemInstruction,
@@ -117,7 +118,7 @@ export const generateChatResponseStream = async (
         const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText);
 
         const responseStream = await ai.models.generateContentStream({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             contents,
             config: {
                 systemInstruction,
@@ -160,7 +161,7 @@ export const analyzePlateImage = async (imageBase64: string, retries = 2): Promi
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             contents: [
                 { inlineData: { data: imageBase64, mimeType: 'image/jpeg' } },
                 { text: "Analise esta placa e retorne APENAS JSON: {volts: number, corrente: number, phase: 'tri'|'bi'|'mono'}." }

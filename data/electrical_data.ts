@@ -52,36 +52,6 @@ export const ELECTRICAL_DATABASE = `
      * 5/6: Alimentação 220VCA.
    - Capacitor de Partida (CS) e Permanente (CR) integrados no compressor.
 
-6. CIP DE LIMPEZA (2, 3 E 4 COMPRESSORES) - PADRÃO:
-   - CLP: Panasonic FP-X0 L40MR.
-   - Fonte: 24VCC 2,5A.
-   - Lógica de Saídas (Relés de Borne):
-     * RL01: Relé de Nível (Bobina 24VCC_VEM DO CONTATO NA RELÉ NÍVEL).
-     * RL02/03/04: Alarme Compressores 01/02/03 (Bobina 220VCA_VEM DO CONTATO AUXILIAR NC DISJUNTOR MOTOR).
-     * RL05: Alarme Bomba Limpeza (Bobina 220VCA_VEM DO CONTATO AUXILIAR NC DISJUNTOR MOTOR).
-     * RL06: Alarme Agitador (Bobina 220VCA_VEM DO CONTATO AUXILIAR NC DISJUNTOR MOTOR).
-     * RL07: Alarme Falta de Fase (Bobina 220VCA_VEM DO CONTATO NC RELÉ FALTA DE FASE).
-     * RL08: Habilita Limpeza (Bobina 24VCC_VEM SAÍDA Y4 CLP).
-     * RL09: Válvula de Água Fria (Bobina 24VCC_VEM SAÍDA Y5 CLP).
-     * RL10: Válvula de Água Quente (Bobina 24VCC_VEM SAÍDA Y6 CLP).
-     * RL11: Aciona Drenagem (Bobina 24VCC_VEM SAÍDA Y7 CLP).
-     * RL12: Dosadora de Ácido (Bobina 24VCC_VEM SAÍDA Y8 CLP).
-     * RL13: Dosadora de Alcalino (Bobina 24VCC_VEM SAÍDA Y9 CLP).
-     * RL14: Dosadora de Sanitizante (Bobina 24VCC_VEM SAÍDA YA CLP).
-     * RL15/16/17: Aciona Compressores 01/02/03 (Bobina 24VCC_VEM SAÍDA YB/YC/YD CLP).
-     * RL18: Aciona Agitadores (Bobina 24VCC_VEM SAÍDA YE CLP).
-     * RL19: Habilita Modo Manual (Bobina 24VCC_VEM SAÍDA YF CLP).
-
-7. QUADRO DE COMANDO LIMPEZA AUTOMÁTICA 2 COMPRESSORES STANDART COM SINAIS PARA PULMÃO:
-   - CLP: Panasonic FP-X0 L40MR.
-   - Lógica de Saídas (Relés de Borne):
-     * RL18: Sinal para Habilitar Compressor 02 (24Vcc / Bobina 24Vcc_Vem do contato saída CLP YD).
-     * RL21: Sinal que vem do Sensor Registro de Descarregamento do Leite (24Vcc / Bobina 24Vcc_Vem do sinal externo do sensor).
-     * RL22: Sinal que vem do Sensor Registro de Descarregamento do Leite (24Vcc / Bobina 24Vcc_Vem do sinal externo do sensor).
-     * RL23: Sinal de Monitoramento Válvula 07 - Dreno Final Tanque de Limpeza (24Vcc / Bobina 24Vcc_Vem do sinal externo válvula 07).
-     * RL24: Sinal Avisando Coleta do Leite - Descarregamento de Leite (24Vcc / Bobina 24Vcc_Vem do contato saída CLP YC).
-     * RL25: Sinal Avisando que Tanque está em Processo de Limpeza (24Vcc / Bobina 24Vcc_Vem do contato saída CLP Y0).
-
 [PARÂMETROS PADRÃO CONTROLADORES (AGEON/FULL GAUGE)]
 - Cd (Acesso): 28.
 - r0 (Histerese): 1.5K.
@@ -99,5 +69,5 @@ ATENÇÃO: Siga estas regras estritamente ao diagnosticar os componentes abaixo:
   3. Contatora do agitador (bobina ou contatos).
   4. Integridade do motor elétrico (medir resistência/tensão).
 
-- BOMBA DE LIMPEZA (CIP): Se a bomba de limpeza não liga ou não aciona, a causa MAIS PROVÁVEL no sistema Ordemilk é o RELÉ DE NÍVEL (RL1 ou RL01) que não detectou água/solução suficiente, ou falha no próprio sensor de nível. Foque o diagnóstico no circuito do relé de nível antes de condenar a bomba. Outra causa comum é o disjuntor motor da bomba desarmado.
+- BOMBA DE LIMPEZA (CIP): Se a bomba de limpeza não liga ou não aciona, a causa MAIS PROVÁVEL no sistema Ordemilk é o RELÉ DE NÍVEL (RL1) que não detectou água/solução suficiente, ou falha no próprio sensor de nível. Foque o diagnóstico no circuito do relé de nível antes de condenar a bomba.
 `;
