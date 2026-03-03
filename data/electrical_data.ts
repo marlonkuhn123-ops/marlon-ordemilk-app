@@ -59,4 +59,15 @@ export const ELECTRICAL_DATABASE = `
 - d1 (Agitador Desligado): 15 min.
 - d2 (Agitador Ligado): 2 min.
 - u1/u2 (Proteção Tensão): 200V a 240V.
+
+[DIRETRIZES DE DIAGNÓSTICO DE COMPONENTES ESPECÍFICOS ORDEMILK]
+ATENÇÃO: Siga estas regras estritamente ao diagnosticar os componentes abaixo:
+
+- AGITADOR: O diagnóstico do agitador é PURAMENTE ELÉTRICO E DE COMANDO. NUNCA sugira verificações mecânicas (como "girar as pás manualmente"). Se o agitador não liga, foque em:
+  1. Parâmetros do controlador (Verifique os tempos d1 e d2).
+  2. Saída de comando do controlador (Bornes A ou RA/NA).
+  3. Contatora do agitador (bobina ou contatos).
+  4. Integridade do motor elétrico (medir resistência/tensão).
+
+- BOMBA DE LIMPEZA (CIP): Se a bomba de limpeza não liga ou não aciona, a causa MAIS PROVÁVEL no sistema Ordemilk é o RELÉ DE NÍVEL (RL1) que não detectou água/solução suficiente, ou falha no próprio sensor de nível. Foque o diagnóstico no circuito do relé de nível antes de condenar a bomba.
 `;

@@ -24,7 +24,14 @@ const getDynamicBrandContext = (userPrompt: string) => {
 };
 
 const getElectricalContext = async (userPrompt: string) => {
-    const keywords = ["ELÉTRICA", "ESQUEMA", "FIO", "BORNE", "LIGAÇÃO", "DISJUNTOR", "CONTATORA", "CABO", "TENSÃO", "VOLT", "AMPER", "CORRENTE", "TRIFÁSICO", "MONOFÁSICO", "CONTROLADOR", "AGEON", "FULL GAUGE", "CLP", "PANASONIC"];
+    const keywords = [
+        // Termos diretos de elétrica
+        "ELÉTRICA", "ELETRICA", "ESQUEMA", "FIO", "BORNE", "LIGAÇÃO", "LIGACAO", "DISJUNTOR", "CONTATORA", "CABO", "TENSÃO", "TENSAO", "VOLT", "AMPER", "CORRENTE", "TRIFÁSICO", "TRIFASICO", "MONOFÁSICO", "MONOFASICO", "CONTROLADOR", "AGEON", "FULL GAUGE", "CLP", "PANASONIC",
+        // Componentes exclusivos de painel/comando
+        "RELÉ", "RELE", "COMANDO", "PAINEL", "QUADRO", "FUSÍVEL", "FUSIVEL",
+        // Sintomas característicos de falha elétrica/comando
+        "NÃO LIGA", "NAO LIGA", "NÃO PARTE", "NAO PARTE", "NÃO ACIONA", "NAO ACIONA", "DESARMA", "CAINDO", "CURTO", "QUEIMOU"
+    ];
     const upper = userPrompt.toUpperCase();
     if (keywords.some(k => upper.includes(k))) {
         // Carrega a base apenas se necessário (Lazy Loading)
