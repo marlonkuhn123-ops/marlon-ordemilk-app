@@ -63,15 +63,16 @@ const getApiKeyOrThrow = () => {
 
 export const generateTechResponse = async (
   userPrompt: string,
-  toolType: keyof typeof TOOL_PROMPTS | "ASSISTANT"
-) => {
+  toolType: keyof typeof TOOL_PROMPTS | "ASSISTANT",
+  retries = 2
+): Promise<string> => {
   const apiKey = getApiKeyOrThrow();
   const ai = new GoogleGenAI({ apiKey });
 
   try {
     const systemInstruction = await getFullSystemInstruction(toolType, userPrompt);
     const response = await ai.models.generateContent({
-      model: "gemini-3.1-pro-preview",
+      model: "gemini-2.5-flash",
       contents: userPrompt,
       config: {
         systemInstruction,
@@ -81,6 +82,11 @@ export const generateTechResponse = async (
 
     return response.text || "";
   } catch (error: any) {
+    if (retries > 0 && error?.message?.includes("503")) {
+        console.warn(`Erro 503 detectado. Tentando novamente em 2s... (${retries} tentativas restantes)`);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return generateTechResponse(userPrompt, toolType, retries - 1);
+    }
     throw new Error(handleApiError(error));
   }
 };
@@ -88,8 +94,9 @@ export const generateTechResponse = async (
 export const generateChatResponseStream = async (
     history: { role: string; parts: any[] }[],
     onChunk?: (text: string) => void,
-    onFinished?: (text: string, sources?: {title: string, uri: string}[]) => void
-) => {
+    onFinished?: (text: string, sources?: {title: string, uri: string}[]) => void,
+    retries = 2
+): Promise<string> => {
     const apiKey = getApiKeyOrThrow();
     const ai = new GoogleGenAI({ apiKey });
 
@@ -103,7 +110,7 @@ export const generateChatResponseStream = async (
         const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText);
 
         const responseStream = await ai.models.generateContentStream({
-            model: 'gemini-3.1-pro-preview',
+            model: 'gemini-2.5-flash',
             contents,
             config: {
                 systemInstruction,
@@ -131,17 +138,22 @@ export const generateChatResponseStream = async (
         if (onFinished) onFinished(fullText, sources.length > 0 ? sources : undefined);
         return fullText;
     } catch (error: any) {
+        if (retries > 0 && error?.message?.includes("503")) {
+            console.warn(`Erro 503 detectado no stream. Tentando novamente em 2s... (${retries} tentativas restantes)`);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return generateChatResponseStream(history, onChunk, onFinished, retries - 1);
+        }
         throw new Error(handleApiError(error));
     }
 };
 
-export const analyzePlateImage = async (imageBase64: string) => {
+export const analyzePlateImage = async (imageBase64: string, retries = 2): Promise<string> => {
     const apiKey = getApiKeyOrThrow();
     const ai = new GoogleGenAI({ apiKey });
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-2.5-flash',
             contents: [
                 { inlineData: { data: imageBase64, mimeType: 'image/jpeg' } },
                 { text: "Analise esta placa e retorne APENAS JSON: {volts: number, corrente: number, phase: 'tri'|'bi'|'mono'}." }
@@ -153,6 +165,10 @@ export const analyzePlateImage = async (imageBase64: string) => {
         const cleanJson = rawText.replace(/```json|```/g, '').trim();
         return cleanJson;
     } catch (error: any) {
+        if (retries > 0 && error?.message?.includes("503")) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return analyzePlateImage(imageBase64, retries - 1);
+        }
         throw new Error(handleApiError(error));
     }
 };
