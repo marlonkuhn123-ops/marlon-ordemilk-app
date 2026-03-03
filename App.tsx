@@ -66,56 +66,61 @@ const AppContent: React.FC = () => {
     };
 
     if (isCheckingAuth) return null;
-    if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} />;
-
-    const SizingPasswordPrompt = () => {
-        const [pass, setPass] = useState('');
-        const [error, setError] = useState(false);
-
-        return (
-            <div className="flex flex-col items-center justify-center py-10 animate-fadeIn">
-                <div className="bg-[#2a2a2a] p-8 rounded-2xl border border-[#ce1126]/20 shadow-xl w-full max-w-sm">
-                    <div className="flex justify-center mb-6">
-                        <div className="w-16 h-16 bg-[#ce1126]/10 rounded-full flex items-center justify-center">
-                            <i className="fa-solid fa-lock text-[#ce1126] text-2xl"></i>
-                        </div>
-                    </div>
-                    <h2 className="text-center text-lg font-bold mb-2 italic">ACESSO RESTRITO</h2>
-                    <p className="text-center text-[10px] text-gray-400 mb-6 uppercase tracking-[0.3em] font-black">Módulo de Dimensionamento</p>
-                    
-                    <div className="space-y-4">
-                        <input 
-                            type="password" 
-                            value={pass}
-                            onChange={(e) => { setPass(e.target.value); setError(false); }}
-                            placeholder="Digite a senha de acesso"
-                            className={`w-full bg-[#1a1a1a] border ${error ? 'border-[#ce1126]' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ce1126] transition-colors text-center font-mono tracking-widest`}
-                            onKeyDown={(e) => e.key === 'Enter' && !handleSizingUnlock(pass) && setError(true)}
-                        />
-                        {error && <p className="text-[#ce1126] text-[10px] text-center font-bold uppercase tracking-tighter animate-bounce">Senha Incorreta</p>}
-                        <button 
-                            onClick={() => !handleSizingUnlock(pass) && setError(true)}
-                            className="w-full bg-[#ce1126] hover:bg-[#a00e1e] text-white font-bold py-3 rounded-xl transition-all active:scale-95 uppercase text-xs tracking-widest italic"
-                        >
-                            LIBERAR ACESSO
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
 
     const renderView = () => {
         switch (view) {
             case ViewState.DIAGNOSTIC: return <Tool_Assistant />;
             case ViewState.ERRORS: return <Tool_Errors />;
             case ViewState.CALCULATOR: return <Tool_Calculator />;
-            case ViewState.SIZING: return isSizingUnlocked ? <Tool_Sizing /> : <SizingPasswordPrompt />;
+            case ViewState.SIZING: return isSizingUnlocked ? <Tool_Sizing /> : (
+                <div className="flex flex-col items-center justify-center py-10 animate-fadeIn">
+                    <div className="bg-[#2a2a2a] p-8 rounded-2xl border border-[#ce1126]/20 shadow-xl w-full max-w-sm">
+                        <div className="flex justify-center mb-6">
+                            <div className="w-16 h-16 bg-[#ce1126]/10 rounded-full flex items-center justify-center">
+                                <i className="fa-solid fa-lock text-[#ce1126] text-2xl"></i>
+                            </div>
+                        </div>
+                        <h2 className="text-center text-lg font-bold mb-2 italic">ACESSO RESTRITO</h2>
+                        <p className="text-center text-[10px] text-gray-400 mb-6 uppercase tracking-[0.3em] font-black">Módulo de Dimensionamento</p>
+                        
+                        <div className="space-y-4">
+                            <input 
+                                type="password" 
+                                placeholder="Digite a senha de acesso"
+                                className="w-full bg-[#1a1a1a] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#ce1126] transition-colors text-center font-mono tracking-widest"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        const val = (e.target as HTMLInputElement).value;
+                                        if (!handleSizingUnlock(val)) {
+                                            alert('Senha Incorreta');
+                                            (e.target as HTMLInputElement).value = '';
+                                        }
+                                    }
+                                }}
+                            />
+                            <button 
+                                onClick={(e) => {
+                                    const input = (e.currentTarget.previousElementSibling as HTMLInputElement);
+                                    if (!handleSizingUnlock(input.value)) {
+                                        alert('Senha Incorreta');
+                                        input.value = '';
+                                    }
+                                }}
+                                className="w-full bg-[#ce1126] hover:bg-[#a00e1e] text-white font-bold py-3 rounded-xl transition-all active:scale-95 uppercase text-xs tracking-widest italic"
+                            >
+                                LIBERAR ACESSO
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
             case ViewState.REPORT: return <Tool_Report />;
             case ViewState.TECH_DATA: return <Tool_Catalog />;
             default: return <Tool_Assistant />;
         }
     };
+
+    if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} />;
 
     return (
         <div className="flex flex-col h-screen overflow-hidden bg-[#1a1a1a] text-white relative">

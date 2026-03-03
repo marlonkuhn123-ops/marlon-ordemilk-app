@@ -69,7 +69,7 @@ export const generateTechResponse = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-flash-latest",
       contents: userPrompt,
       config: {
         systemInstruction: getFullSystemInstruction(toolType, userPrompt),
@@ -99,7 +99,7 @@ export const generateChatResponseStream = async (
             .join(' ');
 
         const responseStream = await ai.models.generateContentStream({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-flash-latest',
             contents,
             config: {
                 systemInstruction: getFullSystemInstruction("DIAGNOSTIC", fullConversationText),
