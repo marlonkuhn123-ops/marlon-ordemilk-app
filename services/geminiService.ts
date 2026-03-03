@@ -1,7 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_PROMPT_BASE, TOOL_PROMPTS, TECHNICAL_CONTEXT, EXTERNAL_MANUALS } from "../constants";
 import { knowledgeService } from "./knowledgeService";
-import { ELECTRICAL_DATABASE } from "../data/electrical_data";
 
 const handleApiError = (error: any) => {
   console.error("Gemini API Error:", error);
@@ -24,20 +23,22 @@ const getDynamicBrandContext = (userPrompt: string) => {
   return manual;
 };
 
-const getElectricalContext = (userPrompt: string) => {
+const getElectricalContext = async (userPrompt: string) => {
     const keywords = ["ELÉTRICA", "ESQUEMA", "FIO", "BORNE", "LIGAÇÃO", "DISJUNTOR", "CONTATORA", "CABO", "TENSÃO", "VOLT", "AMPER", "CORRENTE", "TRIFÁSICO", "MONOFÁSICO", "CONTROLADOR", "AGEON", "FULL GAUGE", "CLP", "PANASONIC"];
     const upper = userPrompt.toUpperCase();
     if (keywords.some(k => upper.includes(k))) {
+        // Carrega a base apenas se necessário (Lazy Loading)
+        const { ELECTRICAL_DATABASE } = await import("../data/electrical_data");
         return `\n\n⚡ [BASE DE DADOS ELÉTRICA ATIVADA]\nUse as informações abaixo para responder dúvidas técnicas sobre ligações e esquemas:\n${ELECTRICAL_DATABASE}\n`;
     }
     return "";
 };
 
-const getFullSystemInstruction = (toolType: string, userPrompt: string = "") => {
+const getFullSystemInstruction = async (toolType: string, userPrompt: string = "") => {
   const fieldKnowledge = knowledgeService.getKnowledgeContext();
   const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
   const brandManual = getDynamicBrandContext(userPrompt);
-  const electricalContext = getElectricalContext(userPrompt);
+  const electricalContext = await getElectricalContext(userPrompt);
 
   return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n\n${toolPrompt}`;
 };
@@ -68,11 +69,12 @@ export const generateTechResponse = async (
   const ai = new GoogleGenAI({ apiKey });
 
   try {
+    const systemInstruction = await getFullSystemInstruction(toolType, userPrompt);
     const response = await ai.models.generateContent({
       model: "gemini-flash-latest",
       contents: userPrompt,
       config: {
-        systemInstruction: getFullSystemInstruction(toolType, userPrompt),
+        systemInstruction,
         temperature: 0.1,
       },
     });
@@ -98,11 +100,13 @@ export const generateChatResponseStream = async (
             .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
             .join(' ');
 
+        const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText);
+
         const responseStream = await ai.models.generateContentStream({
             model: 'gemini-flash-latest',
             contents,
             config: {
-                systemInstruction: getFullSystemInstruction("DIAGNOSTIC", fullConversationText),
+                systemInstruction,
                 temperature: 0.2,
             }
         });

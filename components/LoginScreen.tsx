@@ -7,13 +7,25 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
+    const [name, setName] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(false);
     const [shake, setShake] = useState(false);
 
     const handleLogin = () => {
-        const input = password.trim();
-        if (input === 'om2026') {
+        const inputPass = password.trim();
+        const inputName = name.trim();
+        
+        if (!inputName) {
+            setError(true);
+            setShake(true);
+            setTimeout(() => setShake(false), 500);
+            return;
+        }
+
+        if (inputPass === 'om2026') {
+            // Salva o nome no localStorage para o contexto global usar
+            localStorage.setItem('ordemilk_tech_data', JSON.stringify({ name: inputName, company: 'Ordemilk' }));
             onLogin(true);
             return;
         }
@@ -54,28 +66,39 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                     <div className="mb-6 text-center">
                         <h2 className="text-white/90 font-bold text-sm uppercase tracking-wide mb-1">Autenticação</h2>
                         <p className="text-[10px] text-gray-500">
-                            Insira a credencial de segurança.
+                            Identifique-se para acessar o sistema.
                         </p>
                     </div>
 
                     <div className="space-y-4">
-                        <div className="relative">
+                        <div className="space-y-2">
+                            <Input 
+                                type="text" 
+                                placeholder="NOME DO TÉCNICO" 
+                                value={name}
+                                onChange={(e) => {
+                                    setName(e.target.value.toUpperCase());
+                                    setError(false);
+                                }}
+                                className={`!bg-[#1a1a1a] text-center tracking-widest font-bold text-xs !py-3 transition-all duration-300 ${error && !name ? '!border-red-600' : 'focus:!border-[#1abc9c]'}`}
+                            />
+                            
                             <Input 
                                 type="password" 
-                                placeholder="SENHA" 
+                                placeholder="SENHA DE ACESSO" 
                                 value={password}
                                 onChange={(e) => {
                                     setPassword(e.target.value);
                                     setError(false);
                                 }}
                                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                                className={`!bg-[#1a1a1a] text-center tracking-widest font-mono text-lg !py-4 transition-all duration-300 ${error ? '!border-red-600 !text-red-500 placeholder-red-900/50' : 'focus:!border-[#1abc9c]'}`}
+                                className={`!bg-[#1a1a1a] text-center tracking-widest font-mono text-lg !py-4 transition-all duration-300 ${error && password ? '!border-red-600 !text-red-500 placeholder-red-900/50' : 'focus:!border-[#1abc9c]'}`}
                             />
                         </div>
 
                         {error && (
                             <p className="text-center text-[10px] font-bold text-red-500 uppercase tracking-wider animate-fadeIn">
-                                <i className="fa-solid fa-xmark mr-1"></i> Negado
+                                <i className="fa-solid fa-xmark mr-1"></i> {!name ? 'Informe seu nome' : 'Senha Negada'}
                             </p>
                         )}
 

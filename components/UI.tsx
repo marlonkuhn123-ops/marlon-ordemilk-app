@@ -118,13 +118,6 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const shareWhatsapp = () => {
-        if (!content) return;
-        const text = `*ORDEMILK Tech Assist*\n\n*${title}*\n\n${content}`;
-        const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-        window.open(url, '_blank');
-    };
-
     if (isLoading) {
         return (
             <div className="mt-6 p-4 rounded-lg text-center border animate-pulse bg-[#2a2a2a] border-[#3d3d3d]">
@@ -186,15 +179,26 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
             <div className="p-3 sm:p-4 text-[11px] sm:text-xs leading-relaxed text-gray-300 break-words">
                 {formattedContent}
             </div>
+        </div>
+    );
+};
 
-            {/* RODAPÉ */}
-            <div className="p-2 sm:p-3 border-t border-[#3d3d3d] bg-[#242424]">
-                 <button 
-                    onClick={shareWhatsapp}
-                    className="w-full py-2.5 sm:py-3 rounded-lg font-bold text-[9px] sm:text-[10px] uppercase tracking-widest bg-[#1abc9c] text-white shadow-lg hover:bg-[#16a085] hover:scale-[0.99] transition-all flex items-center justify-center gap-2"
-                >
-                    <i className="fa-brands fa-whatsapp text-xs sm:text-sm"></i> Compartilhar
-                </button>
+// --- WATERMARK SECURITY ---
+export const Watermark: React.FC<{ text: string }> = ({ text }) => {
+    if (!text) return null;
+    return (
+        <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden opacity-[0.04] select-none">
+            <div className="absolute inset-0 flex flex-wrap gap-x-32 gap-y-24 p-10 justify-center items-center rotate-[-25deg] scale-125">
+                {Array.from({ length: 80 }).map((_, i) => (
+                    <div key={i} className="flex flex-col items-center">
+                        <span className="text-white font-black text-xl whitespace-nowrap uppercase tracking-[0.4em]">
+                            {text} • {new Date().toLocaleDateString('pt-BR')}
+                        </span>
+                        <span className="text-white font-bold text-[8px] whitespace-nowrap uppercase tracking-[0.8em] mt-1">
+                            ORDEMILK TECH • PROPRIEDADE PRIVADA
+                        </span>
+                    </div>
+                ))}
             </div>
         </div>
     );

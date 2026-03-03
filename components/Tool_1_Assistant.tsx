@@ -235,15 +235,6 @@ export const Tool_Assistant: React.FC = () => {
         setIsStarted(true);
     };
 
-    const shareChatWhatsapp = () => {
-        if (messages.length === 0) return;
-        const historyText = messages.map(m => {
-            const sender = m.role === 'user' ? 'TÉCNICO' : 'SUPORTE ORDEMILK';
-            return `*[${sender}]*: ${m.text.replace(/\*\*/g, '')}`;
-        }).join('\n\n');
-        window.open(`https://wa.me/?text=${encodeURIComponent(`*DIAGNÓSTICO ORDEMILK*\n\n${historyText}`)}`, '_blank');
-    };
-
     return (
         <div className="animate-fadeIn pb-24">
             <SectionTitle icon="fa-solid fa-headset" title="1. SUPORTE DIRETO" />
@@ -294,10 +285,6 @@ export const Tool_Assistant: React.FC = () => {
                     
                     <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1abc9c] text-white flex items-center justify-center shrink-0">
                         <i className="fa-solid fa-paper-plane text-xs sm:text-base"></i>
-                    </button>
-                    
-                    <button onClick={shareChatWhatsapp} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#25D366] text-white flex items-center justify-center shrink-0">
-                        <i className="fa-brands fa-whatsapp text-xs sm:text-base"></i>
                     </button>
                 </div>
             </Card>
