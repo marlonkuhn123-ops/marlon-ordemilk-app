@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_PROMPT_BASE, TOOL_PROMPTS, TECHNICAL_CONTEXT, EXTERNAL_MANUALS } from "../constants";
 import { knowledgeService } from "./knowledgeService";
+import { ELECTRICAL_DATABASE } from "../data/electrical_data";
 
 const handleApiError = (error: any) => {
   console.error("Gemini API Error:", error);
@@ -23,12 +24,22 @@ const getDynamicBrandContext = (userPrompt: string) => {
   return manual;
 };
 
+const getElectricalContext = (userPrompt: string) => {
+    const keywords = ["ELÉTRICA", "ESQUEMA", "FIO", "BORNE", "LIGAÇÃO", "DISJUNTOR", "CONTATORA", "CABO", "TENSÃO", "VOLT", "AMPER", "CORRENTE", "TRIFÁSICO", "MONOFÁSICO", "CONTROLADOR", "AGEON", "FULL GAUGE", "CLP", "PANASONIC"];
+    const upper = userPrompt.toUpperCase();
+    if (keywords.some(k => upper.includes(k))) {
+        return `\n\n⚡ [BASE DE DADOS ELÉTRICA ATIVADA]\nUse as informações abaixo para responder dúvidas técnicas sobre ligações e esquemas:\n${ELECTRICAL_DATABASE}\n`;
+    }
+    return "";
+};
+
 const getFullSystemInstruction = (toolType: string, userPrompt: string = "") => {
   const fieldKnowledge = knowledgeService.getKnowledgeContext();
   const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
   const brandManual = getDynamicBrandContext(userPrompt);
+  const electricalContext = getElectricalContext(userPrompt);
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n\n${fieldKnowledge}\n\n${toolPrompt}`;
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n\n${toolPrompt}`;
 };
 
 const getApiKeyOrThrow = () => {
