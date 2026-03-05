@@ -94,6 +94,16 @@ export const Tool_Assistant: React.FC = () => {
     const [input, setInput] = useState('');
     const [mode, setMode] = useState<'AUTO' | 'REF' | 'ELEC'>('AUTO');
     
+    useEffect(() => {
+        if (mode === 'AUTO') return;
+        const modeNames = { 'REF': 'Refrigeração', 'ELEC': 'Elétrica' };
+        setMessages(prev => [...prev, {
+            id: crypto.randomUUID(),
+            role: 'model',
+            text: `🔧 Modo de análise alterado para: ${modeNames[mode]}. Foco total em ${mode === 'REF' ? 'ciclo frigorífico e mecânica' : 'comandos elétricos e esquemas'}.`
+        }]);
+    }, [mode]);
+    
     // Estado unificado para múltiplos arquivos (Imagem ou Audio) com ID para chaves únicas
     const [selectedFiles, setSelectedFiles] = useState<{id: string, data: string, mime: string, type: 'image' | 'audio'}[]>([]);
     

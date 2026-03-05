@@ -42,13 +42,20 @@ const getElectricalContext = async (userPrompt: string) => {
     return "";
 };
 
-const getFullSystemInstruction = async (toolType: string, userPrompt: string = "") => {
+const getFullSystemInstruction = async (toolType: string, userPrompt: string = "", mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO') => {
   const fieldKnowledge = knowledgeService.getKnowledgeContext();
   const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
   const brandManual = getDynamicBrandContext(userPrompt);
   const electricalContext = await getElectricalContext(userPrompt);
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n\n${toolPrompt}`;
+  let modeInstruction = "";
+  if (mode === 'ELEC') {
+      modeInstruction = "\n\n🚨 [MODO FOCO EM ELÉTRICA ATIVADO]\nIgnore detalhes do ciclo de refrigeração. Foque 100% em esquemas elétricos, bornes, CLP e componentes de comando. Use a base de dados de esquemas imediatamente.";
+  } else if (mode === 'REF') {
+      modeInstruction = "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO ATIVADO]\nIgnore detalhes de comando elétrico/CLP. Foque 100% no ciclo frigorífico, pressões, fluido, troca de calor e mecânica do compressor.";
+  }
+
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n\n${toolPrompt}\n${modeInstruction}`;
 };
 
 const getApiKeyOrThrow = () => {
@@ -116,14 +123,7 @@ export const generateChatResponseStream = async (
             .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
             .join(' ');
 
-        let systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText);
-
-        // Ajuste de instrução baseado no modo selecionado
-        if (mode === 'ELEC') {
-            systemInstruction += "\n\n🚨 [MODO FOCO EM ELÉTRICA ATIVADO]\nIgnore detalhes do ciclo de refrigeração. Foque 100% em esquemas elétricos, bornes, CLP e componentes de comando. Use a base de dados de esquemas imediatamente.";
-        } else if (mode === 'REF') {
-            systemInstruction += "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO ATIVADO]\nIgnore detalhes de comando elétrico/CLP. Foque 100% no ciclo frigorífico, pressões, fluido, troca de calor e mecânica do compressor.";
-        }
+        let systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode);
 
         const responseStream = await ai.models.generateContentStream({
             model: 'gemini-3-flash-preview',
