@@ -147,7 +147,7 @@ const AppContent: React.FC = () => {
                 style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '30px 30px' }}></div>
             <div className="relative flex flex-col h-full z-10">
                 <Header isOnline={isOnline} onStartTutorial={() => setIsTutorialActive(true)} />
-                <main className="flex-1 overflow-y-auto px-4 pt-4 scroll-smooth max-w-2xl mx-auto w-full no-scrollbar">
+                <main className="flex-1 overflow-y-auto px-4 pt-4 scroll-smooth mx-auto w-full no-scrollbar">
                     <Suspense fallback={<ToolLoader />}>
                         {renderView()}
                     </Suspense>

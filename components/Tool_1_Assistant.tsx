@@ -277,12 +277,12 @@ export const Tool_Assistant: React.FC = () => {
                     </div>
                 )}
 
-                <div className="flex flex-col gap-3 mt-auto pt-3 sm:pt-4 border-t border-white/5 px-2 sm:px-4 pb-2 sm:pb-4">
+                <div className="flex flex-col gap-1.5 mt-auto pt-2 sm:pt-3 border-t border-white/5 px-2 sm:px-4 pb-2 sm:pb-3">
                     {/* BARRA DE MODOS DE DIAGNÓSTICO (AGORA EM CIMA) */}
                     <div className="flex justify-between gap-1 sm:gap-2">
                         <button 
                             onClick={() => setMode('AUTO')}
-                            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 rounded-xl transition-all border text-[8px] sm:text-[10px] font-bold uppercase tracking-tight font-heading ${
+                            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 rounded-lg transition-all border text-[8px] sm:text-[10px] font-bold uppercase tracking-tight font-heading ${
                                 mode === 'AUTO' 
                                 ? 'bg-[#1e293b] border-[#3b82f6] text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]' 
                                 : 'bg-[#0f172a] border-white/5 text-gray-400'
@@ -293,7 +293,7 @@ export const Tool_Assistant: React.FC = () => {
                         </button>
                         <button 
                             onClick={() => setMode('REF')}
-                            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 rounded-xl transition-all border text-[8px] sm:text-[10px] font-bold uppercase tracking-tight font-heading ${
+                            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 rounded-lg transition-all border text-[8px] sm:text-[10px] font-bold uppercase tracking-tight font-heading ${
                                 mode === 'REF' 
                                 ? 'bg-[#2563eb] border-[#3b82f6] text-white shadow-[0_0_15px_rgba(37,99,235,0.6)]' 
                                 : 'bg-[#0f172a] border-white/5 text-gray-400'
@@ -304,7 +304,7 @@ export const Tool_Assistant: React.FC = () => {
                         </button>
                         <button 
                             onClick={() => setMode('ELEC')}
-                            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 rounded-xl transition-all border text-[8px] sm:text-[10px] font-bold uppercase tracking-tight font-heading ${
+                            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 rounded-lg transition-all border text-[8px] sm:text-[10px] font-bold uppercase tracking-tight font-heading ${
                                 mode === 'ELEC' 
                                 ? 'bg-[#1e293b] border-[#fdba74] text-white shadow-[0_0_10px_rgba(253,186,116,0.5)]' 
                                 : 'bg-[#0f172a] border-white/5 text-gray-400'
@@ -316,12 +316,12 @@ export const Tool_Assistant: React.FC = () => {
                     </div>
 
                     <div className="flex gap-1.5 sm:gap-2 items-center">
-                        <button onClick={resetMessages} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0f172a] border border-white/10 text-white/80 hover:text-white transition-colors flex items-center justify-center shadow-lg shrink-0">
-                            <i className="fa-solid fa-trash text-sm sm:text-lg"></i>
+                        <button onClick={resetMessages} className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#0f172a] border border-white/10 text-white/80 hover:text-white transition-colors flex items-center justify-center shadow-lg shrink-0">
+                            <i className="fa-solid fa-trash text-xs sm:text-sm"></i>
                         </button>
                         
-                        <button onClick={() => fileInputRef.current?.click()} className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0f172a] border border-white/10 transition-colors flex items-center justify-center shadow-lg shrink-0 ${selectedFiles.length > 0 ? 'text-[#f97316] border-[#f97316]' : 'text-white/80 hover:text-white'}`}>
-                            <i className="fa-solid fa-paperclip text-sm sm:text-lg"></i>
+                        <button onClick={() => fileInputRef.current?.click()} className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#0f172a] border border-white/10 transition-colors flex items-center justify-center shadow-lg shrink-0 ${selectedFiles.length > 0 ? 'text-[#f97316] border-[#f97316]' : 'text-white/80 hover:text-white'}`}>
+                            <i className="fa-solid fa-paperclip text-xs sm:text-sm"></i>
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
                         </button>
                         
@@ -331,13 +331,13 @@ export const Tool_Assistant: React.FC = () => {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                                className="w-full h-10 sm:h-12 rounded-xl px-3 sm:px-4 text-[11px] sm:text-sm bg-[#0f172a] border border-white/10 text-white focus:border-white/30 outline-none shadow-inner"
+                                className="w-full h-9 sm:h-10 rounded-lg px-3 sm:px-4 text-[11px] sm:text-sm bg-[#0f172a] border border-white/10 text-white focus:border-white/30 outline-none shadow-inner"
                                 placeholder="Digite sua mensagem..."
                             />
                         </div>
                         
-                        <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#f97316] text-white flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 transition-all shrink-0">
-                            <i className="fa-solid fa-paper-plane text-sm sm:text-lg"></i>
+                        <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-[#f97316] text-white flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 transition-all shrink-0">
+                            <i className="fa-solid fa-paper-plane text-xs sm:text-sm"></i>
                         </button>
                     </div>
                 </div>
