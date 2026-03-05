@@ -48,27 +48,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 
                 <div className="flex flex-col items-center mb-10 select-none">
                     <div className="relative mb-4">
-                        <div className="w-20 h-20 rounded-2xl bg-[#242424] border border-[#3d3d3d] flex items-center justify-center shadow-[0_0_30px_rgba(189,195,199,0.15)] transform rotate-3">
-                            <i className="fa-solid fa-shield-halved text-4xl text-[#bdc3c7]"></i>
+                        <div className="w-16 h-16 rounded-2xl bg-[#242424] border border-[#3d3d3d] flex items-center justify-center shadow-[0_0_30px_rgba(189,195,199,0.15)] transform rotate-3">
+                            <i className="fa-solid fa-shield-halved text-3xl text-[#bdc3c7]"></i>
                         </div>
+                    </div>
+                    <div className="bg-white px-4 py-2 rounded-lg mb-4 shadow-lg">
+                        <span className="font-inter font-black italic text-2xl tracking-tighter text-black">ORDEMILK</span>
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <div className="bg-white px-4 py-2 rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.1)] mb-4 transform -rotate-1">
-                            <svg viewBox="0 0 400 80" className="h-10 sm:h-14 w-auto" xmlns="http://www.w3.org/2000/svg">
-                                {/* Top Black Line */}
-                                <polygon points="25,10 390,10 385,20 20,20" fill="#1a1a1a" />
-                                
-                                {/* ORDEMILK Text */}
-                                <g transform="skewX(-15)">
-                                    <text x="45" y="65" fontFamily="Arial Black, Impact, sans-serif" fontWeight="900" fontSize="55" fill="#1a1a1a" letterSpacing="-2">ORDE</text>
-                                    <text x="210" y="65" fontFamily="Arial Black, Impact, sans-serif" fontWeight="900" fontSize="55" fill="#b91c1c" letterSpacing="-2">MILK</text>
-                                </g>
-                                
-                                {/* Bottom Red Line */}
-                                <polygon points="10,75 185,75 195,35 180,35 172,65 5,65" fill="#b91c1c" />
-                            </svg>
-                        </div>
                         <h1 className="flex items-baseline gap-2 mb-1">
                             <span className="font-inter font-black italic text-2xl tracking-tighter leading-none text-[#ce1126]">TECH V51</span>
                         </h1>
