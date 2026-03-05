@@ -162,7 +162,7 @@ export const Tool_Report: React.FC = () => {
     };
 
     return (
-        <div className="animate-fadeIn pb-24">
+        <div className="animate-fadeIn">
             <SectionTitle icon="fa-solid fa-file-signature" title="5. SERVIÇOS TÉCNICOS" />
 
             {/* --- SELETOR DE MODO --- */}

@@ -71,16 +71,16 @@ export const Tool_Sizing: React.FC = () => {
     };
 
     return (
-        <div className="animate-fadeIn pb-24">
+        <div className="animate-fadeIn">
             <SectionTitle icon="fa-solid fa-ruler-combined" title="4. DIMENSIONAMENTO" />
             
             {/* SWITCH DE MODO */}
-            <div className="flex bg-[#252525] p-1 rounded-lg mb-4 border border-[#404040] gap-1">
+            <div className="flex bg-[#0f172a] p-1 rounded-xl mb-4 border border-white/5 gap-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
                 <button 
                     onClick={() => { setInputMode('ordenha'); setInputRaw(''); setVolumeOrdenha(''); setResult(''); }}
-                    className={`flex-1 py-2.5 rounded-md text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-all leading-tight ${
+                    className={`flex-1 py-2.5 rounded-lg text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-all leading-tight font-heading ${
                         inputMode === 'ordenha' 
-                        ? 'bg-[#1abc9c] text-white shadow-md' 
+                        ? 'bg-[#f97316] text-white shadow-md' 
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
                 >
@@ -88,9 +88,9 @@ export const Tool_Sizing: React.FC = () => {
                 </button>
                 <button 
                     onClick={() => { setInputMode('tanque'); setInputRaw(''); setVolumeOrdenha(''); setResult(''); }}
-                    className={`flex-1 py-2.5 rounded-md text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-all leading-tight ${
+                    className={`flex-1 py-2.5 rounded-lg text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-all leading-tight font-heading ${
                         inputMode === 'tanque' 
-                        ? 'bg-[#1abc9c] text-white shadow-md' 
+                        ? 'bg-[#f97316] text-white shadow-md' 
                         : 'text-gray-500 hover:text-gray-300'
                     }`}
                 >
@@ -102,7 +102,7 @@ export const Tool_Sizing: React.FC = () => {
                 <div className="mb-4">
                     <Input 
                         label={inputMode === 'ordenha' ? "Litros na Ordenha (Carga Real)" : "Capacidade Total do Tanque"}
-                        placeholder={inputMode === 'ordenha' ? "Ex: 1000 Litros" : "Ex: 4000 Litros"}
+                        placeholder={inputMode === 'ordenha' ? "Ex: 5000 L" : "Ex: 10000 L"}
                         type="number" 
                         value={inputRaw} 
                         onChange={e => handleInputChange(e.target.value)} 
@@ -110,19 +110,19 @@ export const Tool_Sizing: React.FC = () => {
                     />
                     
                     {volumeOrdenha && inputMode === 'tanque' && (
-                        <div className="text-right text-[9px] sm:text-[10px] text-[#1abc9c] font-bold -mt-2 mb-2 px-1">
+                        <div className="text-right text-[9px] sm:text-[10px] text-[#f97316] font-bold -mt-2 mb-2 px-1 font-heading">
                             Considerando 2 ordenhas/dia: {volumeOrdenha} L/ordenha
                         </div>
                     )}
                 </div>
 
                 {/* VISUALIZAÇÃO DOS PARÂMETROS DE PROJETO (FIXOS) */}
-                <div className="mb-4 p-3 rounded-lg border flex flex-col gap-2 bg-[#1a1a1a] border-[#333]">
-                    <div className="flex items-center gap-2 border-b border-[#333] pb-2">
-                        <i className="fa-solid fa-temperature-low text-[#1abc9c] text-xs"></i>
-                        <span className="text-[9px] sm:text-[10px] font-bold text-gray-300 uppercase">Parâmetros de Projeto (Danfoss)</span>
+                <div className="mb-4 p-3 rounded-xl border flex flex-col gap-2 bg-[#0f172a] border-white/5">
+                    <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                        <i className="fa-solid fa-temperature-low text-[#f97316] text-xs"></i>
+                        <span className="text-[9px] sm:text-[10px] font-bold text-gray-300 uppercase font-heading">Parâmetros de Projeto (Danfoss)</span>
                     </div>
-                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1.5 text-[9px] sm:text-[10px] text-gray-400">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1.5 text-[9px] sm:text-[10px] text-gray-400 font-sans">
                         <div className="flex justify-between xs:block">Evaporação (SST): <span className="text-white font-bold">-10°C</span></div>
                         <div className="flex justify-between xs:block">Condensação (SDT): <span className="text-white font-bold">40°C</span></div>
                         <div className="flex justify-between xs:block">Delta T (Leite): <span className="text-white font-bold">31°C</span></div>

@@ -20,16 +20,16 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = ({ 
                      {parts.map((part, j) => {
                         if (part === undefined) return null;
                         if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={j} className={isUser ? "text-white font-bold" : "text-[#1abc9c] font-bold"}>{part.slice(2, -2)}</strong>;
+                            return <strong key={j} className={isUser ? "text-white font-bold" : "text-[#f97316] font-bold"}>{part.slice(2, -2)}</strong>;
                         }
                         if (part.startsWith('⚠️')) {
                             return <span key={j} className="text-red-400 font-bold">{part}</span>;
                         }
                         if (part.startsWith('🔧')) {
-                            return <span key={j} className="text-[#bdc3c7] font-bold">{part}</span>;
+                            return <span key={j} className="text-[#fdba74] font-bold">{part}</span>;
                         }
                         if (part.startsWith('✅')) {
-                            return <span key={j} className="text-emerald-400 font-bold">{part}</span>;
+                            return <span key={j} className="text-[#3b82f6] font-bold">{part}</span>;
                         }
                         return part;
                     })}
@@ -40,10 +40,10 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = ({ 
 
     return (
         <div className={`flex flex-col max-w-[95%] mb-3 animate-slide-up ${isUser ? 'self-end items-end' : 'self-start items-start'}`}>
-            <span className={`text-[8px] font-black uppercase mb-1 px-1 tracking-widest ${isUser ? 'text-gray-500' : 'text-[#1abc9c]'}`}>
+            <span className={`text-[8px] font-bold uppercase mb-1 px-1 tracking-widest font-heading ${isUser ? 'text-gray-500' : 'text-[#f97316]'}`}>
                 {isUser ? 'TÉCNICO' : 'SUPORTE ORDEMILK'}
             </span>
-            <div className={`p-4 rounded-xl text-sm leading-relaxed shadow-lg ${isUser ? 'bg-[#16a085] text-white rounded-tr-sm' : 'bg-[#1a1a1a] text-gray-100 border border-[#333] rounded-tl-sm shadow-black/60'} ${isError ? 'bg-red-900/80 border-red-500 text-red-100' : ''}`}>
+            <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-lg font-sans ${isUser ? 'bg-[#334155] text-white rounded-tr-sm' : 'bg-[#1e293b] text-slate-100 border border-white/5 rounded-tl-sm shadow-black/40'} ${isError ? 'bg-red-500/20 border-red-500 text-red-100' : ''}`}>
                 {msg.files && msg.files.length > 0 && (
                     <div className="grid grid-cols-2 gap-2 mb-3">
                         {msg.files.map((file, index) => (
@@ -88,10 +88,11 @@ export const Tool_Assistant: React.FC = () => {
         {
             id: 'welcome',
             role: 'model',
-            text: 'Olá! Sou o Assistente Técnico Ordemilk. Como posso ajudar você hoje? Descreva o problema ou envie fotos/áudios para análise.'
+            text: 'Olá sou seu assistente OM, no que posso ajudar hj?'
         }
     ]);
     const [input, setInput] = useState('');
+    const [mode, setMode] = useState<'AUTO' | 'REF' | 'ELEC'>('AUTO');
     
     // Estado unificado para múltiplos arquivos (Imagem ou Audio) com ID para chaves únicas
     const [selectedFiles, setSelectedFiles] = useState<{id: string, data: string, mime: string, type: 'image' | 'audio'}[]>([]);
@@ -205,7 +206,8 @@ export const Tool_Assistant: React.FC = () => {
                             msg.id === modelMessageId ? { ...msg, text: finalText, sources, isStreaming: false } : msg
                         )
                     );
-                }
+                },
+                mode
             );
 
         } catch (error: any) {
@@ -227,20 +229,21 @@ export const Tool_Assistant: React.FC = () => {
             {
                 id: 'welcome',
                 role: 'model',
-                text: 'Olá! Sou o Assistente Técnico Ordemilk. Como posso ajudar você hoje? Descreva o problema ou envie fotos/áudios para análise.'
+                text: 'Olá sou seu assistente OM, no que posso ajudar hj?'
             }
         ]);
         setInput('');
+        setMode('AUTO');
         setSelectedFiles([]);
         setIsStarted(true);
     };
 
     return (
-        <div className="animate-fadeIn pb-24">
+        <div className="animate-fadeIn">
             <SectionTitle icon="fa-solid fa-headset" title="1. SUPORTE DIRETO" />
             
-            <Card className="min-h-[65vh] flex flex-col border-t-4 border-t-[#1abc9c] !bg-[#121212]">
-                <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1 max-h-[500px] flex flex-col">
+            <Card className="min-h-[65vh] flex flex-col border-t-4 border-t-[#f97316] !bg-[#1e293b] !p-2 sm:!p-4">
+                <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1 flex flex-col p-2 sm:p-4">
                     {messages.map((m, i) => <ChatBubble key={m.id || i} msg={m} onImageLoad={scrollToBottom} />)}
                     {isLoadingChat && <div className="p-4 bg-[#1a1a1a] rounded-xl w-16 h-8 animate-pulse self-start">...</div>}
                     <div ref={bottomRef} />
@@ -264,28 +267,69 @@ export const Tool_Assistant: React.FC = () => {
                     </div>
                 )}
 
-                <div className="flex gap-1.5 sm:gap-2 mt-auto pt-3 sm:pt-4 border-t border-[#333]">
-                    <button onClick={resetMessages} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1a1a1a] border border-[#333] hover:text-red-500 shrink-0 flex items-center justify-center">
-                        <i className="fa-solid fa-trash text-xs sm:text-base"></i>
-                    </button>
-                    
-                    <button onClick={() => fileInputRef.current?.click()} className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1a1a1a] border border-[#333] transition-colors shrink-0 flex items-center justify-center ${selectedFiles.length > 0 ? 'text-[#1abc9c] border-[#1abc9c]' : 'text-gray-500 hover:text-[#1abc9c]'}`}>
-                        <i className="fa-solid fa-paperclip text-xs sm:text-base"></i>
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
-                    </button>
-                    
-                    <input 
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                        className="flex-1 min-w-0 rounded-xl px-3 sm:px-4 text-xs sm:text-sm bg-[#0a0a0a] border border-[#333] text-white focus:border-[#1abc9c] outline-none"
-                        placeholder="Digite sua mensagem..."
-                    />
-                    
-                    <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#1abc9c] text-white flex items-center justify-center shrink-0">
-                        <i className="fa-solid fa-paper-plane text-xs sm:text-base"></i>
-                    </button>
+                <div className="flex flex-col gap-3 mt-auto pt-3 sm:pt-4 border-t border-white/5 px-2 sm:px-4 pb-2 sm:pb-4">
+                    <div className="flex gap-1.5 sm:gap-2 items-center">
+                        <button onClick={resetMessages} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0f172a] border border-white/10 text-white/80 hover:text-white transition-colors flex items-center justify-center shadow-lg shrink-0">
+                            <i className="fa-solid fa-trash text-sm sm:text-lg"></i>
+                        </button>
+                        
+                        <button onClick={() => fileInputRef.current?.click()} className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0f172a] border border-white/10 transition-colors flex items-center justify-center shadow-lg shrink-0 ${selectedFiles.length > 0 ? 'text-[#f97316] border-[#f97316]' : 'text-white/80 hover:text-white'}`}>
+                            <i className="fa-solid fa-paperclip text-sm sm:text-lg"></i>
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
+                        </button>
+                        
+                        <div className="flex-1 relative">
+                            <input 
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                                className="w-full h-10 sm:h-12 rounded-xl px-3 sm:px-4 text-[11px] sm:text-sm bg-[#0f172a] border border-white/10 text-white focus:border-white/30 outline-none shadow-inner"
+                                placeholder="Digite sua mensagem..."
+                            />
+                        </div>
+                        
+                        <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#f97316] text-white flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 transition-all shrink-0">
+                            <i className="fa-solid fa-paper-plane text-sm sm:text-lg"></i>
+                        </button>
+                    </div>
+
+                    {/* BARRA DE MODOS DE DIAGNÓSTICO (ABAIXO) */}
+                    <div className="flex justify-between gap-1 sm:gap-2">
+                        <button 
+                            onClick={() => setMode('AUTO')}
+                            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 rounded-xl transition-all border text-[8px] sm:text-[10px] font-bold uppercase tracking-tight font-heading ${
+                                mode === 'AUTO' 
+                                ? 'bg-[#1e293b] border-[#3b82f6] text-white shadow-[0_0_10px_rgba(59,130,246,0.5)]' 
+                                : 'bg-[#0f172a] border-white/5 text-gray-400'
+                            }`}
+                        >
+                            <i className="fa-solid fa-robot text-[10px] sm:text-xs"></i>
+                            <span className="truncate">Auto (IA)</span>
+                        </button>
+                        <button 
+                            onClick={() => setMode('REF')}
+                            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 rounded-xl transition-all border text-[8px] sm:text-[10px] font-bold uppercase tracking-tight font-heading ${
+                                mode === 'REF' 
+                                ? 'bg-[#2563eb] border-[#3b82f6] text-white shadow-[0_0_15px_rgba(37,99,235,0.6)]' 
+                                : 'bg-[#0f172a] border-white/5 text-gray-400'
+                            }`}
+                        >
+                            <i className="fa-solid fa-snowflake text-[10px] sm:text-xs"></i>
+                            <span className="truncate">Refrigeração</span>
+                        </button>
+                        <button 
+                            onClick={() => setMode('ELEC')}
+                            className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-2 sm:py-2.5 rounded-xl transition-all border text-[8px] sm:text-[10px] font-bold uppercase tracking-tight font-heading ${
+                                mode === 'ELEC' 
+                                ? 'bg-[#1e293b] border-[#fdba74] text-white shadow-[0_0_10px_rgba(253,186,116,0.5)]' 
+                                : 'bg-[#0f172a] border-white/5 text-gray-400'
+                            }`}
+                        >
+                            <i className="fa-solid fa-bolt text-[10px] sm:text-xs"></i>
+                            <span className="truncate">Elétrica</span>
+                        </button>
+                    </div>
                 </div>
             </Card>
         </div>

@@ -49,7 +49,7 @@ export const Tool_Catalog: React.FC = () => {
     };
 
     return (
-        <div className="animate-fadeIn pb-24">
+        <div className="animate-fadeIn">
             <SectionTitle icon="fa-solid fa-boxes-stacked" title="6. DADOS TÉCNICOS (BOM)" />
             
             <Card className="mb-6">

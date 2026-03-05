@@ -122,7 +122,7 @@ export const TutorialOverlay: React.FC<Props> = ({ isActive, onClose, setView })
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/90 backdrop-blur-sm animate-fadeIn">
             <div className="relative w-full max-w-md rounded-2xl overflow-hidden shadow-2xl border bg-[#1e1e1e] border-[#444]">
                 {/* Header do Card */}
-                <div className="bg-gradient-to-r from-orange-600 to-red-700 p-4 flex items-center gap-3">
+                <div className="bg-gradient-to-r from-orange-600 to-orange-800 p-4 flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white text-lg shadow-inner border border-white/30">
                         <i className={currentStep.icon}></i>
                     </div>

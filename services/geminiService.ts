@@ -103,6 +103,7 @@ export const generateChatResponseStream = async (
     history: { role: string; parts: any[] }[],
     onChunk?: (text: string) => void,
     onFinished?: (text: string, sources?: {title: string, uri: string}[]) => void,
+    mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO',
     retries = 2
 ): Promise<string> => {
     const apiKey = getApiKeyOrThrow();
@@ -115,7 +116,14 @@ export const generateChatResponseStream = async (
             .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
             .join(' ');
 
-        const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText);
+        let systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText);
+
+        // Ajuste de instrução baseado no modo selecionado
+        if (mode === 'ELEC') {
+            systemInstruction += "\n\n🚨 [MODO FOCO EM ELÉTRICA ATIVADO]\nIgnore detalhes do ciclo de refrigeração. Foque 100% em esquemas elétricos, bornes, CLP e componentes de comando. Use a base de dados de esquemas imediatamente.";
+        } else if (mode === 'REF') {
+            systemInstruction += "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO ATIVADO]\nIgnore detalhes de comando elétrico/CLP. Foque 100% no ciclo frigorífico, pressões, fluido, troca de calor e mecânica do compressor.";
+        }
 
         const responseStream = await ai.models.generateContentStream({
             model: 'gemini-3-flash-preview',
@@ -149,7 +157,7 @@ export const generateChatResponseStream = async (
         if (retries > 0 && error?.message?.includes("503")) {
             console.warn(`Erro 503 detectado no stream. Tentando novamente em 2s... (${retries} tentativas restantes)`);
             await new Promise(resolve => setTimeout(resolve, 2000));
-            return generateChatResponseStream(history, onChunk, onFinished, retries - 1);
+            return generateChatResponseStream(history, onChunk, onFinished, mode, retries - 1);
         }
         throw new Error(handleApiError(error));
     }
