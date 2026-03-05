@@ -268,33 +268,7 @@ export const Tool_Assistant: React.FC = () => {
                 )}
 
                 <div className="flex flex-col gap-3 mt-auto pt-3 sm:pt-4 border-t border-white/5 px-2 sm:px-4 pb-2 sm:pb-4">
-                    <div className="flex gap-1.5 sm:gap-2 items-center">
-                        <button onClick={resetMessages} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0f172a] border border-white/10 text-white/80 hover:text-white transition-colors flex items-center justify-center shadow-lg shrink-0">
-                            <i className="fa-solid fa-trash text-sm sm:text-lg"></i>
-                        </button>
-                        
-                        <button onClick={() => fileInputRef.current?.click()} className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0f172a] border border-white/10 transition-colors flex items-center justify-center shadow-lg shrink-0 ${selectedFiles.length > 0 ? 'text-[#f97316] border-[#f97316]' : 'text-white/80 hover:text-white'}`}>
-                            <i className="fa-solid fa-paperclip text-sm sm:text-lg"></i>
-                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
-                        </button>
-                        
-                        <div className="flex-1 relative">
-                            <input 
-                                type="text"
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                                className="w-full h-10 sm:h-12 rounded-xl px-3 sm:px-4 text-[11px] sm:text-sm bg-[#0f172a] border border-white/10 text-white focus:border-white/30 outline-none shadow-inner"
-                                placeholder="Digite sua mensagem..."
-                            />
-                        </div>
-                        
-                        <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#f97316] text-white flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 transition-all shrink-0">
-                            <i className="fa-solid fa-paper-plane text-sm sm:text-lg"></i>
-                        </button>
-                    </div>
-
-                    {/* BARRA DE MODOS DE DIAGNÓSTICO (ABAIXO) */}
+                    {/* BARRA DE MODOS DE DIAGNÓSTICO (AGORA EM CIMA) */}
                     <div className="flex justify-between gap-1 sm:gap-2">
                         <button 
                             onClick={() => setMode('AUTO')}
@@ -328,6 +302,32 @@ export const Tool_Assistant: React.FC = () => {
                         >
                             <i className="fa-solid fa-bolt text-[10px] sm:text-xs"></i>
                             <span className="truncate">Elétrica</span>
+                        </button>
+                    </div>
+
+                    <div className="flex gap-1.5 sm:gap-2 items-center">
+                        <button onClick={resetMessages} className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0f172a] border border-white/10 text-white/80 hover:text-white transition-colors flex items-center justify-center shadow-lg shrink-0">
+                            <i className="fa-solid fa-trash text-sm sm:text-lg"></i>
+                        </button>
+                        
+                        <button onClick={() => fileInputRef.current?.click()} className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#0f172a] border border-white/10 transition-colors flex items-center justify-center shadow-lg shrink-0 ${selectedFiles.length > 0 ? 'text-[#f97316] border-[#f97316]' : 'text-white/80 hover:text-white'}`}>
+                            <i className="fa-solid fa-paperclip text-sm sm:text-lg"></i>
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
+                        </button>
+                        
+                        <div className="flex-1 relative">
+                            <input 
+                                type="text"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                                className="w-full h-10 sm:h-12 rounded-xl px-3 sm:px-4 text-[11px] sm:text-sm bg-[#0f172a] border border-white/10 text-white focus:border-white/30 outline-none shadow-inner"
+                                placeholder="Digite sua mensagem..."
+                            />
+                        </div>
+                        
+                        <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#f97316] text-white flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.4)] active:scale-95 transition-all shrink-0">
+                            <i className="fa-solid fa-paper-plane text-sm sm:text-lg"></i>
                         </button>
                     </div>
                 </div>
