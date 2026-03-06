@@ -269,7 +269,7 @@ export const Tool_Assistant: React.FC = () => {
                         {/* AUTO (IA) - Botão Sólido Ciano */}
                         <button 
                             onClick={() => setMode('AUTO')}
-                            className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-full transition-all text-[8px] font-bold uppercase tracking-wider font-heading z-10 ${
+                            className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-full transition-all text-[9px] font-bold uppercase tracking-wider font-heading z-10 ${
                                 mode === 'AUTO' 
                                 ? 'bg-[#00E5FF] text-[#050912] shadow-[0_0_15px_rgba(0,229,255,0.5)]' 
                                 : 'text-[#E8EAF6]/70 hover:text-[#E8EAF6]'
@@ -284,7 +284,7 @@ export const Tool_Assistant: React.FC = () => {
                         {/* REFRIGERAÇÃO - Texto com Ícone */}
                         <button 
                             onClick={() => setMode('REF')}
-                            className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-full transition-all text-[8px] font-bold uppercase tracking-wider font-heading z-10 ${
+                            className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-full transition-all text-[9px] font-bold uppercase tracking-wider font-heading z-10 ${
                                 mode === 'REF' 
                                 ? 'text-[#00E5FF] drop-shadow-[0_0_5px_rgba(0,229,255,0.8)]' 
                                 : 'text-[#E8EAF6]/70 hover:text-[#E8EAF6]'
@@ -299,7 +299,7 @@ export const Tool_Assistant: React.FC = () => {
                         {/* ELÉTRICA - Texto com Ícone */}
                         <button 
                             onClick={() => setMode('ELEC')}
-                            className={`flex items-center justify-center gap-1 px-2 py-1.5 rounded-full transition-all text-[8px] font-bold uppercase tracking-wider font-heading z-10 ${
+                            className={`flex items-center justify-center gap-1 px-3 py-1.5 rounded-full transition-all text-[9px] font-bold uppercase tracking-wider font-heading z-10 ${
                                 mode === 'ELEC' 
                                 ? 'text-[#FF8F00] drop-shadow-[0_0_5px_rgba(255,143,0,0.8)]' 
                                 : 'text-[#E8EAF6]/70 hover:text-[#E8EAF6]'
@@ -311,12 +311,12 @@ export const Tool_Assistant: React.FC = () => {
                     </div>
 
                     <div className="flex gap-2 items-center px-1 pb-1">
-                        <button onClick={resetMessages} className="w-7 h-7 rounded-full bg-[#122837] border border-white/5 text-[#E8EAF6]/40 hover:text-white transition-all flex items-center justify-center hover:bg-red-500/20 hover:border-red-500/30">
-                            <i className="fa-solid fa-trash-can text-[10px]"></i>
+                        <button onClick={resetMessages} className="w-8 h-8 rounded-full bg-[#122837] border border-white/5 text-[#E8EAF6]/40 hover:text-white transition-all flex items-center justify-center hover:bg-red-500/20 hover:border-red-500/30">
+                            <i className="fa-solid fa-trash-can text-[11px]"></i>
                         </button>
                         
-                        <button onClick={() => fileInputRef.current?.click()} className={`w-7 h-7 rounded-full bg-[#122837] border border-white/5 transition-all flex items-center justify-center ${selectedFiles.length > 0 ? 'text-[#00E5FF] border-[#00E5FF]/50 bg-[#00E5FF]/10' : 'text-[#E8EAF6]/40 hover:text-white'}`}>
-                            <i className="fa-solid fa-paperclip text-[10px]"></i>
+                        <button onClick={() => fileInputRef.current?.click()} className={`w-8 h-8 rounded-full bg-[#122837] border border-white/5 transition-all flex items-center justify-center ${selectedFiles.length > 0 ? 'text-[#00E5FF] border-[#00E5FF]/50 bg-[#00E5FF]/10' : 'text-[#E8EAF6]/40 hover:text-white'}`}>
+                            <i className="fa-solid fa-paperclip text-[11px]"></i>
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
                         </button>
                         
@@ -326,13 +326,13 @@ export const Tool_Assistant: React.FC = () => {
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                                className="w-full h-7 rounded-full px-3 text-[11px] bg-[#050912]/50 border border-white/5 text-[#E8EAF6] focus:border-[#00E5FF]/30 outline-none transition-all placeholder:text-[#E8EAF6]/50"
+                                className="w-full h-8 rounded-full px-3 text-xs bg-[#050912]/50 border border-white/5 text-[#E8EAF6] focus:border-[#00E5FF]/30 outline-none transition-all placeholder:text-[#E8EAF6]/50"
                                 placeholder="Digite sua mensagem..."
                             />
                         </div>
                         
-                        <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-7 h-7 rounded-full bg-[#FF8F00] text-white flex items-center justify-center shadow-[0_4px_15px_rgba(255,143,0,0.4)] active:scale-95 transition-all hover:brightness-110">
-                            <i className="fa-solid fa-paper-plane text-[10px]"></i>
+                        <button onClick={() => sendMessage()} disabled={isLoadingChat} className="w-8 h-8 rounded-full bg-[#FF8F00] text-white flex items-center justify-center shadow-[0_4px_15px_rgba(255,143,0,0.4)] active:scale-95 transition-all hover:brightness-110">
+                            <i className="fa-solid fa-paper-plane text-[11px]"></i>
                         </button>
                     </div>
                 </div>
