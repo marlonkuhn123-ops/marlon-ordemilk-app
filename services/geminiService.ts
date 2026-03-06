@@ -2,6 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_PROMPT_BASE, TOOL_PROMPTS, TECHNICAL_CONTEXT, EXTERNAL_MANUALS } from "../constants";
 import { knowledgeService } from "./knowledgeService";
 import { FAQ_DATABASE } from "../data/faq_data";
+import { KNOWLEDGE_BASE } from "../data/knowledge_base";
 
 const handleApiError = (error: any) => {
   console.error("Gemini API Error:", error);
@@ -51,14 +52,25 @@ const getFullSystemInstruction = async (toolType: string, userPrompt: string = "
 
   let modeInstruction = "";
   if (mode === 'ELEC') {
-      modeInstruction = "\n\n🚨 [MODO FOCO EM ELÉTRICA ATIVADO]\nIgnore detalhes do ciclo de refrigeração. Foque 100% em esquemas elétricos, bornes, CLP e componentes de comando. Use a base de dados de esquemas imediatamente.";
+      modeInstruction = "\n\n🚨 [MODO FOCO EM ELÉTRICA ATIVADO]\nIgnore detalhes do ciclo de refrigeração. Foque 100% em esquemas elétricos, bornes, CLP e componentes de comando. Use a base de dados de esquemas, a seção de [SUPORTE TÉCNICO: PERGUNTAS E RESPOSTAS ELÉTRICAS] e a seção de [DIAGNÓSTICO RÁPIDO: O QUE PODE SER?] imediatamente para responder dúvidas sobre componentes, funções do painel e falhas de funcionamento.";
   } else if (mode === 'REF') {
       modeInstruction = "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO ATIVADO]\nIgnore detalhes de comando elétrico/CLP. Foque 100% no ciclo frigorífico, pressões, fluido, troca de calor e mecânica do compressor.";
   }
 
   const faqContext = `\n\n[PACOTE DE CONHECIMENTO DE REFERÊNCIA]\nO conteúdo abaixo são casos frequentes e diagnósticos recomendados pela Ordemilk. Use-os como base de conhecimento e inspiração para suas análises, mas sinta-se livre para adaptar o diagnóstico conforme a situação específica relatada pelo técnico. Não trate como regras rígidas, mas como um guia de experiência acumulada.\n${FAQ_DATABASE}`;
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n\n${toolPrompt}\n${modeInstruction}`;
+  const structuredKnowledge = `\n\n[BASE DE CONHECIMENTO TÉCNICO ESTRUTURADA EM 4 CAMADAS]\n${KNOWLEDGE_BASE}`;
+
+  const diagnosticGuidance = `
+[DIRETRIZES DE RACIOCÍNIO TÉCNICO]
+1. NÃO CONCLUA SEM CONFIRMAR: Se o sintoma for genérico, peça contexto antes de afirmar a causa (ex: "A IHM acende?", "Qual o modelo do painel?").
+2. ESTRUTURA DE DIAGNÓSTICO: Sempre que possível, estruture sua resposta com: Sintoma, Causa Provável, Causas Possíveis, Ordem de Verificação e Segurança.
+3. NÍVEIS DE RESPOSTA: Adapte o tom para o usuário. Se for técnico, use nomes de componentes (DM3, K4, Y5). Se for operador, use termos mais simples.
+4. SEGURANÇA PRIMEIRO: Sempre inclua avisos de segurança antes de sugerir testes em painéis energizados.
+5. CAUSA RAIZ: Lembre-se que falhas elétricas muitas vezes são causadas por problemas mecânicos/frigoríficos.
+`;
+
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}`;
 };
 
 const getApiKeyOrThrow = () => {
