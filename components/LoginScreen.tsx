@@ -23,7 +23,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             return;
         }
 
-        if (inputPass === 'marlonk') {
+        if (inputPass === 'om2026') {
             // Salva o nome no localStorage para o contexto global usar
             localStorage.setItem('ordemilk_tech_data', JSON.stringify({ name: inputName, company: 'Ordemilk' }));
             onLogin(true);
