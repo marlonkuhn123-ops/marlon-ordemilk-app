@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 export const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => {
     return (
         <div className={`relative rounded-2xl p-4 sm:p-5 shadow-2xl transition-all duration-300 animate-slide-up 
-            bg-[#1e293b] border border-white/5 shadow-black/40 ${className}`}>
+            bg-[#111827] border border-white/5 shadow-black/40 ${className}`}>
             {children}
         </div>
     );
@@ -14,8 +14,8 @@ export const Card: React.FC<{ children: React.ReactNode; className?: string }> =
 // --- TÍTULO DA SEÇÃO ---
 export const SectionTitle: React.FC<{ icon: string; title: string }> = ({ icon, title }) => {
     return (
-        <h2 className="text-[10px] font-bold mb-1 flex items-center gap-2 uppercase tracking-[0.2em] text-white/90 select-none font-heading">
-            <span className="flex items-center justify-center w-6 h-6 rounded bg-[#334155] text-[#fdba74] border border-white/10 shadow-sm">
+        <h2 className="text-[12px] sm:text-[14px] font-semibold mb-2 flex items-center gap-2 uppercase tracking-[0.1em] text-[#E8EAF6] select-none font-heading">
+            <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-[#122837] text-[#E8EAF6] border border-white/5 shadow-sm">
                 <i className={`${icon} text-xs`}></i>
             </span>
             {title}
@@ -29,10 +29,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const BUTTON_VARIANTS = {
-    primary: "bg-[#f97316] text-white border-transparent hover:bg-[#ea580c] shadow-[0_0_15px_rgba(249,115,22,0.3)] active:scale-[0.98]",
-    secondary: "bg-[#334155] text-white border-white/5 hover:bg-[#475569] hover:border-[#f97316]/50 active:bg-[#1e293b]",
+    primary: "bg-[#FF8F00] text-white border-transparent hover:bg-[#E67E00] shadow-[0_0_15px_rgba(255,143,0,0.3)] active:scale-[0.98]",
+    secondary: "bg-[#122837] text-[#E8EAF6] border-white/5 hover:bg-[#1a3a4f] hover:border-[#00E5FF]/50 active:bg-[#050912]",
     danger: "bg-red-500/20 text-red-200 border-red-500/50 hover:bg-red-500/30",
-    success: "bg-[#3b82f6] text-white border-[#2563eb] hover:bg-[#2563eb] shadow-[0_0_10px_rgba(59,130,246,0.3)]"
+    success: "bg-[#00E5FF] text-[#050912] border-[#00E5FF] hover:bg-[#00B8CC] shadow-[0_0_10px_rgba(0,229,255,0.3)]"
 };
 
 export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', className = '', ...props }) => {
@@ -50,13 +50,13 @@ export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', c
 export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label?: string }> = ({ label, className = '', ...props }) => {
     return (
         <div className="mb-3 sm:mb-4 w-full group">
-            {label && <label className="block text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1 sm:mb-1.5 ml-1 transition-colors text-white/60 group-focus-within:text-[#f97316] font-heading">
+            {label && <label className="block text-[10px] sm:text-[11px] font-medium uppercase tracking-wider mb-1 sm:mb-1.5 ml-1 transition-colors text-[#E8EAF6]/60 group-focus-within:text-[#00E5FF] font-heading">
                 {label}
             </label>}
             <input 
-                className={`w-full p-3 sm:p-3.5 rounded-xl text-xs sm:text-sm font-medium outline-none transition-colors duration-300 border 
-                bg-[#0f172a] border-[#334155] text-white placeholder-gray-500 
-                focus:border-[#f97316] focus:bg-[#1e293b] ${className}`}
+                className={`w-full p-3 sm:p-3.5 rounded-xl text-xs sm:text-sm font-light outline-none transition-colors duration-300 border 
+                bg-[#050912] border-[#122837] text-[#E8EAF6] placeholder-[#E8EAF6]/30 
+                focus:border-[#00E5FF] focus:bg-[#111827] ${className}`}
                 {...props}
             />
         </div>
@@ -67,19 +67,19 @@ export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { lab
 export const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }> = ({ label, children, className = '', ...props }) => {
     return (
         <div className="mb-3 sm:mb-4 w-full group">
-            {label && <label className="block text-[9px] sm:text-[10px] font-bold uppercase tracking-wider mb-1 sm:mb-1.5 ml-1 transition-colors text-white/60 group-focus-within:text-[#f97316] font-heading">
+            {label && <label className="block text-[10px] sm:text-[11px] font-medium uppercase tracking-wider mb-1 sm:mb-1.5 ml-1 transition-colors text-[#E8EAF6]/60 group-focus-within:text-[#00E5FF] font-heading">
                 {label}
             </label>}
             <div className="relative">
                 <select 
                     className={`w-full p-3 sm:p-3.5 rounded-xl text-xs sm:text-sm font-medium outline-none transition-colors duration-300 appearance-none border cursor-pointer 
-                    bg-[#0f172a] border-[#334155] text-white 
-                    focus:border-[#f97316] focus:bg-[#1e293b] ${className}`}
+                    bg-[#050912] border-[#122837] text-[#E8EAF6] 
+                    focus:border-[#00E5FF] focus:bg-[#111827] ${className}`}
                     {...props}
                 >
                     {children}
                 </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#E8EAF6]/50">
                     <i className="fa-solid fa-chevron-down text-[10px] sm:text-xs"></i>
                 </div>
             </div>
@@ -91,15 +91,15 @@ export const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { 
 export const FileUpload: React.FC<{ onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; label: string; icon?: string }> = ({ onChange, label, icon = "fa-camera" }) => {
     return (
         <label className="group relative flex items-center justify-center gap-3 w-full py-3 px-4 rounded-xl border cursor-pointer transition-all duration-300 mb-4 overflow-hidden active:scale-[0.98]
-            bg-[#0f172a] border-[#334155] hover:border-[#f97316]/50 hover:bg-[#1e293b]">
+            bg-[#050912] border-[#122837] hover:border-[#00E5FF]/50 hover:bg-[#111827]">
             
-            <div className="absolute left-0 top-0 bottom-0 w-[3px] transition-colors duration-300 bg-[#334155] group-hover:bg-[#f97316]"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-[3px] transition-colors duration-300 bg-[#122837] group-hover:bg-[#00E5FF]"></div>
 
-            <div className="flex items-center justify-center transition-colors duration-300 text-white/60 group-hover:text-[#f97316]">
+            <div className="flex items-center justify-center transition-colors duration-300 text-[#E8EAF6]/60 group-hover:text-[#00E5FF]">
                 <i className={`fa-solid ${icon} text-sm`}></i>
             </div>
             
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-300 text-white group-hover:text-white font-heading">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-300 text-[#E8EAF6] group-hover:text-white font-heading">
                 {label}
             </span>
             
@@ -120,10 +120,10 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
 
     if (isLoading) {
         return (
-            <div className="mt-6 p-4 rounded-xl text-center border animate-pulse bg-[#1e293b] border-[#334155]">
+            <div className="mt-6 p-4 rounded-xl text-center border animate-pulse bg-[#111827] border-[#122837]">
                 <div className="flex flex-row items-center justify-center gap-3">
-                    <div className="w-4 h-4 rounded-full animate-spin border-2 border-t-transparent border-[#f97316]"></div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-white/60 font-heading">Sincronizando...</p>
+                    <div className="w-4 h-4 rounded-full animate-spin border-2 border-t-transparent border-[#00E5FF]"></div>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-[#E8EAF6]/60 font-heading">Sincronizando...</p>
                 </div>
             </div>
         );
@@ -139,16 +139,16 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
                 {parts.map((part, j) => {
                     if (part === undefined) return null;
                     if (part.startsWith('**') && part.endsWith('**')) {
-                        return <strong key={j} className="text-[#f97316] font-bold">{part.slice(2, -2)}</strong>;
+                        return <strong key={j} className="text-[#00E5FF] font-bold">{part.slice(2, -2)}</strong>;
                     }
                     if (part.startsWith('⚠️')) {
                         return <span key={j} className="text-red-400 font-bold">{part}</span>;
                     }
                     if (part.startsWith('🔧')) {
-                        return <span key={j} className="text-[#fdba74] font-bold">{part}</span>;
+                        return <span key={j} className="text-[#FF8F00] font-bold">{part}</span>;
                     }
                     if (part.startsWith('✅')) {
-                        return <span key={j} className="text-[#3b82f6] font-bold">{part}</span>;
+                        return <span key={j} className="text-[#00E5FF] font-bold">{part}</span>;
                     }
                     return part;
                 })}
@@ -157,17 +157,17 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
     });
 
     return (
-        <div className="mt-4 sm:mt-6 rounded-xl overflow-hidden shadow-xl animate-slide-up border bg-[#1e293b] border-[#334155] shadow-black/30">
+        <div className="mt-4 sm:mt-6 rounded-xl overflow-hidden shadow-xl animate-slide-up border bg-[#111827] border-[#122837] shadow-black/30">
             {/* CABEÇALHO */}
-            <div className="px-3 sm:px-4 py-2 sm:py-2.5 flex justify-between items-center border-b bg-[#0f172a]/50 border-[#334155]">
+            <div className="px-3 sm:px-4 py-2 sm:py-2.5 flex justify-between items-center border-b bg-[#050912]/50 border-[#122837]">
                 <div className="flex items-center gap-2">
-                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full animate-pulse bg-[#3b82f6]"></div>
-                    <h3 className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[#3b82f6] truncate max-w-[120px] sm:max-w-[150px] font-heading">{title}</h3>
+                    <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full animate-pulse bg-[#00E5FF]"></div>
+                    <h3 className="text-[8px] sm:text-[9px] font-black uppercase tracking-widest text-[#00E5FF] truncate max-w-[120px] sm:max-w-[150px] font-heading">{title}</h3>
                 </div>
                 <button 
                     onClick={handleCopy}
                     className={`text-[8px] sm:text-[9px] uppercase font-bold tracking-wider transition-colors flex items-center gap-1 sm:gap-1.5 font-heading ${
-                        copied ? 'text-[#3b82f6]' : 'text-white/60 hover:text-[#3b82f6]'
+                        copied ? 'text-[#00E5FF]' : 'text-[#E8EAF6]/60 hover:text-[#00E5FF]'
                     }`}
                 >
                     <i className={`fa-regular ${copied ? 'fa-circle-check' : 'fa-copy'}`}></i> 
@@ -176,7 +176,7 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
             </div>
             
             {/* CONTEÚDO */}
-            <div className="p-3 sm:p-4 text-[11px] sm:text-xs leading-relaxed text-slate-300 break-words font-sans">
+            <div className="p-3 sm:p-4 text-[11px] sm:text-xs leading-relaxed text-[#E8EAF6] break-words font-sans">
                 {formattedContent}
             </div>
         </div>

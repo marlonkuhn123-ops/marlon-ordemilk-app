@@ -15,42 +15,34 @@ export const Header: React.FC<{ isOnline: boolean; onStartTutorial: () => void }
     };
 
     return (
-        <div className="pt-safe pb-2 px-3 sm:px-6 sticky top-0 z-30 transition-colors duration-500 backdrop-blur-md border-b bg-[#0f172a]/90 border-white/5">
-            <div className="flex justify-between items-center max-w-2xl mx-auto pt-2">
+        <div className="pt-safe pb-2 px-4 sticky top-0 z-30 transition-colors duration-500 backdrop-blur-md border-b bg-[#050912]/90 border-white/5">
+            <div className="relative flex items-center justify-between max-w-2xl mx-auto pt-3 min-h-[50px]">
                 
-                {/* Logo Section */}
-                <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="flex items-center justify-center w-7 h-7 sm:w-10 sm:h-10 rounded-xl shadow-lg transform -rotate-3 transition-all duration-500 bg-[#1e293b] border border-white/10 shadow-black/40 shrink-0 text-[#f97316]">
-                        <i className="fa-solid fa-wrench text-xs sm:text-lg"></i>
-                    </div>
+                {/* Left Icons: Menu and Settings - REMOVED */}
+                <div className="flex items-center gap-4 text-[#E8EAF6]/60 opacity-0 pointer-events-none">
+                    <button className="hover:text-white transition-colors">
+                        <i className="fa-solid fa-bars text-lg"></i>
+                    </button>
+                    <button className="hover:text-white transition-colors">
+                        <i className="fa-solid fa-gear text-lg"></i>
+                    </button>
+                </div>
 
-                    <div className="flex flex-col select-none">
-                        <div className="self-end w-[78%] h-[2px] sm:h-[3px] mb-[-1px] sm:mb-[-2px] z-10 rounded-sm transition-colors duration-500 bg-white"></div>
-                        <h1 className="flex items-baseline gap-1 z-0 transform translate-y-[1px] font-heading">
-                            <span className="font-bold italic text-[16px] sm:text-[24px] tracking-tighter leading-none text-white">OM</span>
-                            <span className="font-bold italic text-[11px] sm:text-[17px] tracking-tighter leading-none text-[#ce1126]">RESFRIADORES</span>
-                        </h1>
-                        <div className="self-start w-[24%] h-[2px] sm:h-[3px] mt-[-1px] sm:mt-[-2px] bg-[#ce1126] z-10 rounded-sm"></div>
-                    </div>
+                {/* Logo Text - Centered */}
+                <div className="absolute left-1/2 -translate-x-1/2 flex flex-col select-none items-center">
+                    <h1 className="flex items-baseline gap-1 font-heading">
+                        <span className="font-bold italic text-[20px] tracking-tighter leading-none text-[#E8EAF6]">OM</span>
+                        <span className="font-bold italic text-[14px] tracking-tighter leading-none text-[#ce1126]">RESFRIADORES</span>
+                    </h1>
                 </div>
                 
-                {/* Actions Section */}
-                <div className="flex items-center gap-2 sm:gap-3">
-                    <button onClick={onStartTutorial} className="w-7 h-7 rounded-full flex items-center justify-center transition-all border bg-[#1e293b] text-[#fdba74] border-white/10 hover:bg-[#334155] shrink-0">
-                        <i className="fa-solid fa-circle-question text-xs"></i>
+                {/* Right Icons: Help and Status */}
+                <div className="flex items-center gap-4">
+                    <button onClick={onStartTutorial} className="w-6 h-6 rounded-full border border-[#E8EAF6]/20 flex items-center justify-center text-[#E8EAF6]/60 hover:text-white hover:bg-white/10 transition-all">
+                        <i className="fa-solid fa-question text-[10px]"></i>
                     </button>
 
-                    <button 
-                        onClick={handleCheckIntegrity}
-                        className={`px-1.5 py-0.5 rounded-lg flex items-center gap-1 border cursor-pointer active:scale-95 transition-all shrink-0 ${
-                            isOnline 
-                                ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' 
-                                : 'border-red-500/20 bg-red-500/10 text-red-400'
-                        }`}
-                    >
-                        <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                        <span className="text-[8px] font-bold tracking-wider font-heading text-white/80 uppercase hidden xs:inline-block">V51.4</span>
-                    </button>
+                    <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.8)]' : 'bg-red-500'}`}></div>
                 </div>
             </div>
         </div>
@@ -73,17 +65,17 @@ const NavItem: React.FC<NavItemProps> = ({ id, icon, label, isActive, onClick })
         >
             <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center transition-all duration-500 relative ${
                 isActive 
-                ? 'bg-[#1e293b] text-[#f97316] shadow-[0_0_15px_rgba(249,115,22,0.4)] border border-[#f97316]/50' 
-                : 'bg-[#0f172a] text-white/90 border border-white/5 hover:border-white/20'
+                ? 'bg-transparent border-[1.5px] border-[#FF8F00] text-[#FF8F00] shadow-[0_0_15px_rgba(255,143,0,0.3)]' 
+                : 'bg-transparent text-[#E8EAF6]/40 hover:text-[#E8EAF6]'
             }`}>
-                {/* Neon Ring for Active */}
+                {/* Active Inner Circle */}
                 {isActive && (
-                    <div className="absolute inset-[-1px] rounded-full border border-[#f97316] opacity-40 animate-pulse"></div>
+                    <div className="absolute inset-1 rounded-full bg-[#FF8F00]/20"></div>
                 )}
-                <i className={`${icon} text-sm sm:text-base transition-transform duration-300 group-active:scale-90`}></i>
+                <i className={`${icon} text-lg transition-transform duration-300 ${isActive ? 'scale-100' : 'group-hover:scale-105'}`}></i>
             </div>
-            <span className={`text-[6px] sm:text-[8px] font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] text-center leading-none transition-all duration-300 font-heading ${
-                isActive ? 'text-[#f97316] opacity-100' : 'text-white/30 group-hover:text-white/60'
+            <span className={`text-[9px] font-bold uppercase tracking-widest text-center leading-none transition-all duration-300 font-heading ${
+                isActive ? 'text-[#FF8F00] opacity-100' : 'text-[#E8EAF6]/30 group-hover:text-[#E8EAF6]/60'
             }`}>
                 {label}
             </span>
@@ -93,14 +85,14 @@ const NavItem: React.FC<NavItemProps> = ({ id, icon, label, isActive, onClick })
 
 export const BottomNav: React.FC<{ activeView: ViewState; setView: (view: ViewState) => void }> = ({ activeView, setView }) => {
     return (
-        <nav className="z-20 pb-safe pt-3 px-2 sm:px-4 bg-[#0a0f1d] border-t border-white/5 w-full shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
+        <nav className="z-20 pb-safe pt-3 px-2 sm:px-4 bg-[#050912] border-t border-white/5 w-full shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
             <div className="flex justify-between items-center max-w-2xl mx-auto gap-0.5">
-                <NavItem id={ViewState.DIAGNOSTIC} icon="fa-solid fa-headset" label="Suporte" isActive={activeView === ViewState.DIAGNOSTIC} onClick={setView} />
-                <NavItem id={ViewState.ERRORS} icon="fa-solid fa-triangle-exclamation" label="Erros" isActive={activeView === ViewState.ERRORS} onClick={setView} />
-                <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="Superaq." isActive={activeView === ViewState.CALCULATOR} onClick={setView} />
-                <NavItem id={ViewState.SIZING} icon="fa-solid fa-ruler-combined" label="Dimens." isActive={activeView === ViewState.SIZING} onClick={setView} />
-                <NavItem id={ViewState.REPORT} icon="fa-solid fa-file-signature" label="Serviços" isActive={activeView === ViewState.REPORT} onClick={setView} />
-                <NavItem id={ViewState.TECH_DATA} icon="fa-solid fa-boxes-stacked" label="Dados" isActive={activeView === ViewState.TECH_DATA} onClick={setView} />
+                <NavItem id={ViewState.DIAGNOSTIC} icon="fa-solid fa-headset" label="SUPORTE" isActive={activeView === ViewState.DIAGNOSTIC} onClick={setView} />
+                <NavItem id={ViewState.ERRORS} icon="fa-solid fa-triangle-exclamation" label="ERROS" isActive={activeView === ViewState.ERRORS} onClick={setView} />
+                <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="SUPERAQ." isActive={activeView === ViewState.CALCULATOR} onClick={setView} />
+                <NavItem id={ViewState.SIZING} icon="fa-solid fa-ruler-combined" label="DIMENS." isActive={activeView === ViewState.SIZING} onClick={setView} />
+                <NavItem id={ViewState.REPORT} icon="fa-solid fa-file-signature" label="SERVIÇOS" isActive={activeView === ViewState.REPORT} onClick={setView} />
+                <NavItem id={ViewState.TECH_DATA} icon="fa-solid fa-boxes-stacked" label="DADOS" isActive={activeView === ViewState.TECH_DATA} onClick={setView} />
             </div>
         </nav>
     );
