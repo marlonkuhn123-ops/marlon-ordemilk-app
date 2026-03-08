@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Header, BottomNav } from './components/Estrutura';
 import { TutorialOverlay } from './components/TutorialOverlay';
 import { LoginScreen } from './components/LoginScreen';
@@ -175,10 +176,17 @@ const AppContent: React.FC = () => {
     );
 };
 
-const App: React.FC = () => (
-    <GlobalProvider>
-        <AppContent />
-    </GlobalProvider>
-);
+const App: React.FC = () => {
+    const isProductionEnv = typeof window !== 'undefined' && 
+        !window.location.hostname.includes('localhost') && 
+        !window.location.hostname.includes('run.app');
+    
+    return (
+        <GlobalProvider>
+            <AppContent />
+            {isProductionEnv && <Analytics />}
+        </GlobalProvider>
+    );
+};
 
 export default App;

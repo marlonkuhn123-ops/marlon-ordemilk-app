@@ -66,7 +66,7 @@ export const Tool_Catalog: React.FC = () => {
                 </div>
 
                 <Button onClick={fetchData} disabled={loading}>
-                    <i className="fa-solid fa-microchip mr-2"></i> CONSULTAR FICHA TÉCNICA
+                    CONSULTAR FICHA TÉCNICA
                 </Button>
                 
                 <AIOutputBox content={result} isLoading={loading} title={`FICHA TÉCNICA: ${selectedModel}`} />
