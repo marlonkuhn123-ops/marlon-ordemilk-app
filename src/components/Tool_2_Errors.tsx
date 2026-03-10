@@ -1,0 +1,44 @@
+import React, { useState } from 'react';
+import { Card, SectionTitle, Button, Input, AIOutputBox } from './UI';
+import { generateTechResponse } from '../services/geminiService';
+
+// --- FERRAMENTA 2: DECODIFICADOR DE ERROS ---
+export const Tool_Errors: React.FC = () => {
+    const [model, setModel] = useState('');
+    const [code, setCode] = useState('');
+    const [result, setResult] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const run = async () => {
+        if (!code) return;
+        setLoading(true);
+        try {
+            // Prompt Robótico
+            const prompt = `
+            COMANDO: BUSCAR CÓDIGO DE ERRO.
+            CONTROLADOR: ${model || 'Genérico'}.
+            CÓDIGO: ${code}.
+            
+            INSTRUÇÃO: Retorne APENAS o significado técnico e a solução direta.
+            SEM BOM DIA. SEM TEXTO DE APOIO. APENAS O DADO TÉCNICO.
+            `;
+            const text = await generateTechResponse(prompt, "ERRORS");
+            setResult(text);
+        } catch (e: any) { 
+            setResult(`ERRO NA ANÁLISE: ${e.message || "Falha ao decodificar erro."}`); 
+        }
+        setLoading(false);
+    };
+
+    return (
+        <div className="animate-fadeIn">
+            <SectionTitle icon="fa-solid fa-triangle-exclamation" title="2. ERROS DO CONTROLADOR" />
+            <Card>
+                <Input label="Modelo do Controlador" placeholder="Ex: Full Gauge, TC-900..." value={model} onChange={e => setModel(e.target.value)} />
+                <Input label="Código no Visor" placeholder="Ex: E1, AH..." value={code} onChange={e => setCode(e.target.value)} />
+                <Button onClick={run} disabled={loading}>ANALISAR FALHA</Button>
+                <AIOutputBox content={result} isLoading={loading} title="DIAGNÓSTICO DO ERRO" />
+            </Card>
+        </div>
+    );
+};
