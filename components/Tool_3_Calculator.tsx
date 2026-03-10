@@ -17,11 +17,12 @@ export const Tool_Calculator: React.FC = () => {
         if (!press || !temp) return;
         setLoading(true);
         try {
-            const prompt = logicService.formatCalculatorPrompt(fluid, press as any, temp, mode);
+            const prompt = logicService.formatCalculatorPrompt(fluid, press, temp, mode);
             const text = await generateTechResponse(prompt, "CALC");
             setResult(text);
-        } catch (e: any) { 
-            setResult(`ERRO TÉCNICO: ${e.message || "Falha na comunicação com a IA."}`); 
+        } catch (error) { 
+            const errorMessage = error instanceof Error ? error.message : "Falha na comunicação com a IA.";
+            setResult(`ERRO TÉCNICO: ${errorMessage}`); 
         }
         setLoading(false);
     };

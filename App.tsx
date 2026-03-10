@@ -26,6 +26,43 @@ const ToolLoader = () => (
     </div>
 );
 
+const PasswordPrompt = ({ type, label, onUnlock }: { type: 'sizing' | 'catalog', label: string, onUnlock: (pass: string, type: 'sizing' | 'catalog') => boolean }) => {
+    const [pass, setPass] = useState('');
+    const [error, setError] = useState(false);
+
+    return (
+        <div className="flex flex-col items-center justify-center py-10 animate-fadeIn">
+            <div className="bg-[#2a2a2a] p-8 rounded-2xl border border-[#f97316]/20 shadow-xl w-full max-w-sm">
+                <div className="flex justify-center mb-6">
+                    <div className="w-16 h-16 bg-[#f97316]/10 rounded-full flex items-center justify-center">
+                        <i className="fa-solid fa-lock text-[#f97316] text-2xl"></i>
+                    </div>
+                </div>
+                <h2 className="text-center text-lg font-bold mb-2 italic">ACESSO RESTRITO</h2>
+                <p className="text-center text-[10px] text-gray-400 mb-6 uppercase tracking-[0.3em] font-black">{label}</p>
+                
+                <div className="space-y-4">
+                    <input 
+                        type="password" 
+                        value={pass}
+                        onChange={(e) => { setPass(e.target.value); setError(false); }}
+                        placeholder="Digite a senha de acesso"
+                        className={`w-full bg-[#0f172a] border ${error ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#f97316] transition-colors text-center font-mono tracking-widest`}
+                        onKeyDown={(e) => e.key === 'Enter' && !onUnlock(pass, type) && setError(true)}
+                    />
+                    {error && <p className="text-red-500 text-[10px] text-center font-bold uppercase tracking-tighter animate-bounce">Senha Incorreta</p>}
+                    <button 
+                        onClick={() => !onUnlock(pass, type) && setError(true)}
+                        className="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-xl transition-all active:scale-95 uppercase text-xs tracking-widest italic shadow-[0_0_15px_rgba(249,115,22,0.3)]"
+                    >
+                        LIBERAR ACESSO
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const AppContent: React.FC = () => {
     const { view, setView, techData, updateTechData } = useGlobal();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -88,51 +125,14 @@ const AppContent: React.FC = () => {
     if (isCheckingAuth) return null;
     if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} />;
 
-    const PasswordPrompt = ({ type, label }: { type: 'sizing' | 'catalog', label: string }) => {
-        const [pass, setPass] = useState('');
-        const [error, setError] = useState(false);
-
-        return (
-            <div className="flex flex-col items-center justify-center py-10 animate-fadeIn">
-                <div className="bg-[#2a2a2a] p-8 rounded-2xl border border-[#f97316]/20 shadow-xl w-full max-w-sm">
-                    <div className="flex justify-center mb-6">
-                        <div className="w-16 h-16 bg-[#f97316]/10 rounded-full flex items-center justify-center">
-                            <i className="fa-solid fa-lock text-[#f97316] text-2xl"></i>
-                        </div>
-                    </div>
-                    <h2 className="text-center text-lg font-bold mb-2 italic">ACESSO RESTRITO</h2>
-                    <p className="text-center text-[10px] text-gray-400 mb-6 uppercase tracking-[0.3em] font-black">{label}</p>
-                    
-                    <div className="space-y-4">
-                        <input 
-                            type="password" 
-                            value={pass}
-                            onChange={(e) => { setPass(e.target.value); setError(false); }}
-                            placeholder="Digite a senha de acesso"
-                            className={`w-full bg-[#0f172a] border ${error ? 'border-red-500' : 'border-white/10'} rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#f97316] transition-colors text-center font-mono tracking-widest`}
-                            onKeyDown={(e) => e.key === 'Enter' && !handleUnlock(pass, type) && setError(true)}
-                        />
-                        {error && <p className="text-red-500 text-[10px] text-center font-bold uppercase tracking-tighter animate-bounce">Senha Incorreta</p>}
-                        <button 
-                            onClick={() => !handleUnlock(pass, type) && setError(true)}
-                            className="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-xl transition-all active:scale-95 uppercase text-xs tracking-widest italic shadow-[0_0_15px_rgba(249,115,22,0.3)]"
-                        >
-                            LIBERAR ACESSO
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
     const renderView = () => {
         switch (view) {
             case ViewState.DIAGNOSTIC: return <Tool_Assistant />;
             case ViewState.ERRORS: return <Tool_Errors />;
             case ViewState.CALCULATOR: return <Tool_Calculator />;
-            case ViewState.SIZING: return isSizingUnlocked ? <Tool_Sizing /> : <PasswordPrompt type="sizing" label="Módulo de Dimensionamento" />;
+            case ViewState.SIZING: return isSizingUnlocked ? <Tool_Sizing /> : <PasswordPrompt type="sizing" label="Módulo de Dimensionamento" onUnlock={handleUnlock} />;
             case ViewState.REPORT: return <Tool_Report />;
-            case ViewState.TECH_DATA: return isCatalogUnlocked ? <Tool_Catalog /> : <PasswordPrompt type="catalog" label="Módulo de Dados Técnicos" />;
+            case ViewState.TECH_DATA: return isCatalogUnlocked ? <Tool_Catalog /> : <PasswordPrompt type="catalog" label="Módulo de Dados Técnicos" onUnlock={handleUnlock} />;
             default: return <Tool_Assistant />;
         }
     };

@@ -5,39 +5,39 @@ import { generateChatResponseStream } from '../services/geminiService';
 import { ChatMessage } from '../types';
 
 // --- SUB-COMPONENTE: BALÃO DE CHAT ---
-const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = ({ msg, onImageLoad }) => {
+const formatText = (text: string, isUser: boolean) => {
+    return text.split('\n').map((line, i) => {
+        if (!line.trim()) return <div key={i} className="h-2" />;
+        
+        const parts = line.split(/(\*\*.*?\*\*)|(⚠️.*?):|(🔧.*?):|(✅.*?):/g);
+        return (
+            <p key={i} className="min-h-[1em] mb-0.5">
+                 {line.trim().startsWith('* ') && <span className="inline-block w-1.5 h-1.5 mr-2 rounded-full bg-[#1abc9c] opacity-80"></span>}
+                 {parts.map((part, j) => {
+                    if (part === undefined) return null;
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                        return <strong key={j} className={isUser ? "text-white font-bold" : "text-[#FF8F00] font-bold"}>{part.slice(2, -2)}</strong>;
+                    }
+                    if (part.startsWith('⚠️')) {
+                        return <span key={j} className="text-red-400 font-bold">{part}</span>;
+                    }
+                    if (part.startsWith('🔧')) {
+                        return <span key={j} className="text-[#fdba74] font-bold">{part}</span>;
+                    }
+                    if (part.startsWith('✅')) {
+                        return <span key={j} className="text-[#3b82f6] font-bold">{part}</span>;
+                    }
+                    return part;
+                })}
+            </p>
+        );
+    });
+};
+
+const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = React.memo(({ msg, onImageLoad }) => {
     const isUser = msg.role === 'user';
     const isError = msg.isError;
     
-    const formatText = (text: string) => {
-        return text.split('\n').map((line, i) => {
-            if (!line.trim()) return <div key={i} className="h-2" />;
-            
-            const parts = line.split(/(\*\*.*?\*\*)|(⚠️.*?):|(🔧.*?):|(✅.*?):/g);
-            return (
-                <p key={i} className="min-h-[1em] mb-0.5">
-                     {line.trim().startsWith('* ') && <span className="inline-block w-1.5 h-1.5 mr-2 rounded-full bg-[#1abc9c] opacity-80"></span>}
-                     {parts.map((part, j) => {
-                        if (part === undefined) return null;
-                        if (part.startsWith('**') && part.endsWith('**')) {
-                            return <strong key={j} className={isUser ? "text-white font-bold" : "text-[#FF8F00] font-bold"}>{part.slice(2, -2)}</strong>;
-                        }
-                        if (part.startsWith('⚠️')) {
-                            return <span key={j} className="text-red-400 font-bold">{part}</span>;
-                        }
-                        if (part.startsWith('🔧')) {
-                            return <span key={j} className="text-[#fdba74] font-bold">{part}</span>;
-                        }
-                        if (part.startsWith('✅')) {
-                            return <span key={j} className="text-[#3b82f6] font-bold">{part}</span>;
-                        }
-                        return part;
-                    })}
-                </p>
-            );
-        });
-    };
-
     return (
         <div className={`flex flex-col max-w-[95%] mb-4 animate-slide-up ${isUser ? 'self-end items-end' : 'self-start items-start'}`}>
             {!isUser && (
@@ -74,13 +74,13 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = ({ 
                         </div>
                     )}
                     <div className="text-sm font-medium">
-                        {formatText(msg.text)}
+                        {formatText(msg.text, isUser)}
                     </div>
                 </div>
             </div>
         </div>
     );
-};
+});
 
 // --- FERRAMENTA 1: ASSISTENTE (CHAT + ELÉTRICA) ---
 export const Tool_Assistant: React.FC = () => {
@@ -113,13 +113,13 @@ export const Tool_Assistant: React.FC = () => {
     const bottomRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const scrollToBottom = () => {
+    const scrollToBottom = React.useCallback(() => {
         setTimeout(() => {
             if (chatContainerRef.current) {
                 chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
             }
         }, 100); // Pequeno delay para garantir que o DOM foi atualizado
-    };
+    }, []);
 
     useEffect(() => {
         scrollToBottom();
@@ -221,7 +221,7 @@ export const Tool_Assistant: React.FC = () => {
             );
 
         } catch (error: any) {
-            console.error("CAUGHT IN COMPONENT:", error);
+            console.error("Chat Error:", error?.message || "Unknown error");
             const errorMessage = error.message || "FALHA DE CONEXÃO. Tente novamente.";
             setMessages(prev => 
                 prev.map(msg => 

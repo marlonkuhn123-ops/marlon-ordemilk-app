@@ -64,8 +64,9 @@ export const Tool_Sizing: React.FC = () => {
             const text = await generateTechResponse(prompt, "SIZING");
             setResult(text);
             
-        } catch (e: any) { 
-            setResult(`ERRO NO CÁLCULO: ${e.message || "Falha ao processar dimensionamento."}`); 
+        } catch (error) { 
+            const errorMessage = error instanceof Error ? error.message : "Falha ao processar dimensionamento.";
+            setResult(`ERRO NO CÁLCULO: ${errorMessage}`); 
         }
         setLoading(false);
     };

@@ -3,9 +3,11 @@ import { SYSTEM_PROMPT_BASE, TOOL_PROMPTS, TECHNICAL_CONTEXT, EXTERNAL_MANUALS }
 import { knowledgeService } from "./knowledgeService";
 import { FAQ_DATABASE } from "../data/faq_data";
 import { KNOWLEDGE_BASE } from "../data/knowledge_base";
+import { ENV } from "../config/env";
 
 const handleApiError = (error: any) => {
-  console.error("Gemini API Error:", error);
+  // Log seguro: apenas a mensagem, evitando expor o objeto de erro completo que pode conter a chave de API no config
+  console.error("Gemini API Error:", error?.message || "Unknown error");
   const msg = error?.message || "";
 
   if (msg.includes("429") || msg.toLowerCase().includes("quota")) {
@@ -25,6 +27,9 @@ const getDynamicBrandContext = (userPrompt: string) => {
   return manual;
 };
 
+let cachedElectricalData: string | null = null;
+let cachedSchematicsData: string | null = null;
+
 const getElectricalContext = async (userPrompt: string) => {
     const keywords = [
         // Termos diretos de elétrica
@@ -36,10 +41,16 @@ const getElectricalContext = async (userPrompt: string) => {
     ];
     const upper = userPrompt.toUpperCase();
     if (keywords.some(k => upper.includes(k))) {
-        // Carrega as bases apenas se necessário (Lazy Loading)
-        const { ELECTRICAL_DATABASE } = await import("../data/electrical_data");
-        const { SCHEMATICS_DATABASE } = await import("../data/schematics_data");
-        return `\n\n⚡ [BASE DE DADOS ELÉTRICA E ESQUEMAS ATIVADA]\nUse as informações abaixo para responder dúvidas técnicas sobre ligações e esquemas:\n${ELECTRICAL_DATABASE}\n\n${SCHEMATICS_DATABASE}\n`;
+        // Carrega as bases apenas se necessário (Lazy Loading) com cache
+        if (!cachedElectricalData) {
+            const { ELECTRICAL_DATABASE } = await import("../data/electrical_data");
+            cachedElectricalData = ELECTRICAL_DATABASE;
+        }
+        if (!cachedSchematicsData) {
+            const { SCHEMATICS_DATABASE } = await import("../data/schematics_data");
+            cachedSchematicsData = SCHEMATICS_DATABASE;
+        }
+        return `\n\n⚡ [BASE DE DADOS ELÉTRICA E ESQUEMAS ATIVADA]\nUse as informações abaixo para responder dúvidas técnicas sobre ligações e esquemas:\n${cachedElectricalData}\n\n${cachedSchematicsData}\n`;
     }
     return "";
 };
@@ -73,30 +84,12 @@ const getFullSystemInstruction = async (toolType: string, userPrompt: string = "
   return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}`;
 };
 
-const getApiKeyOrThrow = () => {
-  let key = "";
-
-  try {
-    // @ts-ignore
-    key = GEMINI_API_KEY || process.env.GEMINI_API_KEY || process.env.API_KEY || "";
-  } catch (e) {
-    // @ts-ignore
-    key = process.env.GEMINI_API_KEY || process.env.API_KEY || "";
-  }
-
-  if (!key || key === "" || key.includes("PLACEHOLDER")) {
-    throw new Error(`CHAVE NÃO ENCONTRADA NO BUILD. Verifique se o nome na Vercel é exatamente GEMINI_API_KEY.`);
-  }
-  
-  return key;
-};
-
 export const generateTechResponse = async (
   userPrompt: string,
   toolType: keyof typeof TOOL_PROMPTS | "ASSISTANT",
   retries = 2
 ): Promise<string> => {
-  const apiKey = getApiKeyOrThrow();
+  const apiKey = ENV.GEMINI_API_KEY;
   const ai = new GoogleGenAI({ apiKey });
 
   try {
@@ -128,7 +121,7 @@ export const generateChatResponseStream = async (
     mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO',
     retries = 2
 ): Promise<string> => {
-    const apiKey = getApiKeyOrThrow();
+    const apiKey = ENV.GEMINI_API_KEY;
     const ai = new GoogleGenAI({ apiKey });
 
     try {
@@ -179,7 +172,7 @@ export const generateChatResponseStream = async (
 };
 
 export const analyzePlateImage = async (imageBase64: string, retries = 2): Promise<string> => {
-    const apiKey = getApiKeyOrThrow();
+    const apiKey = ENV.GEMINI_API_KEY;
     const ai = new GoogleGenAI({ apiKey });
 
     try {

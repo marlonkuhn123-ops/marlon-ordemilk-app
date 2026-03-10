@@ -1,6 +1,17 @@
 
 import { Refrigerant, CalcMode } from '../types';
 
+export interface ReportData {
+    client: string;
+    date: string;
+    techName: string;
+    model: string;
+    serviceMode: string;
+    params: { sh: string; sc: string; temp: string };
+    procedureText: string;
+    obs: string;
+}
+
 /**
  * Lógica centralizada para evitar erros em produção.
  * Estas funções são puras: mesma entrada sempre gera mesma saída.
@@ -8,7 +19,7 @@ import { Refrigerant, CalcMode } from '../types';
 
 export const logicService = {
     // Formata o prompt da calculadora (Coração do diagnóstico de gás)
-    formatCalculatorPrompt: (fluid: Refrigerant, press: string, temp: string, mode: CalcMode) => {
+    formatCalculatorPrompt: (fluid: Refrigerant, press: string, temp: string, mode: CalcMode): string => {
         return `
         COMANDO: CALCULAR ${mode === 'Superaquecimento' ? 'Superaquecimento (SH)' : 'Sub-resfriamento (SC)'}.
         DADOS: Fluido ${fluid}, Pressão ${press} PSI, Temperatura ${temp} °C.
@@ -26,16 +37,7 @@ export const logicService = {
     },
 
     // Formata o laudo técnico (Garante que nenhum dado do cliente suma)
-    formatReportPrompt: (data: {
-        client: string,
-        date: string,
-        techName: string,
-        model: string,
-        serviceMode: string,
-        params: { sh: string, sc: string, temp: string },
-        procedureText: string,
-        obs: string
-    }) => {
+    formatReportPrompt: (data: ReportData): string => {
         return `
         COMANDO: GERAR TEXTO DE LAUDO TÉCNICO (ESTRITO).
         DADOS CADASTRAIS:
@@ -56,7 +58,7 @@ export const logicService = {
     },
 
     // Cálculo de Sizing (Dimensionamento)
-    calculateCargaTermica: (volume: number) => {
+    calculateCargaTermica: (volume: number): { kcal: number; kw: number } => {
         const massa = volume * 1.03;
         const cargaBase = (massa * 0.93 * 31) / 3;
         const cargaTotalKcal = cargaBase * 0.75;
