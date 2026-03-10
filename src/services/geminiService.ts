@@ -93,8 +93,9 @@ export const generateTechResponse = async (
 
   try {
     const systemInstruction = await getFullSystemInstruction(toolType, userPrompt);
+    const useHeavyModel = toolType === "DIAGNOSTIC" || toolType === "ASSISTANT";
     const response = await ai.models.generateContent({
-      model: "gemini-3.0-pro",
+      model: useHeavyModel ? "gemini-3.0-pro" : "gemini-1.5-flash",
       contents: userPrompt,
       config: {
         systemInstruction,
