@@ -8,9 +8,9 @@ Esta camada explica como o sistema Ordemilk deve operar e a função de cada com
    - PAINEL CIP/LIMPEZA: Camada de automação. Concentra IHM, CLP e Relés de Interface para gerenciar a lógica de lavagem.
    - INTERLIGAÇÃO: Feita via borneiras e cabos multicondutores (Sinais de 24Vcc e permissivos).
 
-2. REGRAS DE EQUIPAMENTOS:
-   - Tanques >= 4.000L: CLP Panasonic FP-X0 L40MR.
-   - Tanques < 4.000L: Controladores eletrônicos (Ageon/Full Gauge).
+2. REGRAS DE EQUIPAMENTOS (OBRIGATÓRIO RESPEITAR CAPACIDADE):
+   - Tanques >= 4.000L: OBRIGATORIAMENTE usam CLP Panasonic FP-X0 L40MR e Válvula de Expansão Termostática (VET). NUNCA mencione Ageon, Full Gauge ou tubo capilar para estes modelos.
+   - Tanques < 4.000L: Usam Controladores eletrônicos (Ageon/Full Gauge). Expansão por capilar geralmente restrita a modelos até 2000L.
 
 3. FUNÇÕES DOS COMPONENTES:
    - CLP: Cérebro da limpeza. Gerencia tempos, válvulas e dosadoras.
@@ -152,4 +152,30 @@ Este bloco define o escopo exato e as regras de diagnóstico exclusivas para sis
   Categoria: Desarme por Alta Pressão (condensador obstruído, ventilador parado), Desarme por Baixa Pressão (vazamento de fluido, recolhimento), sobrecarga elétrica (corrente alta).
 - Sintoma: Retorno de líquido para o compressor.
   Categoria: Falha no agitador (leite não troca calor, evaporador inunda), válvula de expansão desregulada/superaquecimento incorreto.
+
+[CAMADA 6: FUNDAMENTOS DO CICLO DE REFRIGERAÇÃO E PRÁTICA DE CAMPO (A CAMADA DE REALIDADE)]
+Este bloco traduz a teoria do ciclo frigorífico para a prática bruta de campo, focando na análise fria do ciclo e nas armadilhas de diagnóstico.
+
+1. OS 4 CORAÇÕES DA MÁQUINA TRADUZIDOS PRO CAMPO:
+- Compressor (O Coração): Succiona o vapor em baixa pressão/temperatura e o comprime. (No contexto de leite: geralmente compressores Maneurop Danfoss ou equivalentes).
+- Condensador (O Dissipador): A que junta poeira no ambiente rústico da fazenda e desarma tudo por alta pressão. Rejeita o calor para o ambiente externo.
+- Dispositivo de Expansão (O Regulador): Válvula de expansão (VET) ou tubo capilar que reduz abruptamente a pressão do líquido.
+- Evaporador (O Absorvedor): A chapa Inox/Roll-bond no fundo do tanque. Onde o fluido em baixa pressão absorve o calor do leite e evapora completamente.
+
+2. A OBRIGATORIEDADE DA COMPRESSÃO SECA:
+- O ciclo real deve garantir a "compressão seca" (apenas vapor chegando ao compressor).
+- Retorno de líquido destrói os flappers (palhetas) e a biela do compressor. Danos mecânicos irreversíveis.
+
+3. MATEMÁTICA DO SH E SR (CRÍTICOS PARA DIAGNÓSTICO):
+- Superaquecimento (SH - Superheat) cravado em 5 a 10 K:
+  * Função: Protege o compressor. SH muito baixo significa: "Compressor vai quebrar por golpe de líquido".
+  * Cálculo Prático: Temp. da Linha de Sucção (medida no tubo) MINUS Temp. de Saturação (lida no manifold de baixa).
+- Sub-resfriamento (SR - Subcooling) cravado em 3 a 5 K:
+  * Função: Para proteger a expansão e evitar que a VET jogue uma rajada inútil de vapor (o "Flash Gas") dentro do tanque.
+  * Cálculo Prático: Temp. de Saturação (lida no manifold de alta) MINUS Temp. da Linha de Líquido (medida no tubo).
+
+4. ARMADILHAS DE DIAGNÓSTICO (SEGREDOS DE CAMPO):
+- Isolamento da Sucção: Atenção ao isolamento de espuma térmica na sucção. Sem ele, o superaquecimento útil se perde e o gás aquece excessivamente no trajeto.
+- Visor de Líquido Mentiroso: O visor de líquido engana se você não comparar com a balança ou com o cálculo de SH/SR. Bolhas podem ser flash gas por restrição, não apenas falta de gás.
+- O Assassino Invisível: Serpentina suja atuando como assassina invisível de compressores. Reduz a troca térmica, eleva a pressão de alta, frita o óleo e quebra o compressor por fadiga térmica.
 `;
