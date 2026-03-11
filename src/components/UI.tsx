@@ -132,13 +132,23 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
     const formattedContent = content.split('\n').map((line, i) => {
         if (!line.trim()) return <div key={i} className="h-2" />;
 
-        const parts = line.split(/(\*\*.*?\*\*)|(⚠️.*?):|(🔧.*?):|(✅.*?):/g);
+        const parts = line.split(/(\*\*.*?\*\*)|(\[MARCA\].*?\[\/MARCA\])|(\bRESULTADO:?\s*[-\d.,]+\s*K\b)/gi);
         return (
             <p key={i} className="min-h-[1.2em] mb-0.5">
                 {parts.map((part, j) => {
-                    if (part === undefined) return null;
+                    if (!part) return null;
+
+                    const pUp = part.toUpperCase();
                     if (part.startsWith('**') && part.endsWith('**')) {
                         return <strong key={j} className="text-electricBlue font-bold">{part.slice(2, -2)}</strong>;
+                    }
+                    if (pUp.startsWith('[MARCA]') && pUp.endsWith('[/MARCA]')) {
+                        const val = part.slice(7, -8).trim();
+                        return <span key={j} className="bg-brand text-white font-black px-2 py-0.5 rounded-md text-[13px] sm:text-[14px] mx-1 border border-orange-400/50 shadow-[0_0_12px_rgba(249,115,22,0.6)] uppercase tracking-wider">{val}</span>;
+                    }
+                    if (pUp.startsWith('RESULTADO:') && pUp.endsWith('K')) {
+                        const val = pUp.replace('RESULTADO:', '').trim();
+                        return <span key={j} className="bg-brand text-white font-black px-2 py-0.5 rounded-md text-[13px] sm:text-[14px] mx-1 border border-orange-400/50 shadow-[0_0_12px_rgba(249,115,22,0.6)] uppercase tracking-wider">{val}</span>;
                     }
                     if (part.startsWith('⚠️')) {
                         return <span key={j} className="text-brand font-bold">{part}</span>;

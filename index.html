@@ -46,5 +46,14 @@
 <body class="bg-[#050912] text-[#E8EAF6]">
   <div id="root"></div>
   <script type="module" src="/index.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('✅ Service Worker do PWA registrado!', reg))
+          .catch(err => console.error('❌ Falha ao registrar Service Worker do PWA:', err));
+      });
+    }
+  </script>
 </body>
 </html>

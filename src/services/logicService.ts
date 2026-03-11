@@ -17,11 +17,17 @@ export const logicService = {
         - Faixa IDEAL para Superaquecimento (SH): 7K a 12K.
         - Faixa IDEAL para Sub-resfriamento (SC): 4K a 8K.
         
-        INSTRUÇÃO DE SAÍDA:
-        NÃO use formatação Markdown ou símbolos especiais.
-        1. Apresente o cálculo em Kelvin (K).
-        2. Classifique o resultado.
-        3. Adicione a AÇÃO RECOMENDADA prática.
+        SAÍDA OBRIGATÓRIA (COPIE EXATAMENTE ESTE FORMATO E PREENCHA):
+        [MARCA]RESULTADO: {VALOR_EM_K} K[/MARCA]
+
+        1. CÁLCULO TERMOMECÂNICO
+        (Mostre as contas aqui com a temperatura de saturação menos a temperatura medida).
+
+        2. CLASSIFICAÇÃO
+        (Diga se está ALTO, BAIXO ou IDEAL e explique).
+
+        3. AÇÃO RECOMENDADA
+        (Checklist mecânico para o técnico no campo).
         `.trim();
     },
 

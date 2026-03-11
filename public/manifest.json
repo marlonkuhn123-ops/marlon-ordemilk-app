@@ -1,8 +1,18 @@
 {
-  "short_name": "Ordemilk Assist",
+  "short_name": "OM Tech",
   "name": "Ordemilk Tech Assist",
-  "start_url": ".",
+  "description": "Assistente Técnico Ordemilk - Diagnóstico Offline do Campo",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "orientation": "portrait",
+  "theme_color": "#050912",
+  "background_color": "#050912",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }

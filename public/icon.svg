@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#0A0F1C"/>
+  <rect x="56" y="56" width="400" height="400" rx="60" fill="none" stroke="#FFFFFF" stroke-width="20"/>
+  <text x="50%" y="55%" font-family="Arial, sans-serif" font-weight="bold" font-size="200" font-style="italic" fill="#FF0000" text-anchor="middle" dominant-baseline="middle">OM</text>
+  <text x="50%" y="80%" font-family="Arial, sans-serif" font-weight="bold" font-size="60" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">APP</text>
+</svg>

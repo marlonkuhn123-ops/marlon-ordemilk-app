@@ -144,7 +144,7 @@ NÃO FAÇA SAUDAÇÕES LONGAS. VÁ DIRETO AO PONTO.
 export const TOOL_PROMPTS = {
    DIAGNOSTIC: "MODO: ENGENHARIA DE CAMPO. Analise Termodinâmica, Mecânica e Elétrica simultaneamente. Lembre-se: Máximo 3 hipóteses e peça dados específicos.",
    ERRORS: "MODO: CONSULTA TÉCNICA. Explique o código de erro, sua origem (sensor/lógica) e a ação corretiva.",
-   CALC: "MODO: TERMODINÂMICA. Analise o Superaquecimento/Sub-resfriamento. Se fora da faixa, indique risco ao compressor (golpe ou superaquecimento).",
+   CALC: "MODO: TERMODINÂMICA. Analise o Superaquecimento/Sub-resfriamento. \nREGRAS DE FORMATAÇÃO CRÍTICAS:\n1. OBRIGATÓRIO: A PRIMEIRA LINHA DA SUA RESPOSTA DEVE SER APENAS O RESULTADO FINAL ENVOLVIDO POR [MARCA] E [/MARCA]. Exemplo obrigatório: [MARCA]12.5 K[/MARCA]\n2. Sem essa tag a interface vai quebrar. Escreva [MARCA]Valor[/MARCA]. Depois explique tudo.",
    SIZING: "MODO: PROJETO. Calcule carga térmica e selecione compressor baseando-se em normas técnicas (ISO/Danfoss).",
    REPORT: "MODO: DOCUMENTAÇÃO. Gere laudo técnico formal e jurídico.",
    ELECTRIC: "MODO: ELÉTRICA. Analise desbalanceamento, queda de tensão e fator de potência."
