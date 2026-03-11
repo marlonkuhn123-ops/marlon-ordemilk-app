@@ -62,6 +62,59 @@ const PasswordPrompt = ({ type, label, onUnlock }: { type: 'sizing' | 'catalog',
     );
 };
 
+const InstallPrompt = () => {
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [showInstall, setShowInstall] = useState(false);
+    const [isIOS, setIsIOS] = useState(false);
+
+    useEffect(() => {
+        // Verifica se é iOS (que não suporta beforeinstallprompt nativo)
+        const iOSInfo = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+        
+        if (iOSInfo && !isStandalone) {
+            setIsIOS(true);
+            setShowInstall(true);
+        }
+
+        const handler = (e: Event) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+            setShowInstall(true);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const handleInstall = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setShowInstall(false);
+        }
+        setDeferredPrompt(null);
+    };
+
+    if (!showInstall) return null;
+
+    return (
+        <div className="absolute top-0 left-0 w-full z-[100] bg-brand text-white p-4 flex justify-between items-center shadow-lg animate-slide-up border-b-4 border-orange-600">
+            <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <i className={isIOS ? "fa-solid fa-arrow-up-from-bracket text-xl" : "fa-solid fa-download text-xl"}></i>
+                </div>
+                <div className="flex flex-col">
+                    <span className="font-bold text-sm uppercase tracking-widest">{isIOS ? "Instalar no iPhone" : "Instalar OM APP"}</span>
+                    <span className="text-[10px] text-white/80">{isIOS ? "Toque em Compartilhar e 'Tela de Início'" : "Acesso rápido e offline"}</span>
+                </div>
+            </div>
+            {!isIOS && <button onClick={handleInstall} className="bg-white text-brand px-6 py-2.5 rounded-full font-bold text-xs shadow-xl active:scale-95 uppercase tracking-widest">OBTER</button>}
+            {isIOS && <button onClick={() => setShowInstall(false)} className="px-4 text-xs font-bold opacity-70">OK</button>}
+        </div>
+    );
+};
+
 const AppContent: React.FC = () => {
     const { view, setView, techData, updateTechData } = useGlobal();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -141,6 +194,7 @@ const AppContent: React.FC = () => {
             className="flex flex-col h-screen overflow-hidden bg-techDark text-white relative select-none"
             onContextMenu={(e) => e.preventDefault()}
         >
+            <InstallPrompt />
             <Watermark text={techData.name} />
 
             <div className="relative flex flex-col h-full z-10">
