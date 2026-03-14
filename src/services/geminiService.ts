@@ -146,9 +146,20 @@ export const generateChatResponseStream = async (
     let fullText = "";
     let sources: { title: string; uri: string }[] = [];
 
+    // Variável para armazenar a Promise do atraso
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
     for await (const chunk of responseStream) {
       const chunkText = chunk.text || "";
-      fullText += chunkText;
+      
+      // Streaming Suavizado: Dilui o chunk grande em pequenos pedaços (Typewriter effect manual)
+      // Resolve o problema de "espirrar" tudo de uma vez.
+      const words = chunkText.split(' ');
+      for (let i = 0; i < words.length; i++) {
+          fullText += (i === 0 && chunkText.startsWith(' ') ? '' : ' ') + words[i];
+          if (onChunk) onChunk(fullText.trim());
+          await delay(15); // Atraso minúsculo por palavra para suavizar o render no React
+      }
 
       const groundingChunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
       if (groundingChunks) {
@@ -156,8 +167,6 @@ export const generateChatResponseStream = async (
           if (c.web) sources.push({ title: c.web.title, uri: c.web.uri });
         });
       }
-
-      if (onChunk) onChunk(fullText);
     }
 
     if (onFinished) onFinished(fullText, sources.length > 0 ? sources : undefined);

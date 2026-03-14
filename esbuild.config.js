@@ -25,7 +25,8 @@ const buildOptions = {
   entryPoints: [path.resolve(__dirname, 'index.tsx')],
   bundle: true,
   outfile: path.resolve(__dirname, 'dist/index.js'), // ✅ fixo
-  minify: isProduction,
+  minify: true, // Forçar minificação para performance mobile
+  treeShaking: true,
   sourcemap: !isProduction,
   platform: 'browser',
   format: 'esm',
