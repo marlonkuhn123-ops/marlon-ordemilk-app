@@ -139,7 +139,7 @@ const AppContent: React.FC = () => {
 
     return (
         <div 
-            className="flex flex-col h-screen overflow-hidden bg-[#050912] text-[#E8EAF6] relative select-none"
+            className="flex flex-col h-screen overflow-hidden bg-[#0a0e17] text-[#E8EAF6] relative select-none"
             onContextMenu={(e) => e.preventDefault()}
         >
             <Watermark text={techData.name} />

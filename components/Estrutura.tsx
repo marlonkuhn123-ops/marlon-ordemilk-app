@@ -74,9 +74,7 @@ const NavItem: React.FC<NavItemProps> = ({ id, icon, label, isActive, onClick })
                 )}
                 <i className={`${icon} text-lg transition-transform duration-300 ${isActive ? 'scale-100' : 'group-hover:scale-105'}`}></i>
             </div>
-            <span className={`text-[9px] font-bold uppercase tracking-widest text-center leading-none transition-all duration-300 font-heading ${
-                isActive ? 'text-[#FF8F00] opacity-100' : 'text-[#E8EAF6]/30 group-hover:text-[#E8EAF6]/60'
-            }`}>
+            <span className={`text-[9.5px] font-black uppercase tracking-widest text-center leading-none transition-all duration-300 font-heading text-white`}>
                 {label}
             </span>
         </button>
