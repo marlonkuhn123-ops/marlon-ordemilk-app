@@ -8,14 +8,14 @@ export default {
     theme: {
         extend: {
             colors: {
-                brand: '#f97316', // Action Orange
-                brandSoft: '#fdba74', // Soft Orange
-                techDark: '#0f172a', // Deep Slate
-                techPanel: '#1e293b', // Surface
-                techBorder: '#1e293b', // Surface for borders
-                electricBlue: '#3b82f6', // Electric Blue
-                neonViolet: '#3b82f6', // Reusing Electric Blue for neonViolet mappings
-                neonCyan: '#f97316', // Remapping old cyan to action orange
+                brand: '#FF9F1A', // Vibrant Orange (Action)
+                brandSoft: '#FFB84D', // Soft Orange for secondary elements
+                techDark: '#121821', // Grafite Background
+                techPanel: '#18212C', // Layered Card Surface
+                techBorder: '#263140', // Professional Border
+                electricBlue: '#3b82f6', // Electric Blue (Kept for functional UI)
+                neonViolet: '#3b82f6', 
+                neonCyan: '#FF9F1A', 
             },
             fontFamily: {
                 sans: ['"Inter"', 'sans-serif'],

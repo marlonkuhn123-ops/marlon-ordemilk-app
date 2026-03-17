@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 // --- CARD INDUSTRIAL ---
 export const Card: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => {
     return (
-        <div className={`relative rounded-xl p-4 sm:p-5 shadow-lg ${className}`}>
+        <div className={`relative rounded-xl p-4 sm:p-5 shadow-xl bg-techPanel border border-techBorder ${className}`}>
             {children}
         </div>
     );
@@ -28,8 +28,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const BUTTON_VARIANTS = {
-    primary: "bg-brand text-white hover:bg-orange-500 transition-colors border-none shadow-[0_8px_20px_rgba(249,115,22,0.45),inset_0_-4px_8px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(255,255,255,0.25)]",
-    secondary: "bg-techPanel text-gray-300 hover:bg-slate-700 active:bg-slate-600 transition-colors border border-techBorder shadow-[0_4px_10px_rgba(0,0,0,0.3),inset_0_-2px_4px_rgba(0,0,0,0.2)]",
+    primary: "bg-brand text-white hover:bg-[#FFB040] transition-all border-none shadow-[0_8px_25px_rgba(255,159,26,0.35),inset_0_-4px_8px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(255,255,255,0.25)]",
+    secondary: "bg-techPanel text-[#E8EEF5] hover:bg-[#263140] active:bg-[#121821] transition-colors border border-techBorder shadow-[0_4px_10px_rgba(0,0,0,0.3),inset_0_-2px_4px_rgba(0,0,0,0.2)]",
     danger: "bg-red-600 text-white hover:bg-red-700 transition-colors border-none shadow-[0_8px_20px_rgba(220,38,38,0.45),inset_0_-4px_8px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(255,255,255,0.25)]",
     success: "bg-electricBlue text-white hover:bg-blue-600 transition-colors border-none shadow-[0_8px_20px_rgba(59,130,246,0.45),inset_0_-4px_8px_rgba(0,0,0,0.2),inset_0_2px_4px_rgba(255,255,255,0.25)]"
 };
@@ -49,13 +49,13 @@ export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', c
 export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { label?: string }> = ({ label, className = '', ...props }) => {
     return (
         <div className="mb-4 sm:mb-5 w-full group">
-            {label && <label className="block text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-2 transition-colors text-gray-400 group-focus-within:text-electricBlue">
+            {label && <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider mb-2 transition-colors text-white/50 group-focus-within:text-brand">
                 {label}
             </label>}
             <input
                 className={`w-full p-3.5 sm:p-4 rounded-xl text-sm sm:text-base outline-none transition-all duration-300 border 
-                bg-techDark border-techBorder text-white placeholder-gray-500 
-                focus:border-electricBlue focus:ring-1 focus:ring-electricBlue ${className}`}
+                bg-techDark border-techBorder text-[#E8EEF5] placeholder-gray-500 
+                focus:border-brand focus:ring-1 focus:ring-brand/30 ${className}`}
                 {...props}
             />
         </div>
@@ -66,14 +66,14 @@ export const Input: React.FC<React.InputHTMLAttributes<HTMLInputElement> & { lab
 export const Select: React.FC<React.SelectHTMLAttributes<HTMLSelectElement> & { label?: string }> = ({ label, children, className = '', ...props }) => {
     return (
         <div className="mb-3 sm:mb-4 w-full group">
-            {label && <label className="block text-[9px] sm:text-[10px] font-black uppercase tracking-wider mb-1 sm:mb-1.5 ml-1 transition-colors text-white/70 group-focus-within:text-electricBlue">
+            {label && <label className="block text-[10px] sm:text-[11px] font-black uppercase tracking-wider mb-1 sm:mb-1.5 ml-1 transition-colors text-white/60 group-focus-within:text-brand">
                 {label}
             </label>}
             <div className="relative">
                 <select
                     className={`w-full p-3 sm:p-3.5 rounded-lg text-xs sm:text-sm font-medium outline-none transition-colors duration-300 appearance-none border cursor-pointer 
-                    bg-techPanel border-techBorder text-white 
-                    focus:border-electricBlue focus:bg-techDark ${className}`}
+                    bg-techPanel border-techBorder text-[#E8EEF5] 
+                    focus:border-brand focus:bg-techDark ${className}`}
                     {...props}
                 >
                     {children}
@@ -184,7 +184,7 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
             </div>
 
             {/* CONTEÚDO */}
-            <div className="p-3 sm:p-4 text-[11px] sm:text-xs leading-relaxed text-gray-300 break-words">
+            <div className="p-3 sm:p-4 text-[12px] sm:text-sm leading-relaxed text-[#E8EEF5]/90 break-words">
                 {formattedContent}
             </div>
         </div>

@@ -22,8 +22,8 @@ import { GlobalProvider, useGlobal } from './contexts/GlobalContext';
 // Fallback visual enquanto a ferramenta é carregada
 const ToolLoader = () => (
     <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-        <div className="w-12 h-12 border-4 border-[#3d3d3d] border-t-[#1abc9c] rounded-full animate-spin mb-4"></div>
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Sincronizando Módulo...</p>
+        <div className="w-12 h-12 border-4 border-techBorder border-t-brand rounded-full animate-spin mb-4 shadow-[0_0_15px_rgba(255,159,26,0.3)]"></div>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Sincronizando Módulo...</p>
     </div>
 );
 
@@ -39,8 +39,8 @@ const PasswordPrompt = ({ type, label, onUnlock }: { type: 'sizing' | 'catalog',
                         <i className="fa-solid fa-lock text-brand text-2xl drop-shadow-md"></i>
                     </div>
                 </div>
-                <h2 className="text-center text-lg font-display font-bold mb-2 italic">ACESSO RESTRITO</h2>
-                <p className="text-center text-[10px] text-slate-400 mb-6 uppercase tracking-[0.3em] font-black">{label}</p>
+                <h2 className="text-center text-lg font-display font-bold mb-2 italic text-[#E8EEF5]">ACESSO RESTRITO</h2>
+                <p className="text-center text-[10px] text-white/40 mb-6 uppercase tracking-[0.3em] font-black">{label}</p>
 
                 <div className="space-y-4">
                     <input

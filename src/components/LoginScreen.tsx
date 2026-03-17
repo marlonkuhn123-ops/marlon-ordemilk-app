@@ -43,10 +43,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-techDark relative overflow-hidden">
 
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
+            <div className="absolute inset-0 pointer-events-none opacity-[0.05]"
                 style={{
-                    backgroundImage: `linear-gradient(#555 1px, transparent 1px), linear-gradient(90deg, #555 1px, transparent 1px)`,
-                    backgroundSize: '25px 25px'
+                    backgroundImage: `linear-gradient(#263140 1px, transparent 1px), linear-gradient(90deg, #263140 1px, transparent 1px)`,
+                    backgroundSize: '30px 30px'
                 }}
             ></div>
 
@@ -54,24 +54,24 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
                 <div className="flex flex-col items-center mb-10 select-none">
                     <div className="relative mb-4">
-                        <div className="w-20 h-20 rounded-2xl bg-techPanel border border-techBorder flex items-center justify-center shadow-[0_0_30px_rgba(30,41,59,0.5)] transform rotate-3">
-                            <i className="fa-solid fa-shield-halved text-4xl text-slate-400"></i>
+                        <div className="w-20 h-20 rounded-2xl bg-techPanel border border-techBorder flex items-center justify-center shadow-[0_10_40px_rgba(0,0,0,0.5)] transform rotate-3">
+                            <i className="fa-solid fa-shield-halved text-4xl text-white/40"></i>
                         </div>
                     </div>
 
                     <div className="flex flex-col items-center">
                         <h1 className="flex items-baseline gap-2 mb-1">
-                            <span className="font-inter font-black italic text-4xl tracking-tighter leading-none text-white">OM</span>
+                            <span className="font-inter font-black italic text-4xl tracking-tighter leading-none text-[#E8EEF5]">OM</span>
                             <span className="font-inter font-black italic text-2xl tracking-tighter leading-none text-brand">TECH V51</span>
                         </h1>
-                        <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.3em] text-gray-500">Terminal Técnico Privado</p>
+                        <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.3em] text-white/30">Terminal Técnico Privado</p>
                     </div>
                 </div>
 
-                <Card className={`border-t-4 border-t-techBorder !bg-techPanel ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
+                <Card className={`border-t-4 border-t-brand/30 !bg-techPanel ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
                     <div className="mb-6 text-center">
-                        <h2 className="text-white/90 font-bold text-sm uppercase tracking-wide mb-1">Autenticação</h2>
-                        <p className="text-[10px] text-gray-500">
+                        <h2 className="text-[#E8EEF5] font-bold text-sm uppercase tracking-wide mb-1">Autenticação</h2>
+                        <p className="text-[10px] text-white/40">
                             Identifique-se para acessar o sistema.
                         </p>
                     </div>
