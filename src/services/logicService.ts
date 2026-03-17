@@ -1,5 +1,5 @@
-
 import { Refrigerant, CalcMode } from '../types';
+import { PT_TABLES } from '../data/pt_tables';
 
 /**
  * Lógica centralizada para evitar erros em produção.
@@ -7,13 +7,33 @@ import { Refrigerant, CalcMode } from '../types';
  */
 
 export const logicService = {
+    // Busca a temperatura de saturação exata na tabela
+    getSaturationTemp: (fluid: Refrigerant, pressure: number): number | null => {
+        const table = PT_TABLES[fluid];
+        if (!table) return null;
+        
+        // Arredondar a pressão para o inteiro mais próximo (já que a tabela é de 1 em 1 PSI)
+        const pressKey = Math.round(pressure);
+        return table[pressKey] !== undefined ? table[pressKey] : null;
+    },
+
     // Formata o prompt da calculadora (Coração do diagnóstico de gás)
     formatCalculatorPrompt: (fluid: Refrigerant, press: string, temp: string, mode: CalcMode) => {
+        const pressureVal = parseFloat(press);
+        const tempMeasured = parseFloat(temp);
+        const satTemp = logicService.getSaturationTemp(fluid, pressureVal);
+
+        // Se tivermos o valor exato, passamos para a IA já processado
+        const satDataContext = satTemp !== null 
+            ? `VALOR EXATO DE SATURAÇÃO ENCONTRADO NA TABELA: ${satTemp}°C.`
+            : `AVISO: Valor de saturação não encontrado na biblioteca local para ${fluid} a ${press} PSI. Use seus conhecimentos técnicos padrão.`;
+
         return `
         COMANDO: CALCULAR ${mode === 'Superaquecimento' ? 'Superaquecimento (SH)' : 'Sub-resfriamento (SC)'}.
-        DADOS: Fluido ${fluid}, Pressão ${press} PSI, Temperatura ${temp} °C.
+        DADOS: Fluido ${fluid}, Pressão ${press} PSI, Temperatura Medida ${tempMeasured} °C.
+        ${satDataContext}
         
-        CONTEXTO DE REFERÊNCIA:
+        VALORES DE REFERÊNCIA ORDEMILK:
         - Faixa IDEAL para Superaquecimento (SH): 7K a 12K.
         - Faixa IDEAL para Sub-resfriamento (SC): 4K a 8K.
         
@@ -21,7 +41,9 @@ export const logicService = {
         [MARCA]RESULTADO: {VALOR_EM_K} K[/MARCA]
 
         1. CÁLCULO TERMOMECÂNICO
-        (Mostre as contas aqui com a temperatura de saturação menos a temperatura medida).
+        ${satTemp !== null 
+            ? `Equação: ${mode === 'Superaquecimento' ? `${tempMeasured} - (${satTemp})` : `(${satTemp}) - ${tempMeasured}`} = ${(mode === 'Superaquecimento' ? tempMeasured - satTemp : satTemp - tempMeasured).toFixed(1)}K.`
+            : '(IA, realize o cálculo baseado na temperatura de saturação correta do fluido)'}
 
         2. CLASSIFICAÇÃO
         (Diga se está ALTO, BAIXO ou IDEAL e explique).
