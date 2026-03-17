@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Button, Input } from './UI';
+import { track } from '@vercel/analytics';
 
 interface LoginScreenProps {
     onLogin: (success: boolean) => void;
@@ -24,6 +25,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
         if (inputPass === 'om2026') {
             localStorage.setItem('ordemilk_tech_data', JSON.stringify({ name: inputName, company: 'Ordemilk' }));
+            
+            // Rastrear login na Vercel
+            track('LoginTécnico', { 
+                nome: inputName,
+                data: new Date().toISOString()
+            });
+
             onLogin(true);
             return;
         }

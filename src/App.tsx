@@ -4,6 +4,7 @@ import { Header, BottomNav } from './components/Estrutura';
 import { TutorialOverlay } from './components/TutorialOverlay';
 import { LoginScreen } from './components/LoginScreen';
 import { Watermark } from './components/UI';
+import { Analytics } from '@vercel/analytics/react';
 
 // COMPONENTES DE FERRAMENTAS - CARREGAMENTO PREGUIÇOSO (LAZY LOADING)
 // Como os componentes usam exportação nomeada, precisamos mapear para default para o React.lazy
@@ -230,6 +231,7 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => (
     <GlobalProvider>
         <AppContent />
+        <Analytics />
     </GlobalProvider>
 );
 
