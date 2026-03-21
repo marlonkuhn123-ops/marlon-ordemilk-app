@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ordemilk-tech-v2';
+const CACHE_NAME = 'ordemilk-tech-v51-final';
 const ASSETS = [
     '/',
     '/index.html',

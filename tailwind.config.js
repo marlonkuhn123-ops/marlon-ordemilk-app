@@ -8,14 +8,15 @@ export default {
     theme: {
         extend: {
             colors: {
-                brand: '#FF9F1A', // Vibrant Orange (Action)
-                brandSoft: '#FFB84D', // Soft Orange for secondary elements
-                techDark: '#121821', // Grafite Background
-                techPanel: '#18212C', // Layered Card Surface
-                techBorder: '#263140', // Professional Border
-                electricBlue: '#3b82f6', // Electric Blue (Kept for functional UI)
+                brand: '#ff6600', // Laranja Ordemilk
+                brandSoft: '#ff8833', // Laranja Hover
+                techDark: '#2a3646', // Background Secundário (Inputs/Inactive Toggles)
+                techPanel: '#3b4c61', // Fundo de Cards (com opacidade na UI)
+                techBorder: '#4a5c73', // Bordas dos painéis
+                electricBlue: '#00d9ff', // Ciano para marcações e robô
                 neonViolet: '#3b82f6', 
-                neonCyan: '#FF9F1A', 
+                neonCyan: '#00d9ff',
+                textMuted: '#9ca7b8', // Textos Secundários
             },
             fontFamily: {
                 sans: ['"Inter"', 'sans-serif'],

@@ -76,13 +76,13 @@ export const Tool_Sizing: React.FC = () => {
             <SectionTitle icon="fa-solid fa-ruler-combined" title="4. DIMENSIONAMENTO" />
             
             {/* SWITCH DE MODO */}
-            <div className="flex bg-[#050912] p-1 rounded-xl mb-4 border border-white/5 gap-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
+            <div className="flex bg-[#2a3646] p-1 rounded-[16px] mb-4 border border-[#4a5c73] gap-1 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]">
                 <button 
                     onClick={() => { setInputMode('ordenha'); setInputRaw(''); setVolumeOrdenha(''); setResult(''); }}
                     className={`flex-1 py-2.5 rounded-lg text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-all leading-tight font-heading ${
                         inputMode === 'ordenha' 
-                        ? 'bg-[#FF8F00] text-white shadow-md' 
-                        : 'text-[#E8EAF6]/40 hover:text-[#E8EAF6]'
+                        ? 'bg-[#ff6600] text-white shadow-md' 
+                        : 'text-[#9ca7b8] hover:text-[#ffffff]'
                     }`}
                 >
                     Por Ordenha
@@ -91,8 +91,8 @@ export const Tool_Sizing: React.FC = () => {
                     onClick={() => { setInputMode('tanque'); setInputRaw(''); setVolumeOrdenha(''); setResult(''); }}
                     className={`flex-1 py-2.5 rounded-lg text-[8px] sm:text-[9px] font-bold uppercase tracking-widest transition-all leading-tight font-heading ${
                         inputMode === 'tanque' 
-                        ? 'bg-[#FF8F00] text-white shadow-md' 
-                        : 'text-[#E8EAF6]/40 hover:text-[#E8EAF6]'
+                        ? 'bg-[#ff6600] text-white shadow-md' 
+                        : 'text-[#9ca7b8] hover:text-[#ffffff]'
                     }`}
                 >
                     Capacidade Tanque

@@ -2,13 +2,36 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0e17">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#263243">
   <title>Ordemilk Tech</title>
 
   <link rel="manifest" href="/manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-
+  <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    brand: '#ff6600', // Laranja Ordemilk
+                    brandSoft: '#ff8833', // Laranja Hover
+                    techDark: '#2a3646', // Background Secundário (Inputs/Inactive Toggles)
+                    techPanel: '#3b4c61', // Fundo de Cards (com opacidade na UI)
+                    techBorder: '#4a5c73', // Bordas dos painéis
+                    electricBlue: '#00d9ff', // Ciano para marcações e robô
+                    neonViolet: '#3b82f6', 
+                    neonCyan: '#00d9ff',
+                    textMuted: '#9ca7b8', // Textos Secundários
+                },
+                fontFamily: {
+                    sans: ['"Inter"', 'sans-serif'],
+                    display: ['"Space Grotesk"', 'sans-serif'],
+                    mono: ['ui-monospace', 'SFMono-Regular', 'monospace'],
+                }
+            }
+        }
+    }
+  </script>
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -18,13 +41,9 @@
   <style>
       body { 
           font-family: 'Inter', sans-serif; 
-          background-color: #0a0e17; 
-          color: #E8EAF6; 
+          color: #ffffff; 
           overflow: hidden; 
-          background-image: 
-            radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.15) 0px, transparent 50%),
-            radial-gradient(at 100% 100%, rgba(17, 24, 39, 0.2) 0px, transparent 50%),
-            url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+          background-image: linear-gradient(to bottom, #263243, #758498, #e4e9f0);
           background-attachment: fixed; 
           -webkit-tap-highlight-color: transparent; 
       }
@@ -43,7 +62,7 @@
   </style>
 </head>
 
-<body class="bg-[#0a0e17] text-[#E8EAF6]">
+<body class="text-white">
   <div id="root"></div>
   <script type="module" src="/index.js"></script>
   <script>

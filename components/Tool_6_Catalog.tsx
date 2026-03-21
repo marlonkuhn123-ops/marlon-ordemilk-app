@@ -60,8 +60,8 @@ export const Tool_Catalog: React.FC = () => {
                     <option value="OUTRO">OUTROS MODELOS (CONSULTAR FÁBRICA)</option>
                 </Select>
                 
-                <div className="mb-4 p-3 rounded-lg border text-[10px] font-medium leading-relaxed flex items-start gap-2 transition-colors bg-[#1a1a1a] border-[#333] text-gray-400">
-                    <i className="fa-solid fa-database mt-0.5 text-xs text-[#1abc9c]"></i>
+                <div className="mb-4 p-3 rounded-lg border text-[10px] font-medium leading-relaxed flex items-start gap-2 transition-colors bg-[#2a3646]/50 border-[#4a5c73] text-[#9ca7b8]">
+                    <i className="fa-solid fa-database mt-0.5 text-xs text-[#00d9ff]"></i>
                     <span>Consulta ESTRITA à Base V35 (Engenharia). Dados oficiais de fábrica.</span>
                 </div>
 
@@ -73,10 +73,10 @@ export const Tool_Catalog: React.FC = () => {
             </Card>
 
             <SectionTitle icon="fa-solid fa-brain" title="MEMÓRIA DE CAMPO (A IA APRENDE AQUI)" />
-            <Card className="border-t-4 border-t-emerald-500">
-                <p className="text-[10px] text-gray-400 mb-3 leading-relaxed">
+            <Card className="border-t-4 border-t-[#00d9ff] !mt-4">
+                <p className="text-[10px] text-[#9ca7b8] mb-3 leading-relaxed">
                     Escreva abaixo suas descobertas ou regras que a IA deve lembrar. 
-                    <span className="text-emerald-400 font-bold ml-1">Ela usará isso para te dar respostas melhores no Suporte.</span>
+                    <span className="text-[#00d9ff] font-bold ml-1">Ela usará isso para te dar respostas melhores no Suporte.</span>
                 </p>
                 <div className="flex gap-2 mb-4">
                     <div className="flex-1">
@@ -89,7 +89,7 @@ export const Tool_Catalog: React.FC = () => {
                     </div>
                     <button 
                         onClick={handleAddTip}
-                        className="bg-emerald-600 text-white w-11 h-11 sm:w-12 sm:h-12 rounded-lg hover:bg-emerald-500 transition-colors shrink-0 flex items-center justify-center shadow-lg active:scale-95"
+                        className="bg-[#00d9ff] text-black font-bold w-11 h-11 sm:w-12 sm:h-12 rounded-[16px] hover:bg-[#00b8cc] transition-colors shrink-0 flex items-center justify-center shadow-[0_0_15px_rgba(0,217,255,0.4)] active:scale-95"
                     >
                         <i className="fa-solid fa-plus text-sm"></i>
                     </button>

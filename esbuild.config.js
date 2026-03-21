@@ -9,7 +9,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || '';
 
 if (apiKey) {
-  console.log('✅ CHAVE DE API DETECTADA DURANTE O BUILD (Iniciando com: ' + apiKey.substring(0, 6) + '...)');
+  console.log('✅ CHAVE DE API DETECTADA DURANTE O BUILD (Ocultada por segurança)');
 } else {
   console.log('❌ ALERTA: NENHUMA CHAVE DE API ENCONTRADA DURANTE O BUILD!');
 }

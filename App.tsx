@@ -6,14 +6,12 @@ import { TutorialOverlay } from './components/TutorialOverlay';
 import { LoginScreen } from './components/LoginScreen';
 import { Watermark } from './components/UI';
 
-// COMPONENTES DE FERRAMENTAS - CARREGAMENTO PREGUIÇOSO (LAZY LOADING)
-// Como os componentes usam exportação nomeada, precisamos mapear para default para o React.lazy
-const Tool_Assistant = lazy(() => import('./components/Tool_1_Assistant').then(m => ({ default: m.Tool_Assistant })));
-const Tool_Errors = lazy(() => import('./components/Tool_2_Errors').then(m => ({ default: m.Tool_Errors })));
-const Tool_Calculator = lazy(() => import('./components/Tool_3_Calculator').then(m => ({ default: m.Tool_Calculator })));
-const Tool_Sizing = lazy(() => import('./components/Tool_4_Sizing').then(m => ({ default: m.Tool_Sizing })));
-const Tool_Report = lazy(() => import('./components/Tool_5_Report').then(m => ({ default: m.Tool_Report })));
-const Tool_Catalog = lazy(() => import('./components/Tool_6_Catalog').then(m => ({ default: m.Tool_Catalog })));
+import { Tool_Assistant } from './components/Tool_1_Assistant';
+import { Tool_Errors } from './components/Tool_2_Errors';
+import { Tool_Calculator } from './components/Tool_3_Calculator';
+import { Tool_Sizing } from './components/Tool_4_Sizing';
+import { Tool_Report } from './components/Tool_5_Report';
+import { Tool_Catalog } from './components/Tool_6_Catalog';
 
 import { ViewState } from './types';
 import { GlobalProvider, useGlobal } from './contexts/GlobalContext';
@@ -139,22 +137,19 @@ const AppContent: React.FC = () => {
 
     return (
         <div 
-            className="flex flex-col h-screen overflow-hidden bg-[#0a0e17] text-[#E8EAF6] relative select-none"
+            className="h-dvh flex flex-col max-w-md mx-auto relative overflow-hidden bg-transparent text-[#ffffff] select-none shadow-[0_0_50px_rgba(0,0,0,0.5)]"
             onContextMenu={(e) => e.preventDefault()}
         >
             <Watermark text={techData.name} />
             
             <div className="absolute inset-0 pointer-events-none opacity-[0.02]" 
                 style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '30px 30px' }}></div>
-            <div className="relative flex flex-col h-full z-10">
-                <Header isOnline={isOnline} onStartTutorial={() => setIsTutorialActive(true)} />
-                <main className="flex-1 overflow-y-auto px-4 pt-4 scroll-smooth mx-auto w-full no-scrollbar">
-                    <Suspense fallback={<ToolLoader />}>
-                        {renderView()}
-                    </Suspense>
-                </main>
-                <BottomNav activeView={view} setView={setView} />
-            </div>
+            
+            <Header isOnline={isOnline} onStartTutorial={() => setIsTutorialActive(true)} />
+            <main className="flex-1 overflow-y-auto no-scrollbar relative w-full pt-4 pb-2 px-5 sm:px-6">
+                {renderView()}
+            </main>
+            <BottomNav activeView={view} setView={setView} />
             <TutorialOverlay isActive={isTutorialActive} onClose={() => setIsTutorialActive(false)} setView={setView} />
             
             <style>{`

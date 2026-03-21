@@ -35,7 +35,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[#050912] relative overflow-hidden">
+        <div className="h-dvh flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden max-w-md mx-auto">
             
             <div className="absolute inset-0 pointer-events-none opacity-[0.03]" 
                 style={{ 
@@ -64,7 +64,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                     </div>
                 </div>
 
-                <Card className={`border-t-4 border-t-[#E8EAF6]/20 !bg-[#111827] ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
+                <Card className={`border-t-4 border-t-[#00d9ff]/50 ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
                     <div className="mb-6 text-center">
                         <h2 className="text-[#E8EAF6] font-bold text-sm uppercase tracking-wide mb-1">Autenticação</h2>
                         <p className="text-[10px] text-[#E8EAF6]/60">
@@ -82,7 +82,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                     setName(e.target.value.toUpperCase());
                                     setError(false);
                                 }}
-                                className={`!bg-[#050912] text-center tracking-widest font-bold text-xs !py-3 transition-all duration-300 ${error && !name ? '!border-red-600' : 'focus:!border-[#00E5FF]'}`}
+                                className={`text-center tracking-widest font-bold text-xs !py-3 transition-all duration-300 ${error && !name ? '!border-red-600' : ''}`}
                             />
                             
                             <Input 
@@ -94,7 +94,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                                     setError(false);
                                 }}
                                 onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                                className={`!bg-[#050912] text-center tracking-widest font-mono text-lg !py-4 transition-all duration-300 ${error && password ? '!border-red-600 !text-red-500 placeholder-red-900/50' : 'focus:!border-[#00E5FF]'}`}
+                                className={`text-center tracking-widest font-mono text-lg !py-4 transition-all duration-300 ${error && password ? '!border-red-600 !text-red-500 placeholder-red-900/50' : ''}`}
                             />
                         </div>
 

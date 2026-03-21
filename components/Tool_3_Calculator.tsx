@@ -46,8 +46,8 @@ export const Tool_Calculator: React.FC = () => {
                     <option value="Sub-resfriamento">Sub-resfriamento (Alta/Líquido)</option>
                 </Select>
 
-                <div className="mb-4 p-3 rounded-lg border text-[10px] font-medium leading-relaxed flex items-start gap-2 transition-colors bg-blue-900/20 border-blue-800 text-blue-200">
-                    <i className="fa-solid fa-circle-info mt-0.5 text-xs text-blue-400"></i>
+                <div className="mb-4 p-3 rounded-lg border text-[10px] font-medium leading-relaxed flex items-start gap-2 transition-colors bg-[#2a3646]/50 border-[#4a5c73] text-[#9ca7b8]">
+                    <i className="fa-solid fa-circle-info mt-0.5 text-xs text-[#00d9ff]"></i>
                     <span>
                         {mode === 'Superaquecimento' 
                             ? "SUPER AQUECIMENTO (SH): Meça a temperatura na tubulação de sucção, a 10cm do compressor."
