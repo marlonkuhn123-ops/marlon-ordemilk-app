@@ -212,3 +212,14 @@ PROIBIDO:
 - Tela de login passou a respeitar o mesmo container mobile-first (`h-dvh`, `max-w-md`, `mx-auto`).
 - Nenhuma alteracao de logica, auth, roteamento, fluxo do assistente ou service worker.
 - Validacao: `npm.cmd run lint` = OK | `npm.cmd run build` = OK.
+
+### DIAGNOSTICO VERCEL - 2026-03-21
+- O screenshot da Vercel continua mostrando o shell largo, sem o `max-w-md mx-auto`.
+- Isso indica que a Vercel ainda nao esta servindo o build novo mobile-first.
+- Leitura objetiva: a correcao esta no workspace local, mas o deploy exibido no print ainda corresponde ao estado anterior.
+
+### LEITURA VERCEL - 2026-03-22
+- O novo screenshot mostra que o `max-w-md mx-auto` agora esta pegando no deploy: o app esta contido e centralizado.
+- O que ainda incomoda visualmente nao e mais o shell largo; agora o problema residual e a composicao desktop ao redor do app.
+- As laterais escuras do `body` continuam muito pesadas e criam o efeito de "faixa no meio", mesmo com o app corretamente contido.
+- O proximo ajuste, se desejado, e de apresentacao desktop do canvas externo, nao de layout mobile interno.

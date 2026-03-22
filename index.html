@@ -41,7 +41,7 @@
   <style>
       body { 
           font-family: 'Inter', sans-serif; 
-          background-color: #111827; /* Fundo absoluto do PC/Tablet */
+          background: radial-gradient(circle at 50% 50%, #1f2a3a 0%, #0a0e14 100%);
           margin: 0;
           height: 100vh;
           height: 100dvh;
@@ -50,6 +50,15 @@
           justify-content: center;
           overflow: hidden;
           -webkit-tap-highlight-color: transparent; 
+      }
+      body::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image: linear-gradient(rgba(0,217,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,217,255,0.03) 1px, transparent 1px);
+          background-size: 50px 50px;
+          pointer-events: none;
+          z-index: 0;
       }
       #root {
           width: 100%;
