@@ -234,3 +234,9 @@ PROIBIDO:
 - `App.tsx` teve a contencao `max-w-md mx-auto` removida do shell principal.
 - `h-dvh`, `flex-1`, `min-h-0` e `overflow-y-auto` permanecem, mas sem limitar a largura do app.
 - Validacao apos ajuste: `npm.cmd run lint` = OK | `npm.cmd run build` = OK.
+
+### CORRECAO DAS FAIXAS ESCURAS - 2026-03-22T06:43:22-03:00
+- Faixas pretas/horizontais em cima e embaixo vinham do wrapper do `Header` e da `BottomNav` em `components/Estrutura.tsx`.
+- Removidos apenas: `bg`, `border` e `backdrop-blur` do `header` e do `nav` externos.
+- O shell interno, botoes, capsulas e logica permanecem intactos.
+- Validacao apos correcao: `npm.cmd run lint` = OK | `npm.cmd run build` = OK.

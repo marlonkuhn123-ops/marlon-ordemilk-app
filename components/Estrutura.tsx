@@ -13,7 +13,7 @@ export const Header: React.FC<{ isOnline: boolean; onStartTutorial: () => void }
     };
 
     return (
-        <header className="shrink-0 pt-safe px-5 sm:px-6 z-30 relative w-full border-b border-[#2a3646]/30 bg-[#263243]/95 backdrop-blur-md">
+        <header className="shrink-0 pt-safe px-5 sm:px-6 z-30 relative w-full">
             <div className="w-full pt-3 pb-3">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -93,7 +93,7 @@ const NavItem: React.FC<NavItemProps> = ({ id, icon, label, isActive, onClick })
 
 export const BottomNav: React.FC<{ activeView: ViewState; setView: (view: ViewState) => void }> = ({ activeView, setView }) => {
     return (
-        <nav className="shrink-0 pb-safe pt-2 px-4 sm:px-5 w-full bg-[#263243]/95 backdrop-blur-md border-t border-[#4a5c73]/50">
+        <nav className="shrink-0 pb-safe pt-2 px-4 sm:px-5 w-full">
             <div className="flex justify-between items-start w-full gap-1 mb-2">
                 <NavItem id={ViewState.DIAGNOSTIC} icon="fa-solid fa-headset" label="Suporte" isActive={activeView === ViewState.DIAGNOSTIC} onClick={setView} />
                 <NavItem id={ViewState.ERRORS} icon="fa-solid fa-triangle-exclamation" label="Erros" isActive={activeView === ViewState.ERRORS} onClick={setView} />
