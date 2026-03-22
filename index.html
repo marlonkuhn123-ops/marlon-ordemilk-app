@@ -41,11 +41,25 @@
   <style>
       body { 
           font-family: 'Inter', sans-serif; 
-          color: #ffffff; 
-          overflow: hidden; 
-          background-image: linear-gradient(to bottom, #263243, #758498, #e4e9f0);
-          background-attachment: fixed; 
+          background-color: #111827; /* Fundo absoluto do PC/Tablet */
+          margin: 0;
+          height: 100vh;
+          height: 100dvh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
           -webkit-tap-highlight-color: transparent; 
+      }
+      #root {
+          width: 100%;
+          max-width: 448px;
+          height: 100%;
+          background-image: linear-gradient(to bottom, #263243, #758498, #e4e9f0);
+          position: relative;
+          box-shadow: 0 0 50px rgba(0,0,0,0.5);
+          overflow: hidden;
+          color: #ffffff;
       }
       h1, h2, h3, h4, h5, h6, .font-heading { font-family: 'Space Grotesk', sans-serif; }
       ::-webkit-scrollbar { width: 0px; display: none; }

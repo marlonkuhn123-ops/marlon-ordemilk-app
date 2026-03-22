@@ -192,3 +192,9 @@ PROIBIDO:
 - Nunca usar `h-screen` (usar `h-dvh`)
 - Nunca deixar conteudo vazar fora da tela
 - Nunca fazer scroll horizontal
+
+### LEITURA VERCEL - 2026-03-21
+- Screenshot do deploy mostra que o shell visual esta funcional, mas ainda nao respeita totalmente a regra `max-w-md mx-auto`.
+- Header, card de acesso restrito e bottom nav estao esticando/alinhando como tela larga, em vez de parecer um app mobile contido.
+- O principal desvio visual em producao e de composicao/layout, nao de logica: falta o container mobile centralizado com largura maxima fixa.
+- A regra Mobile First da sala passa a ser obrigatoria tambem para o deploy da Vercel, nao apenas para localhost.
