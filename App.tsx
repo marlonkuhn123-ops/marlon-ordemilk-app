@@ -38,10 +38,10 @@ const PasswordPrompt = ({ type, label, onUnlock }: { type: 'sizing' | 'catalog',
                 </div>
                 <h2 className="text-center text-lg font-bold mb-2 italic">ACESSO RESTRITO</h2>
                 <p className="text-center text-[10px] text-gray-400 mb-6 uppercase tracking-[0.3em] font-black">{label}</p>
-                
+
                 <div className="space-y-4">
-                    <input 
-                        type="password" 
+                    <input
+                        type="password"
                         value={pass}
                         onChange={(e) => { setPass(e.target.value); setError(false); }}
                         placeholder="Digite a senha de acesso"
@@ -49,7 +49,7 @@ const PasswordPrompt = ({ type, label, onUnlock }: { type: 'sizing' | 'catalog',
                         onKeyDown={(e) => e.key === 'Enter' && !onUnlock(pass, type) && setError(true)}
                     />
                     {error && <p className="text-red-500 text-[10px] text-center font-bold uppercase tracking-tighter animate-bounce">Senha Incorreta</p>}
-                    <button 
+                    <button
                         onClick={() => !onUnlock(pass, type) && setError(true)}
                         className="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-bold py-3 rounded-xl transition-all active:scale-95 uppercase text-xs tracking-widest italic shadow-[0_0_15px_rgba(249,115,22,0.3)]"
                     >
@@ -77,7 +77,7 @@ const AppContent: React.FC = () => {
                 const loginDate = new Date(parseInt(authTime));
                 const now = new Date();
                 const diffHours = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
-                
+
                 // Sessão expira em 8 horas
                 if (diffHours < 8) {
                     setIsAuthenticated(true);
@@ -136,22 +136,22 @@ const AppContent: React.FC = () => {
     };
 
     return (
-        <div 
-            className="h-dvh w-full max-w-md mx-auto flex flex-col relative overflow-hidden bg-transparent text-[#ffffff] select-none"
+        <div
+            className="h-dvh w-full flex flex-col relative overflow-hidden bg-transparent text-[#ffffff] select-none"
             onContextMenu={(e) => e.preventDefault()}
         >
             <Watermark text={techData.name} />
-            
-            <div className="absolute inset-0 pointer-events-none opacity-[0.02]" 
+
+            <div className="absolute inset-0 pointer-events-none opacity-[0.02]"
                 style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '30px 30px' }}></div>
-            
+
             <Header isOnline={isOnline} onStartTutorial={() => setIsTutorialActive(true)} />
             <main className="flex-1 min-h-0 overflow-y-auto no-scrollbar relative w-full pt-4 pb-2 px-5 sm:px-6">
                 {renderView()}
             </main>
             <BottomNav activeView={view} setView={setView} />
             <TutorialOverlay isActive={isTutorialActive} onClose={() => setIsTutorialActive(false)} setView={setView} />
-            
+
             <style>{`
                 * {
                     -webkit-user-select: none;
@@ -172,10 +172,10 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-    const isProductionEnv = typeof window !== 'undefined' && 
-        !window.location.hostname.includes('localhost') && 
+    const isProductionEnv = typeof window !== 'undefined' &&
+        !window.location.hostname.includes('localhost') &&
         !window.location.hostname.includes('run.app');
-    
+
     return (
         <GlobalProvider>
             <AppContent />

@@ -47,15 +47,13 @@ export const Header: React.FC<{ isOnline: boolean; onStartTutorial: () => void }
 
                         <button
                             onClick={handleCheckIntegrity}
-                            className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all relative shadow-[0_0_10px_rgba(0,217,255,0.35)] shrink-0 ${
-                                isOnline ? 'bg-[#00d9ff] text-white' : 'bg-red-500 text-white'
-                            }`}
+                            className={`w-[32px] h-[32px] rounded-full flex items-center justify-center transition-all relative shadow-[0_0_10px_rgba(0,217,255,0.35)] shrink-0 ${isOnline ? 'bg-[#00d9ff] text-white' : 'bg-red-500 text-white'
+                                }`}
                             aria-label="Status do sistema"
                         >
                             <span className="text-[9px] font-black leading-none">{isOnline ? 'ON' : 'OFF'}</span>
-                            <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#263243] ${
-                                isOnline ? 'bg-[#00ff88]' : 'bg-red-200'
-                            }`}></span>
+                            <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#263243] ${isOnline ? 'bg-[#00ff88]' : 'bg-red-200'
+                                }`}></span>
                         </button>
                     </div>
                 </div>
@@ -79,11 +77,10 @@ const NavItem: React.FC<NavItemProps> = ({ id, icon, label, isActive, onClick })
             className="relative flex flex-col items-center justify-center transition-all duration-300 gap-1 group flex-1 min-w-[52px]"
         >
             <div
-                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-300 relative border ${
-                    isActive
+                className={`w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-300 relative border ${isActive
                         ? 'bg-[#ff6600] border-[#ff8833] text-white shadow-[0_0_20px_rgba(255,102,0,0.35)]'
                         : 'bg-[#43556c] border-[#536882] text-white/90 hover:bg-[#4f647d]'
-                }`}
+                    }`}
             >
                 <i className={`${icon} text-[17px] transition-transform duration-300 ${isActive ? 'scale-100' : 'group-hover:scale-105'}`}></i>
             </div>

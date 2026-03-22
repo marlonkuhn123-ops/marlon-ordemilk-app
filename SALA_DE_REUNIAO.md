@@ -223,3 +223,14 @@ PROIBIDO:
 - O que ainda incomoda visualmente nao e mais o shell largo; agora o problema residual e a composicao desktop ao redor do app.
 - As laterais escuras do `body` continuam muito pesadas e criam o efeito de "faixa no meio", mesmo com o app corretamente contido.
 - O proximo ajuste, se desejado, e de apresentacao desktop do canvas externo, nao de layout mobile interno.
+
+### LEITURA DESKTOP LOCAL - 2026-03-22
+- O screenshot mais recente confirma que o shell mobile interno esta correto: app centralizado, largura contida e estrutura `header / conteudo / nav` respeitada.
+- O problema restante e de apresentacao em tela grande: as colunas laterais escuras com grade estao fortes demais e chamam mais atencao que o app.
+- A composicao atual ja nao parece "quebrada"; ela apenas ainda nao esta refinada no canvas desktop externo.
+
+### CORRECAO DE ALVO VISUAL - 2026-03-22T00:24:47-03:00
+- USER corrigiu o alvo visual: o shell correto e o canvas largo do print, nao o app encaixotado em `max-w-md`.
+- `App.tsx` teve a contencao `max-w-md mx-auto` removida do shell principal.
+- `h-dvh`, `flex-1`, `min-h-0` e `overflow-y-auto` permanecem, mas sem limitar a largura do app.
+- Validacao apos ajuste: `npm.cmd run lint` = OK | `npm.cmd run build` = OK.
