@@ -35,7 +35,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     };
 
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden">
+        <div className="h-dvh w-full max-w-md mx-auto flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden">
             
             <div className="absolute inset-0 pointer-events-none opacity-[0.03]" 
                 style={{ 

@@ -137,7 +137,7 @@ const AppContent: React.FC = () => {
 
     return (
         <div 
-            className="w-full h-full flex flex-col relative overflow-hidden bg-transparent text-[#ffffff] select-none"
+            className="h-dvh w-full max-w-md mx-auto flex flex-col relative overflow-hidden bg-transparent text-[#ffffff] select-none"
             onContextMenu={(e) => e.preventDefault()}
         >
             <Watermark text={techData.name} />
@@ -146,7 +146,7 @@ const AppContent: React.FC = () => {
                 style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '30px 30px' }}></div>
             
             <Header isOnline={isOnline} onStartTutorial={() => setIsTutorialActive(true)} />
-            <main className="flex-1 overflow-y-auto no-scrollbar relative w-full pt-4 pb-2 px-5 sm:px-6">
+            <main className="flex-1 min-h-0 overflow-y-auto no-scrollbar relative w-full pt-4 pb-2 px-5 sm:px-6">
                 {renderView()}
             </main>
             <BottomNav activeView={view} setView={setView} />

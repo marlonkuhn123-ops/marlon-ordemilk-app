@@ -198,3 +198,17 @@ PROIBIDO:
 - Header, card de acesso restrito e bottom nav estao esticando/alinhando como tela larga, em vez de parecer um app mobile contido.
 - O principal desvio visual em producao e de composicao/layout, nao de logica: falta o container mobile centralizado com largura maxima fixa.
 - A regra Mobile First da sala passa a ser obrigatoria tambem para o deploy da Vercel, nao apenas para localhost.
+
+### BLOQUEIO OPERACIONAL - 2026-03-21T21:07:45-03:00
+- USER autorizou explicitamente o CODEX a corrigir o shell mobile-first com calma.
+- Escopo autorizado: somente container mobile-first e contencao de largura no deploy.
+- Arquivos bloqueados para esta execucao: `App.tsx`, `components/LoginScreen.tsx`.
+- Regra ativa: nao tocar em logica, auth, service worker, fluxo do chat, roteamento ou integracao Gemini.
+
+### CORRECAO MOBILE-FIRST - 2026-03-21T21:08:38-03:00
+- Ajuste minimo aplicado em `App.tsx` e `components/LoginScreen.tsx`.
+- Shell principal agora usa `h-dvh w-full max-w-md mx-auto`.
+- Area central principal agora usa `flex-1 min-h-0 overflow-y-auto`, reforcando scroll apenas no conteudo.
+- Tela de login passou a respeitar o mesmo container mobile-first (`h-dvh`, `max-w-md`, `mx-auto`).
+- Nenhuma alteracao de logica, auth, roteamento, fluxo do assistente ou service worker.
+- Validacao: `npm.cmd run lint` = OK | `npm.cmd run build` = OK.
