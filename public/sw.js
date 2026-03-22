@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ordemilk-tech-v51-mobile-lock';
+const CACHE_NAME = 'ordemilk-tech-v51-fluid-desktop';
 const ASSETS = [
     '/',
     '/index.html',
