@@ -13,7 +13,7 @@ export const Header: React.FC<{ isOnline: boolean; onStartTutorial: () => void }
     };
 
     return (
-        <header className="shrink-0 pt-safe px-5 sm:px-6 z-30 relative w-full border-b border-[#2a3646]/30 bg-[#263243]/90 backdrop-blur-md">
+        <header className="shrink-0 pt-safe px-5 sm:px-6 z-30 relative w-full border-b border-[#2a3646]/30 bg-[#263243]/95 backdrop-blur-md">
             <div className="w-full pt-3 pb-3">
                 <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
