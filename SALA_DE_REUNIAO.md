@@ -7,12 +7,12 @@
 
 ## STATUS DE OPERACAO EM TEMPO REAL
 - **Arquivo em edicao agora:** `Nenhum`
-- **Responsavel atual:** `USER - Validacao da nova cadencia da IA`
+- **Responsavel atual:** `USER - Deploy para GitHub`
 - **Arquivos bloqueados:** `Nenhum`
-- **Ultimo State Sincronizado do Worktree:** ETAPA 5 (MOBILE FIRST RIGOROSO). A engenharia mecânica do HTML virou puramente focada em iPhone/Android. O Root agora trava no Mobile Clássico (`max-w-md` = 448px de tala). O pulo ou bug de teclado não existe mais, pois a root fixou 100% no Viewport do hardware (`h-dvh` inviolável) enquanto Header/Nav foram jogados em encapsulamento HTML5 (`shrink-0`). Nenhum Input ou Select trará zoom automático parasita da Apple (`text-[16px]`), e todos os botões do Assistente receberam calços `>=44x44`. Tudo buildou liso (1 arquivo JS único monolítico). 
-- **Proxima acao autorizada:** USER validar em conversa real se a primeira resposta da IA ficou mais curta sem perder qualidade tecnica.
+- **Ultimo State Sincronizado do Worktree:** Rollback validado com sucesso pelo USER. IA operando 100% na versão original. Código pronto para envio ao repositório remoto.
+- **Proxima acao autorizada:** USER executar comandos do Git para push. A Vercel assumirá o deploy automaticamente.
 - **Pode editar sem pedir?** SIM
-- **Build atual:** OK (Build gerado e atualizado minificado no bundle final).
+- **Build atual:** OK.
 
 ---
 
