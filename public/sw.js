@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ordemilk-tech-v51-ai-router';
+const CACHE_NAME = 'ordemilk-tech-v51-menu-gaveta';
 const ASSETS = [
     '/',
     '/index.html',
