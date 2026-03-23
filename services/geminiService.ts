@@ -31,6 +31,11 @@ interface DiagnosticMemory {
   compressorStatus: 'sim' | 'nao' | 'desconhecido';
 }
 
+interface ResponseStrategy {
+  cadenceInstruction: string;
+  maxOutputTokens: number;
+}
+
 const ELECTRICAL_KEYWORDS = [
   "ELETRICA", "ESQUEMA", "FIO", "BORNE", "LIGACAO", "DISJUNTOR", "CONTATORA",
   "CABO", "TENSAO", "VOLT", "AMPER", "CORRENTE", "TRIFASICO", "MONOFASICO",
@@ -78,10 +83,10 @@ const handleApiError = (error: any) => {
   const msg = error?.message || "";
 
   if (msg.includes("429") || msg.toLowerCase().includes("quota")) {
-    return "LIMITE DE USO EXCEDIDO: O sistema atingiu o limite de consultas. Aguarde 60 segundos.";
+    return "\u26A0\uFE0F LIMITE DE USO EXCEDIDO: O sistema atingiu o limite de consultas. Aguarde 60 segundos.";
   }
 
-  return `ERRO DE CONEXAO: ${error?.message || "Verifique internet e chave de API."}`;
+  return `\u26A0\uFE0F ERRO DE CONEX\u00C3O: ${error?.message || "Verifique internet e chave de API."}`;
 };
 
 const normalizeText = (value: string) =>
@@ -193,6 +198,11 @@ const buildMemorySection = (memory: DiagnosticMemory) => {
   return `\n\n[MEMORIA TECNICA ESTRUTURADA DA CONVERSA]\n${lines.join('\n')}`;
 };
 
+const getMissingFieldsForRoute = (route: RouteCategory, memory: DiagnosticMemory) => {
+  const requiredFields = REQUIRED_FIELDS_BY_ROUTE[route] || [];
+  return requiredFields.filter(field => !hasRequiredField(field, memory));
+};
+
 const hasRequiredField = (field: string, memory: DiagnosticMemory) => {
   const normalized = normalizeText(field);
 
@@ -213,8 +223,7 @@ const hasRequiredField = (field: string, memory: DiagnosticMemory) => {
 };
 
 const buildClarificationSection = (route: RouteCategory, memory: DiagnosticMemory) => {
-  const requiredFields = REQUIRED_FIELDS_BY_ROUTE[route] || [];
-  const missingFields = requiredFields.filter(field => !hasRequiredField(field, memory));
+  const missingFields = getMissingFieldsForRoute(route, memory);
 
   if (missingFields.length === 0) {
     return `\n\n[CHECKLIST DE CONTEXTO]\nOs dados criticos principais desta rota ja foram parcialmente informados. Se ainda houver ambiguidade tecnica, faca no maximo 1 ou 2 perguntas de confirmacao antes de concluir.`;
@@ -236,6 +245,52 @@ const getRouteInstruction = (route: RouteCategory) => {
   };
 
   return `\n\n${instructions[route]}`;
+};
+
+const getResponseStrategy = (
+  route: RouteCategory,
+  memory: DiagnosticMemory,
+  toolType: PromptTool
+): ResponseStrategy => {
+  const missingFields = getMissingFieldsForRoute(route, memory);
+  const shouldUseShortTriage = toolType !== 'REPORT' && missingFields.length > 0;
+
+  if (shouldUseShortTriage) {
+    return {
+      cadenceInstruction: `
+[CADENCIA DE RESPOSTA OBRIGATORIA]
+Como ainda faltam dados criticos, a PRIMEIRA resposta deve ser curta, pratica e operacional.
+Formato obrigatorio desta primeira resposta:
+1. Informe apenas 1 causa provavel em 1 ou 2 frases curtas.
+2. Faca no maximo 3 perguntas objetivas e numeradas.
+3. Inclua 1 alerta de seguranca curto se houver risco.
+4. Nao entregue lista longa de causas, aula tecnica ou passo a passo completo agora.
+5. A analise completa so deve vir depois que o tecnico responder as perguntas ou pedir aprofundamento.
+6. Entregue a resposta completa, sem cortar frase no meio.
+7. Limite de tamanho: resposta curta, direta e de leitura rapida em campo.
+      `.trim(),
+      maxOutputTokens: 520
+    };
+  }
+
+  if (toolType === 'REPORT') {
+    return {
+      cadenceInstruction: `
+[CADENCIA DE RESPOSTA]
+Entregue resposta completa, mas ainda priorize clareza e blocos curtos.
+      `.trim(),
+      maxOutputTokens: 1200
+    };
+  }
+
+  return {
+    cadenceInstruction: `
+[CADENCIA DE RESPOSTA]
+Mesmo com contexto suficiente, priorize conclusao pratica primeiro e detalhe tecnico depois.
+Evite blocos excessivamente longos quando uma resposta mais objetiva resolver.
+    `.trim(),
+    maxOutputTokens: 900
+  };
 };
 
 const getModeInstruction = (mode: AiMode) => {
@@ -298,6 +353,7 @@ const getFullSystemInstruction = async (
   const memorySection = buildMemorySection(memory);
   const clarificationSection = buildClarificationSection(route, memory);
   const routeInstruction = getRouteInstruction(route);
+  const responseStrategy = getResponseStrategy(route, memory, toolType);
   const { includeFaq, includeKnowledgeBase } = getReferencePackages(route);
 
   const faqContext = includeFaq
@@ -318,7 +374,7 @@ const getFullSystemInstruction = async (
 6. PERSONA PRESERVADA: Mantenha exatamente o mesmo tom tecnico e a mesma personalidade do assistente atual. Nao altere o estilo de fala.
 `;
 
-  return [
+  const systemInstruction = [
     SYSTEM_PROMPT_BASE,
     TECHNICAL_CONTEXT,
     brandManual,
@@ -328,6 +384,7 @@ const getFullSystemInstruction = async (
     structuredKnowledge,
     memorySection,
     routeInstruction,
+    responseStrategy.cadenceInstruction,
     clarificationSection,
     diagnosticGuidance,
     toolPrompt,
@@ -337,6 +394,11 @@ const getFullSystemInstruction = async (
     .join("\n\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  return {
+    systemInstruction,
+    maxOutputTokens: responseStrategy.maxOutputTokens
+  };
 };
 
 export const generateTechResponse = async (
@@ -348,13 +410,14 @@ export const generateTechResponse = async (
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    const systemInstruction = await getFullSystemInstruction(toolType, userPrompt);
+    const { systemInstruction, maxOutputTokens } = await getFullSystemInstruction(toolType, userPrompt);
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: userPrompt,
       config: {
         systemInstruction,
         temperature: 0.1,
+        maxOutputTokens,
       },
     });
 
@@ -386,13 +449,14 @@ export const generateChatResponseStream = async (
       .map(item => item.parts.map((part: any) => (typeof part?.text === 'string' ? part.text : '')).filter(Boolean).join(' '))
       .join(' ');
 
-    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode);
+    const { systemInstruction, maxOutputTokens } = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode);
     const responseStream = await ai.models.generateContentStream({
       model: 'gemini-3-flash-preview',
       contents,
       config: {
         systemInstruction,
         temperature: 0.2,
+        maxOutputTokens,
       }
     });
 

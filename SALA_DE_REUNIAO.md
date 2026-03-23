@@ -1,16 +1,16 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-03-22T15:41:25-03:00
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-03-23T11:04:05-03:00
 
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
 - **Arquivo em edicao agora:** `Nenhum`
-- **Responsavel atual:** `USER - Validacao da IA`
+- **Responsavel atual:** `USER - Validacao da nova cadencia da IA`
 - **Arquivos bloqueados:** `Nenhum`
 - **Ultimo State Sincronizado do Worktree:** ETAPA 5 (MOBILE FIRST RIGOROSO). A engenharia mecânica do HTML virou puramente focada em iPhone/Android. O Root agora trava no Mobile Clássico (`max-w-md` = 448px de tala). O pulo ou bug de teclado não existe mais, pois a root fixou 100% no Viewport do hardware (`h-dvh` inviolável) enquanto Header/Nav foram jogados em encapsulamento HTML5 (`shrink-0`). Nenhum Input ou Select trará zoom automático parasita da Apple (`text-[16px]`), e todos os botões do Assistente receberam calços `>=44x44`. Tudo buildou liso (1 arquivo JS único monolítico). 
-- **Proxima acao autorizada:** Aplicar roteador de contexto e memoria estruturada na IA, sem mudar persona, tom de voz ou copy base.
+- **Proxima acao autorizada:** USER validar em conversa real se a primeira resposta da IA ficou mais curta sem perder qualidade tecnica.
 - **Pode editar sem pedir?** SIM
 - **Build atual:** OK (Build gerado e atualizado minificado no bundle final).
 
@@ -339,3 +339,44 @@ PROIBIDO:
   - Fala normal da IA: preservada.
   - Persona em fluxo normal: preservada.
   - Persona em mensagem de erro da API: alterada em pequeno grau.
+
+### LEITURA DE UX DA IA - 2026-03-23T10:52:31-03:00
+- Pelos prints mais recentes, o diagnostico esta tecnicamente correto e bem estruturado.
+- O problema atual nao e qualidade tecnica; e densidade excessiva de informacao logo na primeira resposta.
+- A IA esta "guspindo" contexto demais de uma vez, o que pode cansar o tecnico no campo e atrasar a acao pratica.
+- Direcao recomendada para proxima iteracao:
+  1. Primeira resposta mais curta, com: `causa provavel + 2 ou 3 perguntas criticas + 1 alerta de seguranca`.
+  2. So depois, se o tecnico responder, abrir a analise completa com `causas possiveis + ordem de verificacao + detalhes tecnicos`.
+  3. Priorizar leitura de campo: menos bloco corrido, mais etapas curtas e decisivas.
+- Resumo operacional: diagnostico bom, verbosidade ainda alta demais para uso rapido em atendimento real.
+
+### EXECUCAO CODEX - CADENCIA DA IA - 2026-03-23T11:04:05-03:00
+- Arquivo alterado: `services/geminiService.ts`.
+- Mudanca aplicada:
+  1. Quando ainda faltam dados criticos da rota, a primeira resposta agora e obrigada a ser curta e operacional.
+  2. A primeira resposta passa a priorizar: `1 causa provavel + ate 3 perguntas objetivas + 1 alerta de seguranca curto`.
+  3. A analise completa fica para depois, quando o tecnico responder ou pedir aprofundamento.
+  4. Quando ja houver contexto suficiente, a IA continua podendo aprofundar, mas com prioridade para conclusao pratica primeiro.
+- Protecoes mantidas:
+  - `SYSTEM_PROMPT_BASE` intacto.
+  - `TECHNICAL_CONTEXT` intacto.
+  - Nenhuma alteracao em UI, chat, auth, build, service worker ou componentes visuais.
+  - Persona e tom de voz preservados.
+- Ajuste adicional:
+  - Mensagens de erro da API restauradas para o baseline com o aviso `⚠️`, reduzindo o desvio anterior de persona em estado de erro.
+- Validacao:
+  - `npm run lint` = OK
+  - `npm run build` = OK
+
+### AJUSTE DE SEGURANCA NA CADENCIA - 2026-03-23T11:10:22-03:00
+- Problema observado pelo USER: a IA respondeu curta demais e aparentemente cortou a frase no meio.
+- Causa mais provavel: o teto de saida da resposta curta ficou agressivo demais.
+- Correcao aplicada em `services/geminiService.ts`:
+  1. Aumentado o `maxOutputTokens` da resposta curta.
+  2. Aumentado o teto das respostas completas.
+  3. Adicionada instrucao explicita para nao cortar frase no meio.
+- O objetivo permanece o mesmo: primeira resposta curta, mas completa e operacional.
+- Persona, tom de voz e cerebro base permanecem preservados.
+- Validacao apos ajuste:
+  - `npm run lint` = OK
+  - `npm run build` = OK

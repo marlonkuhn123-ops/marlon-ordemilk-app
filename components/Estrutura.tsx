@@ -68,9 +68,10 @@ interface NavItemProps {
     label: string;
     isActive: boolean;
     onClick: (id: ViewState) => void;
+    isDarkBg?: boolean;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ id, icon, label, isActive, onClick }) => {
+const NavItem: React.FC<NavItemProps> = ({ id, icon, label, isActive, onClick, isDarkBg = false }) => {
     return (
         <button
             onClick={() => onClick(id)}
@@ -84,7 +85,7 @@ const NavItem: React.FC<NavItemProps> = ({ id, icon, label, isActive, onClick })
             >
                 <i className={`${icon} text-[17px] transition-transform duration-300 ${isActive ? 'scale-100' : 'group-hover:scale-105'}`}></i>
             </div>
-            <span className="text-[9px] font-black uppercase tracking-[0.18em] text-center leading-none transition-all duration-300 font-heading text-[#1a202c]">
+            <span className={`text-[9px] font-black uppercase tracking-[0.18em] text-center leading-none transition-all duration-300 font-heading ${isDarkBg ? 'text-white/90' : 'text-[#1a202c]'}`}>
                 {label}
             </span>
         </button>
@@ -92,16 +93,42 @@ const NavItem: React.FC<NavItemProps> = ({ id, icon, label, isActive, onClick })
 };
 
 export const BottomNav: React.FC<{ activeView: ViewState; setView: (view: ViewState) => void }> = ({ activeView, setView }) => {
+    const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
     return (
-        <nav className="shrink-0 pb-safe pt-2 px-4 sm:px-5 w-full">
-            <div className="flex justify-between items-start w-full gap-1 mb-2">
-                <NavItem id={ViewState.DIAGNOSTIC} icon="fa-solid fa-headset" label="Suporte" isActive={activeView === ViewState.DIAGNOSTIC} onClick={setView} />
-                <NavItem id={ViewState.ERRORS} icon="fa-solid fa-triangle-exclamation" label="Erros" isActive={activeView === ViewState.ERRORS} onClick={setView} />
-                <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="Superaq." isActive={activeView === ViewState.CALCULATOR} onClick={setView} />
-                <NavItem id={ViewState.SIZING} icon="fa-solid fa-ruler-combined" label="Dimens." isActive={activeView === ViewState.SIZING} onClick={setView} />
-                <NavItem id={ViewState.REPORT} icon="fa-solid fa-file-signature" label="Serviços" isActive={activeView === ViewState.REPORT} onClick={setView} />
-                <NavItem id={ViewState.TECH_DATA} icon="fa-solid fa-boxes-stacked" label="Dados" isActive={activeView === ViewState.TECH_DATA} onClick={setView} />
-            </div>
-        </nav>
+        <>
+            {isMenuOpen && (
+                <div className="absolute bottom-[90px] right-4 z-40 animate-fadeIn" style={{ animationDuration: '0.2s' }}>
+                    <div className="bg-[#1f2a3a] border border-[#f97316]/50 rounded-2xl p-4 shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col gap-3 min-w-[150px]">
+                        <div className="text-center text-[10px] text-[#ff6600] font-black mb-1 tracking-[0.2em] uppercase">Módulos Extras</div>
+                        <div className="bg-[#4a5c73]/20 h-[1px] w-full mb-1"></div>
+                        <div className="flex gap-4 justify-around">
+                            <NavItem id={ViewState.SIZING} icon="fa-solid fa-ruler-combined" label="Dimens." isActive={activeView === ViewState.SIZING} onClick={(v) => { setView(v); setIsMenuOpen(false); }} isDarkBg={true} />
+                            <NavItem id={ViewState.TECH_DATA} icon="fa-solid fa-boxes-stacked" label="Dados" isActive={activeView === ViewState.TECH_DATA} onClick={(v) => { setView(v); setIsMenuOpen(false); }} isDarkBg={true} />
+                        </div>
+                    </div>
+                </div>
+            )}
+            <nav className="shrink-0 pb-safe pt-2 px-4 sm:px-5 w-full relative z-50">
+                <div className="flex justify-between items-start w-full gap-1 mb-2">
+                    <NavItem id={ViewState.DIAGNOSTIC} icon="fa-solid fa-headset" label="Suporte" isActive={activeView === ViewState.DIAGNOSTIC} onClick={(v) => { setView(v); setIsMenuOpen(false); }} />
+                    <NavItem id={ViewState.ERRORS} icon="fa-solid fa-triangle-exclamation" label="Erros" isActive={activeView === ViewState.ERRORS} onClick={(v) => { setView(v); setIsMenuOpen(false); }} />
+                    <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="Superaq." isActive={activeView === ViewState.CALCULATOR} onClick={(v) => { setView(v); setIsMenuOpen(false); }} />
+                    <NavItem id={ViewState.REPORT} icon="fa-solid fa-file-signature" label="Serviços" isActive={activeView === ViewState.REPORT} onClick={(v) => { setView(v); setIsMenuOpen(false); }} />
+                    
+                    <button 
+                        onClick={() => setIsMenuOpen(!isMenuOpen)}
+                        className="relative flex flex-col items-center justify-center transition-all duration-300 gap-1 group flex-1 min-w-[52px]"
+                    >
+                        <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-[14px] flex items-center justify-center transition-all duration-300 relative border ${isMenuOpen ? 'bg-[#ff6600] border-[#ff8833] text-white shadow-[0_0_20px_rgba(255,102,0,0.35)]' : 'bg-[#43556c] border-[#536882] text-white/90 hover:bg-[#4f647d]'}`}>
+                            <i className={`text-[17px] transition-transform duration-300 fa-solid ${isMenuOpen ? 'fa-xmark scale-100' : 'fa-list-ul group-hover:scale-105'}`}></i>
+                        </div>
+                        <span className={`text-[9px] font-black uppercase tracking-[0.18em] text-center leading-none transition-all duration-300 font-heading ${isMenuOpen ? 'text-[#ff6600]' : 'text-[#1a202c]'}`}>
+                            Mais
+                        </span>
+                    </button>
+                </div>
+            </nav>
+        </>
     );
 };
