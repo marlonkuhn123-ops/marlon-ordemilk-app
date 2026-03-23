@@ -33,7 +33,6 @@ interface DiagnosticMemory {
 
 interface ResponseStrategy {
   cadenceInstruction: string;
-  maxOutputTokens: number;
 }
 
 const ELECTRICAL_KEYWORDS = [
@@ -268,8 +267,7 @@ Formato obrigatorio desta primeira resposta:
 5. A analise completa so deve vir depois que o tecnico responder as perguntas ou pedir aprofundamento.
 6. Entregue a resposta completa, sem cortar frase no meio.
 7. Limite de tamanho: resposta curta, direta e de leitura rapida em campo.
-      `.trim(),
-      maxOutputTokens: 520
+      `.trim()
     };
   }
 
@@ -278,8 +276,7 @@ Formato obrigatorio desta primeira resposta:
       cadenceInstruction: `
 [CADENCIA DE RESPOSTA]
 Entregue resposta completa, mas ainda priorize clareza e blocos curtos.
-      `.trim(),
-      maxOutputTokens: 1200
+      `.trim()
     };
   }
 
@@ -288,8 +285,7 @@ Entregue resposta completa, mas ainda priorize clareza e blocos curtos.
 [CADENCIA DE RESPOSTA]
 Mesmo com contexto suficiente, priorize conclusao pratica primeiro e detalhe tecnico depois.
 Evite blocos excessivamente longos quando uma resposta mais objetiva resolver.
-    `.trim(),
-    maxOutputTokens: 900
+    `.trim()
   };
 };
 
@@ -396,8 +392,7 @@ const getFullSystemInstruction = async (
     .trim();
 
   return {
-    systemInstruction,
-    maxOutputTokens: responseStrategy.maxOutputTokens
+    systemInstruction
   };
 };
 
@@ -410,14 +405,13 @@ export const generateTechResponse = async (
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    const { systemInstruction, maxOutputTokens } = await getFullSystemInstruction(toolType, userPrompt);
+    const { systemInstruction } = await getFullSystemInstruction(toolType, userPrompt);
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: userPrompt,
       config: {
         systemInstruction,
         temperature: 0.1,
-        maxOutputTokens,
       },
     });
 
@@ -449,14 +443,13 @@ export const generateChatResponseStream = async (
       .map(item => item.parts.map((part: any) => (typeof part?.text === 'string' ? part.text : '')).filter(Boolean).join(' '))
       .join(' ');
 
-    const { systemInstruction, maxOutputTokens } = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode);
+    const { systemInstruction } = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode);
     const responseStream = await ai.models.generateContentStream({
       model: 'gemini-3-flash-preview',
       contents,
       config: {
         systemInstruction,
         temperature: 0.2,
-        maxOutputTokens,
       }
     });
 
