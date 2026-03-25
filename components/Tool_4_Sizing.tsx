@@ -123,11 +123,11 @@ export const Tool_Sizing: React.FC = () => {
                         <i className="fa-solid fa-temperature-low text-[#FF8F00] text-xs"></i>
                         <span className="text-[9px] sm:text-[10px] font-bold text-[#E8EAF6]/80 uppercase font-heading">Parâmetros de Projeto (Danfoss)</span>
                     </div>
-                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1.5 text-[9px] sm:text-[10px] text-[#E8EAF6]/60 font-sans">
-                        <div className="flex justify-between xs:block">Evaporação (SST): <span className="text-white font-bold">-10°C</span></div>
-                        <div className="flex justify-between xs:block">Condensação (SDT): <span className="text-white font-bold">40°C</span></div>
-                        <div className="flex justify-between xs:block">Delta T (Leite): <span className="text-white font-bold">31°C</span></div>
-                        <div className="flex justify-between xs:block">Tempo Limite: <span className="text-white font-bold">3 Horas</span></div>
+                    <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-x-4 gap-y-1.5 text-[9px] sm:text-[10px] text-[#E8EAF6]/60 font-sans">
+                        <div className="flex justify-between min-[380px]:block">Evaporação (SST): <span className="text-white font-bold">-10°C</span></div>
+                        <div className="flex justify-between min-[380px]:block">Condensação (SDT): <span className="text-white font-bold">40°C</span></div>
+                        <div className="flex justify-between min-[380px]:block">Delta T (Leite): <span className="text-white font-bold">31°C</span></div>
+                        <div className="flex justify-between min-[380px]:block">Tempo Limite: <span className="text-white font-bold">3 Horas</span></div>
                     </div>
                 </div>
                 

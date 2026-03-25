@@ -1,5 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { SYSTEM_PROMPT_BASE, TOOL_PROMPTS, TECHNICAL_CONTEXT, EXTERNAL_MANUALS } from "../constants";
+import { knowledgeService } from "./knowledgeService";
+import { FAQ_DATABASE } from "../data/faq_data";
+import { KNOWLEDGE_BASE } from "../data/knowledge_base";
 import { ENV } from "../config/env";
 
 const handleApiError = (error: any) => {
@@ -24,18 +27,93 @@ const getDynamicBrandContext = (userPrompt: string) => {
   return manual;
 };
 
-const getFullSystemInstruction = (toolType: string, userPrompt: string = "", mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO') => {
+let cachedElectricalData: string | null = null;
+let cachedSchematicsData: string | null = null;
+
+const getElectricalContext = async (userPrompt: string) => {
+  const keywords = [
+    // Termos diretos de elétrica
+    "ELÉTRICA", "ELETRICA", "ESQUEMA", "FIO", "BORNE", "LIGAÇÃO", "LIGACAO", "DISJUNTOR", "CONTATORA", "CABO", "TENSÃO", "TENSAO", "VOLT", "AMPER", "CORRENTE", "TRIFÁSICO", "TRIFASICO", "MONOFÁSICO", "MONOFASICO", "CONTROLADOR", "AGEON", "FULL GAUGE", "CLP", "PANASONIC",
+    // Componentes exclusivos de painel/comando
+    "RELÉ", "RELE", "COMANDO", "PAINEL", "QUADRO", "FUSÍVEL", "FUSIVEL",
+    // Sintomas característicos de falha elétrica/comando
+    "NÃO LIGA", "NAO LIGA", "NÃO PARTE", "NAO PARTE", "NÃO ACIONA", "NAO ACIONA", "DESARMA", "CAINDO", "CURTO", "QUEIMOU"
+  ];
+  const upper = userPrompt.toUpperCase();
+  if (keywords.some(k => upper.includes(k))) {
+    // Carrega as bases apenas se necessário (Lazy Loading) com cache
+    if (!cachedElectricalData) {
+      const { ELECTRICAL_DATABASE } = await import("../data/electrical_data");
+      cachedElectricalData = ELECTRICAL_DATABASE;
+    }
+    if (!cachedSchematicsData) {
+      const { SCHEMATICS_DATABASE } = await import("../data/schematics_data");
+      cachedSchematicsData = SCHEMATICS_DATABASE;
+    }
+    return `\n\n⚡ [BASE DE DADOS ELÉTRICA E ESQUEMAS ATIVADA]\nUse as informações abaixo para responder dúvidas técnicas sobre ligações e esquemas:\n${cachedElectricalData}\n\n${cachedSchematicsData}\n`;
+  }
+  return "";
+};
+
+const getFullSystemInstruction = async (toolType: string, userPrompt: string = "", mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO') => {
+  const fieldKnowledge = knowledgeService.getKnowledgeContext();
   const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
   const brandManual = getDynamicBrandContext(userPrompt);
+  const electricalContext = await getElectricalContext(userPrompt);
 
   let modeInstruction = "";
   if (mode === 'ELEC') {
-    modeInstruction = "\n\n🚨 [MODO FOCO EM ELÉTRICA ATIVADO]\nFoque 100% em esquemas elétricos, bornes, CLP e componentes de comando.";
+    modeInstruction = "\n\n🚨 [MODO FOCO EM ELÉTRICA ATIVADO]\nIgnore detalhes do ciclo de refrigeração. Foque 100% em esquemas elétricos, bornes, CLP e componentes de comando. Use a base de dados de esquemas, a seção de [SUPORTE TÉCNICO: PERGUNTAS E RESPOSTAS ELÉTRICAS] e a seção de [DIAGNÓSTICO RÁPIDO: O QUE PODE SER?] imediatamente para responder dúvidas sobre componentes, funções do painel e falhas de funcionamento.";
   } else if (mode === 'REF') {
     modeInstruction = "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO ATIVADO]\nIgnore detalhes de comando elétrico/CLP. Foque 100% no ciclo frigorífico, pressões, fluido, troca de calor e mecânica do compressor.";
   }
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n\n${toolPrompt}\n${modeInstruction}`;
+  let cadenceInstruction = "";
+  if (toolType === "DIAGNOSTIC") {
+    cadenceInstruction = `\n\n🚨 [INSTRUÇÃO OBRIGATÓRIA DE CADÊNCIA - UX DE CAMPO]
+O técnico está no cliente e precisa de objetividade. Na PRIMEIRA resposta, é proibido entregar texto longo ou diagnóstico completo.
+Mantenha o mesmo contexto técnico, a mesma inteligência e o mesmo tom educado e professoral de hoje. Você não deve soar frio, seco ou mal educado. Seja cordial, claro e profissional.
+
+PRIMEIRA RESPOSTA — USE EXATAMENTE ESTE FORMATO:
+
+Olá. Vou te ajudar com um diagnóstico rápido e direto.
+
+**🎯 Hipótese Inicial:** [1 frase curta com a hipótese mais forte no momento]
+
+**❓ Preciso confirmar:**
+1. [pergunta objetiva 1]
+2. [pergunta objetiva 2]
+
+**⚠️ Faça agora:** [1 ação segura, concreta e imediata]
+
+REGRA DE OURO:
+- Não entregue laudo completo na primeira resposta.
+- Não liste causas possíveis em bloco grande.
+- Não despeje teoria de uma vez.
+- Só aprofunde depois que o técnico responder com dados reais ou pedir detalhes.
+
+SOMENTE após o técnico responder, você pode entregar:
+- causa provável fechada
+- causas possíveis
+- ordem de verificação
+- alertas de segurança
+- conclusão técnica completa`;
+  }
+
+  const faqContext = `\n\n[PACOTE DE CONHECIMENTO DE REFERÊNCIA]\nO conteúdo abaixo são casos frequentes e diagnósticos recomendados pela Ordemilk. Use-os como base de conhecimento e inspiração para suas análises, mas sinta-se livre para adaptar o diagnóstico conforme a situação específica relatada pelo técnico. Não trate como regras rígidas, mas como um guia de experiência acumulada.\n${FAQ_DATABASE}`;
+
+  const structuredKnowledge = `\n\n[BASE DE CONHECIMENTO TÉCNICO ESTRUTURADA EM 4 CAMADAS]\n${KNOWLEDGE_BASE}`;
+
+  const diagnosticGuidance = `
+[DIRETRIZES DE RACIOCÍNIO TÉCNICO]
+1. NÃO CONCLUA SEM CONFIRMAR: Se o sintoma for genérico, peça contexto antes de afirmar a causa (ex: "A IHM acende?", "Qual o modelo do painel?").
+2. ESTRUTURA DE DIAGNÓSTICO: Sempre que possível, estruture sua resposta com: Sintoma, Causa Provável, Causas Possíveis, Ordem de Verificação e Segurança.
+3. NÍVEIS DE RESPOSTA: Adapte o tom para o usuário. Se for técnico, use nomes de componentes (DM3, K4, Y5). Se for operador, use termos mais simples.
+4. SEGURANÇA PRIMEIRO: Sempre inclua avisos de segurança antes de sugerir testes em painéis energizados.
+5. CAUSA RAIZ: Lembre-se que falhas elétricas muitas vezes são causadas por problemas mecânicos/frigoríficos.
+`;
+
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
 };
 
 export const generateTechResponse = async (
@@ -47,7 +125,7 @@ export const generateTechResponse = async (
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    const systemInstruction = getFullSystemInstruction(toolType, userPrompt);
+    const systemInstruction = await getFullSystemInstruction(toolType, userPrompt);
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: userPrompt,
@@ -85,7 +163,7 @@ export const generateChatResponseStream = async (
       .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
       .join(' ');
 
-    let systemInstruction = getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode);
+    let systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode);
 
     const responseStream = await ai.models.generateContentStream({
       model: 'gemini-3-flash-preview',

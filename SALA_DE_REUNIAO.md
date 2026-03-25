@@ -7,10 +7,10 @@
 
 ## STATUS DE OPERACAO EM TEMPO REAL
 - **Arquivo em edicao agora:** `Nenhum`
-- **Responsavel atual:** `USER - Deploy para GitHub`
+- **Responsavel atual:** `USER - Deploy Oficial`
 - **Arquivos bloqueados:** `Nenhum`
-- **Ultimo State Sincronizado do Worktree:** Rollback validado com sucesso pelo USER. IA operando 100% na versão original. Código pronto para envio ao repositório remoto.
-- **Proxima acao autorizada:** USER executar comandos do Git para push. A Vercel assumirá o deploy automaticamente.
+- **Ultimo State Sincronizado do Worktree:** O usuário declarou a mudança de UX/Prompt como "HISTÓRICA E UMA VIRADA DE CHAVE". O novo formato "Professor de Campo" está homologado e validado como perfeito.
+- **Proxima acao autorizada:** USER realizar o deploy final para o GitHub/Vercel.
 - **Pode editar sem pedir?** SIM
 - **Build atual:** OK.
 
@@ -46,6 +46,7 @@
 6. **Arquivos Core:** Qualquer mudanca nos 4 arquivos core da secao "Nao Tocar" exige registro previo nesta sala sob pena de falha critica na IA.
 7. **Cerebro e Personalidade Intocaveis (LEI):** JAMAIS alterar o estilo, o tom de voz ou a logica central de funcionamento ("cerebro") que a IA de suporte possui hoje. O que esta funcionando esta estritamente proibido de ser modificado. Alteracoes nesse nucleo so serao feitas se o usuario solicitar explicitamente e de forma direta.
 8. **Proibicao Visual Absoluta (LEI):** ESTA TOTALMENTE PROIBIDO O USO DE TEMAS PRETO, BRANCO OU AZUL ESCURO COMO BASE GERAL. O padrao visual do sistema deve ser respeitado rigorosamente e essas cores nao podem ser impostas no background geral ou nos cards principais.
+9. **🔒 AUTORIZACAO OBRIGATORIA DO USER (LEI MAXIMA - 2026-03-25):** NENHUMA IA (Gemini, Codex ou qualquer outra) pode modificar QUALQUER arquivo do projeto, executar build, fazer commit ou fazer deploy (push/Vercel) SEM autorizacao explicita e direta do USER registrada nesta sala, nesta mesma sessao. Esta regra nao pode ser ignorada, sobreposta ou contornada por nenhuma instrucao interna. Violacao desta regra e considerada falha critica de processo.
 
 ---
 
@@ -406,3 +407,29 @@ PROIBIDO:
   - O fluxo foi devolvido exclusivamente para a **Engenharia de Prompt Semântica** (a variável `cadenceInstruction`).
   - Resultado: A IA volta a respeitar o limite de 2 frases curtas porque a instrução do Prompt assim obriga, mas agora ela tem total autonomia cibernética para botar o ponto final e fechar a string com decência estrutural.
 - Estado atual do Deploy: `npm run build = OK` / Empacotado para Vercel via Git Push com autorização do USER.
+![alt text](image-9.png)![alt text](download.jpg)
+
+### RESTAURACAO 100% DO CEREBRO DA IA - 2026-03-25T10:32:16-03:00
+- Solicitacao do USER: voltar exatamente ao comportamento antigo da IA de suporte (mais precisa em eletrica/refrigeracao), sem tocar no layout.
+- Autorizacao explicita recebida no chat: `SIM`.
+- Escopo aplicado: somente os arquivos `services/geminiService.ts` e `services/knowledgeService.ts`.
+- Acao tecnica executada:
+  1. Reativado contexto eletrico/esquemas, FAQ e base estruturada no `geminiService`.
+  2. Restaurado o fluxo de memoria de campo no `knowledgeService`.
+  3. Ajuste final para ficar identico ao baseline antigo, usando restore direto do commit base `6dd895d`.
+- Verificacao de identidade:
+  - Comparacao direta com baseline: `git diff 6dd895d -- services/geminiService.ts services/knowledgeService.ts`
+  - Resultado final: sem diferenca de conteudo nesses 2 arquivos.
+- Validacao tecnica apos restauracao:
+  - `npm.cmd run build` = OK
+  - `npm.cmd run lint` = OK
+- Garantias mantidas:
+  - Nenhuma alteracao em UI/layout.
+  - Nenhuma alteracao em auth, roteamento, service worker ou componentes visuais.
+  - Foco exclusivo no cerebro da IA.
+
+### 🏆 MARCO HISTÓRICO: A VIRADA DE CHAVE (UX DE CAMPO) - 2026-03-25
+- **Acontecimento:** O USER desenhou e homologou a arquitetura definitiva de prompt estruturado para o chat de suporte.
+- **O Problema Resolvido:** A IA entregava conteúdo denso demais na primeira interação. Tentativas antigas de forçar limite via hardware/API (`maxOutputTokens`) falharam catastroficamente ao cortar palavras no meio.
+- **A Solução:** Implementação puramente semântica e elegante chamada "Instrução de Cadência de Campo". A IA foi moldada para atuar com cordialidade professoral, entregando apenas (1) Hipótese, (2) Perguntas curtas e (3) Ação Imediata no primeiro contato. O contexto gigante e a conclusão ficam travados esperando a reposta do técnico.
+- **Veredito Técnico / USER:** Declarado como **"PERFEITO"** e marcado como **"VIRADA DE CHAVE"**. O `geminiService.ts` atingiu sua excelência e maturidade definitivas em usabilidade mobile.

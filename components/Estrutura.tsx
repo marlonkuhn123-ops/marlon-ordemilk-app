@@ -113,7 +113,7 @@ export const BottomNav: React.FC<{ activeView: ViewState; setView: (view: ViewSt
                 <div className="flex justify-between items-start w-full gap-1 mb-2">
                     <NavItem id={ViewState.DIAGNOSTIC} icon="fa-solid fa-headset" label="Suporte" isActive={activeView === ViewState.DIAGNOSTIC} onClick={(v) => { setView(v); setIsMenuOpen(false); }} />
                     <NavItem id={ViewState.ERRORS} icon="fa-solid fa-triangle-exclamation" label="Erros" isActive={activeView === ViewState.ERRORS} onClick={(v) => { setView(v); setIsMenuOpen(false); }} />
-                    <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="Superaq." isActive={activeView === ViewState.CALCULATOR} onClick={(v) => { setView(v); setIsMenuOpen(false); }} />
+                    <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="Superaq" isActive={activeView === ViewState.CALCULATOR} onClick={(v) => { setView(v); setIsMenuOpen(false); }} />
                     <NavItem id={ViewState.REPORT} icon="fa-solid fa-file-signature" label="Serviços" isActive={activeView === ViewState.REPORT} onClick={(v) => { setView(v); setIsMenuOpen(false); }} />
                     
                     <button 
