@@ -43,11 +43,10 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = Rea
                     </div>
                 )}
                 <div
-                    className={`max-w-[min(560px,78vw)] p-4 sm:p-5 text-sm leading-relaxed shadow-lg font-sans border ${
-                        isUser
+                    className={`max-w-[min(560px,78vw)] p-4 sm:p-5 text-sm leading-relaxed shadow-lg font-sans border ${isUser
                             ? 'bg-[#2a3646] text-white rounded-[22px] border-[#4a5c73]'
                             : 'bg-[#3b4c61]/92 text-white rounded-b-[24px] rounded-tl-[4px] rounded-tr-[24px] border-[#4a5c73] shadow-[0_10px_24px_rgba(24,35,49,0.18)]'
-                    } ${isError ? '!bg-red-500/20 !border-red-500 !text-red-100' : ''}`}
+                        } ${isError ? '!bg-red-500/20 !border-red-500 !text-red-100' : ''}`}
                 >
                     {msg.files && msg.files.length > 0 && (
                         <div className="grid grid-cols-2 gap-2 mb-3">
@@ -255,11 +254,10 @@ export const Tool_Assistant: React.FC = () => {
                         <div className="flex items-center gap-2 mb-3">
                             <button
                                 onClick={() => setMode('AUTO')}
-                                className={`flex-1 h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${
-                                    mode === 'AUTO'
+                                className={`flex-1 h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${mode === 'AUTO'
                                         ? 'bg-gradient-to-r from-[#00d9ff] to-[#0088ff] text-white border-transparent shadow-[0_0_15px_rgba(0,217,255,0.3)]'
                                         : 'bg-[#2a3646] text-white/80 border-[#4a5c73] hover:text-white'
-                                }`}
+                                    }`}
                             >
                                 <i className="fa-solid fa-robot text-[12px]"></i>
                                 <span>AUTO (IA)</span>
@@ -267,11 +265,10 @@ export const Tool_Assistant: React.FC = () => {
 
                             <button
                                 onClick={() => setMode('REF')}
-                                className={`flex-1 h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${
-                                    mode === 'REF'
+                                className={`flex-1 h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${mode === 'REF'
                                         ? 'bg-gradient-to-r from-[#00d9ff] to-[#0088ff] text-white border-transparent shadow-[0_0_15px_rgba(0,217,255,0.3)]'
                                         : 'bg-[#2a3646] text-white/80 border-[#4a5c73] hover:text-white'
-                                }`}
+                                    }`}
                             >
                                 <i className="fa-solid fa-snowflake text-[12px]"></i>
                                 <span>REFRIGERAÇÃO</span>
@@ -279,11 +276,10 @@ export const Tool_Assistant: React.FC = () => {
 
                             <button
                                 onClick={() => setMode('ELEC')}
-                                className={`flex-1 h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${
-                                    mode === 'ELEC'
+                                className={`flex-1 h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${mode === 'ELEC'
                                         ? 'bg-gradient-to-r from-[#00d9ff] to-[#0088ff] text-white border-transparent shadow-[0_0_15px_rgba(0,217,255,0.3)]'
                                         : 'bg-[#2a3646] text-white/80 border-[#4a5c73] hover:text-white'
-                                }`}
+                                    }`}
                             >
                                 <i className="fa-solid fa-bolt text-[12px]"></i>
                                 <span>ELÉTRICA</span>
@@ -301,11 +297,10 @@ export const Tool_Assistant: React.FC = () => {
 
                             <button
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`w-11 h-11 rounded-[14px] bg-[#2a3646] border border-[#3b4c61] transition-all flex items-center justify-center shrink-0 ${
-                                    selectedFiles.length > 0
+                                className={`w-11 h-11 rounded-[14px] bg-[#2a3646] border border-[#3b4c61] transition-all flex items-center justify-center shrink-0 ${selectedFiles.length > 0
                                         ? 'text-[#00d9ff] border-[#00d9ff]/50 bg-[#00d9ff]/10'
                                         : 'text-[#9ca7b8] hover:bg-[#344458] hover:text-white'
-                                }`}
+                                    }`}
                                 aria-label="Anexar arquivo"
                             >
                                 <i className="fa-solid fa-paperclip text-[12px]"></i>
@@ -318,7 +313,7 @@ export const Tool_Assistant: React.FC = () => {
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                                    className="w-full h-11 rounded-[18px] px-4 text-[16px] bg-[#00000026] border border-[#4a5c73] text-white focus:border-[#00d9ff]/60 outline-none transition-all placeholder:text-[#8896a8]"
+                                    className="w-full h-11 rounded-[18px] px-4 text-[16px] bg-[#00000026] border border-[#4a5c73] text-[#F8FAFC] font-medium focus:border-[#00d9ff]/60 outline-none transition-all placeholder:text-[#8896a8] placeholder:font-normal"
                                     placeholder="Digite sua mensagem..."
                                 />
                             </div>
