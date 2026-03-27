@@ -540,8 +540,8 @@ export const Tool_Assistant: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                         <span className="px-2.5 py-1 rounded-full border border-white/10 bg-black/15 text-[11px] text-[#cdd7e4]">{filledDiagnosticCount > 0 ? `${filledDiagnosticCount} dado(s)` : 'Sem dados'}</span>
-                        <span className={`w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-white/80 transition-transform ${isGuideOpen ? 'rotate-180' : ''}`}>
-                            <i className="fa-solid fa-chevron-down text-[12px]"></i>
+                        <span className={`w-7 h-7 rounded-[18px] border border-white/10 flex items-center justify-center text-white/80 transition-transform ${isGuideOpen ? 'rotate-180' : ''}`}>
+                            <i className="fa-solid fa-chevron-down text-[10px]"></i>
                         </span>
                     </div>
                 </button>
