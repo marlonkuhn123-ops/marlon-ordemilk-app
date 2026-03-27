@@ -34,6 +34,50 @@ export const runSystemDiagnostics = () => {
         assert(p.includes("60 PSI"), "Pressão incorreta no prompt");
     });
 
+    test("Calculadora: Deve calcular Superaquecimento corretamente com tabela local", () => {
+        // R-22 a 68 PSI = 4.0°C na tabela local. Logo 14°C - 4°C = 10K.
+        const p = logicService.formatCalculatorPrompt(Refrigerant.R22, "68", "14", "Superaquecimento");
+        assert(p.includes("= 10.0K"), `Cálculo SH padrão falhou. Esperado 10.0K. Prompt: ${p}`);
+
+        const audit = logicService.getCalculatorAudit(Refrigerant.R22, "68", "14", "Superaquecimento");
+        assert(audit.tsatLabel === "Tsat = 4.0°C", `Linha de Tsat incorreta no SH. Recebido: ${audit.tsatLabel}`);
+        assert(audit.resultLabel === "SH = 14.0°C - 4.0°C = 10.0K", `Linha de cálculo SH incorreta. Recebido: ${audit.resultLabel}`);
+    });
+
+    test("Calculadora: Deve calcular Superaquecimento corretamente com temperaturas negativas", () => {
+        // R-22 a 30 PSI = -14.0°C na tabela local. Logo -4°C - (-14°C) = 10K.
+        const p = logicService.formatCalculatorPrompt(Refrigerant.R22, "30", "-4", "Superaquecimento");
+        assert(p.includes("= 10.0K"), `Cálculo SH com negativos falhou. Esperado 10.0K. Prompt: ${p}`);
+    });
+
+    test("Calculadora: Deve interpolar saturação para R-404A entre dois pontos da tabela", () => {
+        const satTemp = logicService.getSaturationTemp(Refrigerant.R404A, 295);
+        assert(satTemp !== null && Math.abs(satTemp - 61.0) < 0.1, `Interpolação R-404A falhou. Esperado ~61.0°C, recebido ${satTemp}`);
+
+        // Entre 289.9 PSI (60°C) e 299.7 PSI (62°C), 295 PSI fica em ~61.0°C. Logo 61 - 53 = 8K.
+        const p = logicService.formatCalculatorPrompt(Refrigerant.R404A, "295", "53", "Sub-resfriamento");
+        assert(p.includes("= 8.0K"), `Cálculo SC interpolado falhou. Esperado 8.0K. Prompt: ${p}`);
+
+        const audit = logicService.getCalculatorAudit(Refrigerant.R404A, "295", "53", "Sub-resfriamento");
+        assert(audit.tsatLabel === "Tsat = 61.0°C", `Linha de Tsat incorreta no SC. Recebido: ${audit.tsatLabel}`);
+        assert(audit.resultLabel === "SC = 61.0°C - 53.0°C = 8.0K", `Linha de cálculo SC incorreta. Recebido: ${audit.resultLabel}`);
+    });
+
+    test("Calculadora: Deve encontrar chaves decimais exatas na tabela PT", () => {
+        const satTemp = logicService.getSaturationTemp(Refrigerant.R404A, 289.9);
+        assert(satTemp === 60, `Busca exata de chave decimal falhou. Esperado 60°C, recebido ${satTemp}`);
+    });
+
+    test("Calculadora: Deve lidar com dados de saturação não encontrados", () => {
+        // Usando uma pressão irreal para forçar o erro
+        const p = logicService.formatCalculatorPrompt(Refrigerant.R22, "9999", "10", "Superaquecimento");
+        const audit = logicService.getCalculatorAudit(Refrigerant.R22, "9999", "10", "Superaquecimento");
+        assert(audit.ready === false, "Auditoria local deveria sinalizar cálculo indisponível.");
+        assert(p.includes("Pressao fora da faixa da tabela PT local"), "Mensagem de fallback para saturação não encontrada falhou.");
+        assert(p.includes("Realize o calculo com base em seu conhecimento"), "Instrução para a IA em caso de falha não encontrada.");
+        assert(!p.includes("CÁLCULO LOCAL REALIZADO"), "Contexto de cálculo local não deveria existir no fallback.");
+    });
+
     // --- TESTES DO RELATÓRIO ---
     test("Relatório: Deve conter nome do cliente", () => {
         const p = logicService.formatReportPrompt({

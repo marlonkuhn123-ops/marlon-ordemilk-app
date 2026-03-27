@@ -5,6 +5,10 @@ import { FAQ_DATABASE } from "../data/faq_data";
 import { KNOWLEDGE_BASE } from "../data/knowledge_base";
 import { ENV } from "../config/env";
 
+const DEFAULT_TEXT_MODEL = ENV.GEMINI_TEXT_MODEL;
+const SUPPORT_PRIMARY_MODEL = ENV.GEMINI_SUPPORT_MODEL;
+const SUPPORT_FALLBACK_MODEL = ENV.GEMINI_SUPPORT_FALLBACK_MODEL;
+
 const handleApiError = (error: any) => {
   // Log seguro: apenas a mensagem, evitando expor o objeto de erro completo que pode conter a chave de API no config
   console.error("Gemini API Error:", error?.message || "Unknown error");
@@ -53,6 +57,35 @@ const getElectricalContext = async (userPrompt: string) => {
     return `\n\n⚡ [BASE DE DADOS ELÉTRICA E ESQUEMAS ATIVADA]\nUse as informações abaixo para responder dúvidas técnicas sobre ligações e esquemas:\n${cachedElectricalData}\n\n${cachedSchematicsData}\n`;
   }
   return "";
+};
+
+const isModelAvailabilityError = (error: any) => {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("model") &&
+    (
+      message.includes("not found") ||
+      message.includes("not supported") ||
+      message.includes("permission") ||
+      message.includes("access") ||
+      message.includes("unavailable")
+    )
+  );
+};
+
+const getSupportConfig = (systemInstruction: string, modelName: string) => {
+  const baseConfig: Record<string, any> = {
+    systemInstruction,
+    temperature: 0.2,
+  };
+
+  if (modelName.startsWith("gemini-3")) {
+    baseConfig.thinkingConfig = {
+      thinkingLevel: "medium",
+    };
+  }
+
+  return baseConfig;
 };
 
 const getFullSystemInstruction = async (toolType: string, userPrompt: string = "", mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO') => {
@@ -127,7 +160,7 @@ export const generateTechResponse = async (
   try {
     const systemInstruction = await getFullSystemInstruction(toolType, userPrompt);
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: DEFAULT_TEXT_MODEL,
       contents: userPrompt,
       config: {
         systemInstruction,
@@ -153,10 +186,10 @@ export const generateChatResponseStream = async (
   mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO',
   retries = 2
 ): Promise<string> => {
+  const runStream = async (modelName: string): Promise<string> => {
   const apiKey = ENV.GEMINI_API_KEY;
   const ai = new GoogleGenAI({ apiKey });
 
-  try {
     const contents = history;
 
     const fullConversationText = history
@@ -166,12 +199,9 @@ export const generateChatResponseStream = async (
     let systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode);
 
     const responseStream = await ai.models.generateContentStream({
-      model: 'gemini-3-flash-preview',
+      model: modelName,
       contents,
-      config: {
-        systemInstruction,
-        temperature: 0.2,
-      }
+      config: getSupportConfig(systemInstruction, modelName)
     });
 
     let fullText = "";
@@ -193,7 +223,16 @@ export const generateChatResponseStream = async (
 
     if (onFinished) onFinished(fullText, sources.length > 0 ? sources : undefined);
     return fullText;
+  };
+
+  try {
+    return await runStream(SUPPORT_PRIMARY_MODEL);
   } catch (error: any) {
+    if (SUPPORT_FALLBACK_MODEL !== SUPPORT_PRIMARY_MODEL && isModelAvailabilityError(error)) {
+      console.warn(`Modelo de suporte ${SUPPORT_PRIMARY_MODEL} indisponivel. Recuando para ${SUPPORT_FALLBACK_MODEL}.`);
+      return runStream(SUPPORT_FALLBACK_MODEL);
+    }
+
     if (retries > 0 && error?.message?.includes("503")) {
       console.warn(`Erro 503 detectado no stream. Tentando novamente em 2s... (${retries} tentativas restantes)`);
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -209,7 +248,7 @@ export const analyzePlateImage = async (imageBase64: string, retries = 2): Promi
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: DEFAULT_TEXT_MODEL,
       contents: [
         { inlineData: { data: imageBase64, mimeType: 'image/jpeg' } },
         { text: "Analise esta placa e retorne APENAS JSON: {volts: number, corrente: number, phase: 'tri'|'bi'|'mono'}." }

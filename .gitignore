@@ -5,3 +5,8 @@ node_modules/
 # Build artifacts
 dist/
 build/
+
+# Local automation artifacts
+.playwright-cli/
+server.err.log
+server.out.log

@@ -2,8 +2,12 @@
 import React, { useState } from 'react';
 import { Card, SectionTitle, Button, Input, Select, AIOutputBox } from './UI';
 import { useGlobal } from '../contexts/GlobalContext';
-import { logicService } from '../services/logicService';
+import { CALCULATOR_REFERENCE_RANGES, logicService } from '../services/logicService';
 import { generateTechResponse } from '../services/geminiService';
+import { runSystemDiagnostics } from '../services/testSuite';
+
+const SUPERHEAT_RANGE = CALCULATOR_REFERENCE_RANGES['Superaquecimento'];
+const SUBCOOLING_RANGE = CALCULATOR_REFERENCE_RANGES['Sub-resfriamento'];
 
 const INSTALL_STEPS = [
     {
@@ -25,7 +29,7 @@ const INSTALL_STEPS = [
         ]
     },
     {
-    title: "3. TUBULAÇÃO E BRASAGEM",
+        title: "3. TUBULAÇÃO E BRASAGEM",
         points: [
             "Brasagem com Nitrogênio (Passante): Evitar oxidação interna (borra).",
             "Limpeza Pós-Brasagem: Carga forte de N2 se não usou durante.",
@@ -55,8 +59,8 @@ const INSTALL_STEPS = [
         points: [
             "Sentido de Giro: Bomba de Limpeza e Agitador (Jogando p/ baixo).",
             "Nível de Óleo: Entre 1/4 e 3/4 do visor (estável).",
-            "Superaquecimento (SH): Ajustar entre 8K e 12K.",
-            "Sub-resfriamento (SC): Ajustar entre 4K e 8K.",
+            `Superaquecimento (SH): Ajustar entre ${SUPERHEAT_RANGE.min}K e ${SUPERHEAT_RANGE.max}K.`,
+            `Sub-resfriamento (SC): Ajustar entre ${SUBCOOLING_RANGE.min}K e ${SUBCOOLING_RANGE.max}K.`,
             "Teste de Gelo: Verificar retorno de líquido na sucção."
         ]
     },
@@ -76,30 +80,45 @@ export const Tool_Report: React.FC = () => {
 
     // --- ESTADO GERAL ---
     const [serviceMode, setServiceMode] = useState<'maintenance' | 'installation'>('installation');
-    
+
     // Dados do Relatório
     const [client, setClient] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [model, setModel] = useState('');
-    
+
     // Leituras Técnicas
     const [finalTemp, setFinalTemp] = useState('');
     const [superHeat, setSuperHeat] = useState('');
     const [subCooling, setSubCooling] = useState('');
-    
+
     // Checklist Manutenção
     const [maintChecks, setMaintChecks] = useState({
         vacuum: false, nitrogen: false, electricCheck: false, cleaning: false
     });
     const [vacuumMicrons, setVacuumMicrons] = useState('');
     const [obs, setObs] = useState('');
-    
+
     // Checklist Instalação
     const [installChecked, setInstallChecked] = useState<Set<string>>(new Set());
 
     // Resultado
     const [report, setReport] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const handleRunTests = () => {
+        console.log("--- INICIANDO DIAGNÓSTICO DO SISTEMA ---");
+        const report = runSystemDiagnostics();
+        if (report.errors.length > 0) {
+            console.error(`🔴 TESTES FALHARAM: ${report.errors.length} de ${report.total} com erro.`);
+            console.table(report.errors.map(e => ({ Erro: e })));
+        } else {
+            console.log(`✅ SUCESSO: Todos os ${report.total} testes passaram.`);
+        }
+        console.log("--- DIAGNÓSTICO DO SISTEMA CONCLUÍDO ---");
+        alert(`Diagnóstico do sistema executado.
+
+Verifique o console do navegador (F12) para ver o resultado detalhado.`);
+    };
 
     // Calculo de progresso
     const totalPoints = INSTALL_STEPS.reduce((acc, s) => acc + s.points.length, 0);
@@ -140,7 +159,7 @@ export const Tool_Report: React.FC = () => {
                 });
                 procedureText = `ITENS VISTORIADOS E APROVADOS NA ENTREGA TÉCNICA:\n- ${completedSteps.join('\n- ')}\n\nPROGRESSO TOTAL: ${installProgress}%`;
             } else {
-                procedureText = `PROCEDIMENTOS REALIZADOS (MANUTENÇÃO):\n${maintChecks.vacuum ? '- Desidratação/Vácuo ('+vacuumMicrons+' microns)' : ''}\n${maintChecks.nitrogen ? '- Teste de Estanqueidade (N2)' : ''}\n${maintChecks.electricCheck ? '- Revisão/Reaperto Elétrico' : ''}\n${maintChecks.cleaning ? '- Limpeza Química do Condensador' : ''}`;
+                procedureText = `PROCEDIMENTOS REALIZADOS (MANUTENÇÃO):\n${maintChecks.vacuum ? '- Desidratação/Vácuo (' + vacuumMicrons + ' microns)' : ''}\n${maintChecks.nitrogen ? '- Teste de Estanqueidade (N2)' : ''}\n${maintChecks.electricCheck ? '- Revisão/Reaperto Elétrico' : ''}\n${maintChecks.cleaning ? '- Limpeza Química do Condensador' : ''}`;
             }
 
             const prompt = logicService.formatReportPrompt({
@@ -168,8 +187,8 @@ export const Tool_Report: React.FC = () => {
 
             {/* --- SELETOR DE MODO --- */}
             <Card className="mb-3 !py-2 bg-[#252525]">
-                <Select 
-                    value={serviceMode === 'installation' ? 'Instalação' : 'Manutenção'} 
+                <Select
+                    value={serviceMode === 'installation' ? 'Instalação' : 'Manutenção'}
                     onChange={handleServiceChange}
                     className="!mb-0 font-bold text-orange-500 text-center bg-transparent border-none focus:bg-transparent"
                 >
@@ -185,32 +204,32 @@ export const Tool_Report: React.FC = () => {
                         <i className="fa-solid fa-id-card"></i> Identificação
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <Input 
-                            label="Cliente" 
-                            value={client} 
-                            onChange={e => setClient(e.target.value)} 
-                            placeholder="Nome / Fazenda" 
+                        <Input
+                            label="Cliente"
+                            value={client}
+                            onChange={e => setClient(e.target.value)}
+                            placeholder="Nome / Fazenda"
                             className="!p-2 text-xs !mb-0"
                         />
-                        <Input 
-                            label="Data" 
-                            type="date" 
-                            value={date} 
-                            onChange={e => setDate(e.target.value)} 
+                        <Input
+                            label="Data"
+                            type="date"
+                            value={date}
+                            onChange={e => setDate(e.target.value)}
                             className="!p-2 text-xs !mb-0"
                         />
-                        <Input 
-                            label="Técnico" 
-                            value={techData.name} 
-                            onChange={e => updateTechData({ name: e.target.value })} 
+                        <Input
+                            label="Técnico"
+                            value={techData.name}
+                            onChange={e => updateTechData({ name: e.target.value })}
                             placeholder="Resp. Técnico"
                             className="!p-2 text-xs !mb-0"
                         />
-                        <Input 
-                            label="Modelo" 
-                            value={model} 
-                            onChange={e => setModel(e.target.value)} 
-                            placeholder="Ex: 4000L" 
+                        <Input
+                            label="Modelo"
+                            value={model}
+                            onChange={e => setModel(e.target.value)}
+                            placeholder="Ex: 4000L"
                             className="!p-2 text-xs !mb-0"
                         />
                     </div>
@@ -244,18 +263,18 @@ export const Tool_Report: React.FC = () => {
                     </div>
                 ) : (
                     <div className="mb-6">
-                         <div className="flex justify-between items-center mb-3">
+                        <div className="flex justify-between items-center mb-3">
                             <p className="text-[11px] font-black uppercase tracking-widest text-orange-500">
                                 ENTREGA TÉCNICA - DETALHADA ({installProgress}%)
                             </p>
                             <div className="w-1/3 h-1.5 bg-[#333] rounded-full">
-                                <div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{width: `${installProgress}%`}}></div>
+                                <div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{ width: `${installProgress}%` }}></div>
                             </div>
-                         </div>
-                         
-                         <div className="space-y-4">
-                             {INSTALL_STEPS.map((step, idx) => (
-                                 <div key={idx} className="bg-[#1a1a1a] border border-[#333] rounded-lg p-3">
+                        </div>
+
+                        <div className="space-y-4">
+                            {INSTALL_STEPS.map((step, idx) => (
+                                <div key={idx} className="bg-[#1a1a1a] border border-[#333] rounded-lg p-3">
                                     <p className="text-[10px] font-bold text-gray-300 mb-3 border-b border-[#333] pb-1 uppercase tracking-wide">
                                         {step.title}
                                     </p>
@@ -264,18 +283,16 @@ export const Tool_Report: React.FC = () => {
                                             const id = `${idx}-${pIdx}`;
                                             const checked = installChecked.has(id);
                                             return (
-                                                <button 
-                                                    key={pIdx} 
-                                                    onClick={() => toggleInstallCheck(id)} 
-                                                    className={`p-3 rounded text-[10px] font-medium transition-all flex items-start text-left gap-3 ${
-                                                        checked 
-                                                        ? 'bg-emerald-900/20 border border-emerald-500/40 text-emerald-400' 
-                                                        : 'bg-[#252525] border border-[#404040] text-gray-400 hover:border-gray-500'
-                                                    }`}
+                                                <button
+                                                    key={pIdx}
+                                                    onClick={() => toggleInstallCheck(id)}
+                                                    className={`p-3 rounded text-[10px] font-medium transition-all flex items-start text-left gap-3 ${checked
+                                                            ? 'bg-emerald-900/20 border border-emerald-500/40 text-emerald-400'
+                                                            : 'bg-[#252525] border border-[#404040] text-gray-400 hover:border-gray-500'
+                                                        }`}
                                                 >
-                                                    <div className={`mt-0.5 w-4 h-4 min-w-[16px] rounded border flex items-center justify-center ${
-                                                        checked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-[#555]'
-                                                    }`}>
+                                                    <div className={`mt-0.5 w-4 h-4 min-w-[16px] rounded border flex items-center justify-center ${checked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-[#555]'
+                                                        }`}>
                                                         {checked && <i className="fa-solid fa-check text-[8px]"></i>}
                                                     </div>
                                                     <span className="leading-relaxed">{pt}</span>
@@ -283,24 +300,29 @@ export const Tool_Report: React.FC = () => {
                                             )
                                         })}
                                     </div>
-                                 </div>
-                             ))}
-                         </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
                 <Input label="Observações / Peças Trocadas" value={obs} onChange={e => setObs(e.target.value)} className="!p-3 text-xs" />
-                
+
                 <Button onClick={generate} disabled={loading}>
-                    <i className="fa-solid fa-file-shield mr-2"></i> 
+                    <i className="fa-solid fa-file-shield mr-2"></i>
                     {serviceMode === 'installation' ? 'GERAR CERTIFICADO OFICIAL' : 'GERAR LAUDO TÉCNICO'}
+                </Button>
+
+                <Button onClick={handleRunTests} disabled={loading} className="!bg-slate-600 hover:!bg-slate-500 mt-3">
+                    <i className="fa-solid fa-stethoscope mr-2"></i>
+                    Executar Diagnóstico do Sistema
                 </Button>
             </Card>
 
-            <AIOutputBox 
-                content={report} 
-                isLoading={loading} 
-                title={serviceMode === 'installation' ? "CERTIFICADO DE ENTREGA TÉCNICA" : "RELATÓRIO DE SERVIÇO"} 
+            <AIOutputBox
+                content={report}
+                isLoading={loading}
+                title={serviceMode === 'installation' ? "CERTIFICADO DE ENTREGA TÉCNICA" : "RELATÓRIO DE SERVIÇO"}
             />
         </div>
     );

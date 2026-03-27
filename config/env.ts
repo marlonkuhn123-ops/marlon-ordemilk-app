@@ -14,5 +14,32 @@ export const ENV = {
         }
         
         return key;
+    },
+
+    get GEMINI_TEXT_MODEL(): string {
+        try {
+            // @ts-ignore
+            return process.env.GEMINI_TEXT_MODEL || "gemini-3-flash-preview";
+        } catch (e) {
+            return "gemini-3-flash-preview";
+        }
+    },
+
+    get GEMINI_SUPPORT_MODEL(): string {
+        try {
+            // @ts-ignore
+            return process.env.GEMINI_SUPPORT_MODEL || "gemini-3.1-pro-preview";
+        } catch (e) {
+            return "gemini-3.1-pro-preview";
+        }
+    },
+
+    get GEMINI_SUPPORT_FALLBACK_MODEL(): string {
+        try {
+            // @ts-ignore
+            return process.env.GEMINI_SUPPORT_FALLBACK_MODEL || ENV.GEMINI_TEXT_MODEL;
+        } catch (e) {
+            return ENV.GEMINI_TEXT_MODEL;
+        }
     }
 };

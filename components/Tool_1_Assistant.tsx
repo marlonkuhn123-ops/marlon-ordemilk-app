@@ -1,6 +1,129 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { generateChatResponseStream } from '../services/geminiService';
-import { ChatMessage } from '../types';
+import { localSupportService } from '../services/localSupportService';
+import { supportSessionService } from '../services/supportSessionService';
+import {
+    ChatMessage,
+    SupportAttachmentMeta,
+    SupportDiagnosticContext,
+    SupportMode
+} from '../types';
+
+const WELCOME_TEXT = 'Olá! Sou o Assistente Técnico Ordemilk. Como posso ajudar você hoje?\nDescreva o problema ou envie fotos/áudios para análise.';
+
+const MODE_NAMES: Record<SupportMode, string> = {
+    AUTO: 'Auto (IA)',
+    REF: 'Refrigeração',
+    ELEC: 'Elétrica'
+};
+
+type SelectedSupportFile = {
+    id: string;
+    name?: string;
+    data: string;
+    mime: string;
+    type: 'image' | 'audio';
+};
+
+const GUIDE_FIELDS: Array<{
+    key: keyof Pick<SupportDiagnosticContext, 'model' | 'code' | 'voltage' | 'pressure' | 'temperature' | 'refrigerant'>;
+    label: string;
+    placeholder: string;
+    icon: string;
+}> = [
+    { key: 'model', label: 'Modelo', placeholder: 'Ex: TK 3000 / painel Full Gauge', icon: 'fa-cubes' },
+    { key: 'code', label: 'Codigo ou alarme', placeholder: 'Ex: E04 / AL-02', icon: 'fa-triangle-exclamation' },
+    { key: 'voltage', label: 'Tensao medida', placeholder: 'Ex: 220V trifasico / 24V comando', icon: 'fa-bolt' },
+    { key: 'pressure', label: 'Pressao', placeholder: 'Ex: 28 psi baixa / 250 psi alta', icon: 'fa-gauge-high' },
+    { key: 'temperature', label: 'Temperatura', placeholder: 'Ex: leite 8C / descarga 95C', icon: 'fa-temperature-half' },
+    { key: 'refrigerant', label: 'Fluido refrigerante', placeholder: 'Ex: R404A / R134a', icon: 'fa-snowflake' }
+];
+
+const EMPTY_DIAGNOSTIC_CONTEXT: SupportDiagnosticContext = {};
+
+const createWelcomeMessage = (): ChatMessage => ({
+    id: 'welcome',
+    role: 'model',
+    text: WELCOME_TEXT,
+    createdAt: Date.now()
+});
+
+const createModeMessage = (mode: Exclude<SupportMode, 'AUTO'>): ChatMessage => ({
+    id: crypto.randomUUID(),
+    role: 'model',
+    text: `Modo de Diagnóstico Focado em **${MODE_NAMES[mode]}** ativado. Descreva o problema detalhadamente.`,
+    createdAt: Date.now()
+});
+
+const buildAttachmentMeta = (files: SelectedSupportFile[]): SupportAttachmentMeta[] =>
+    files.map(file => ({
+        id: file.id,
+        name: file.name,
+        mime: file.mime,
+        type: file.type
+    }));
+
+const hasDiagnosticContext = (context: SupportDiagnosticContext) =>
+    Boolean(
+        context.model ||
+        context.code ||
+        context.voltage ||
+        context.pressure ||
+        context.temperature ||
+        context.refrigerant ||
+        context.ihmOn ||
+        context.compressorStarts
+    );
+
+const buildStructuredSupportContext = (
+    mode: SupportMode,
+    diagnosticContext: SupportDiagnosticContext,
+    isOnline: boolean
+) => {
+    const lines: string[] = [];
+
+    if (diagnosticContext.model) lines.push(`Modelo: ${diagnosticContext.model}`);
+    if (diagnosticContext.code) lines.push(`Codigo/alarme: ${diagnosticContext.code}`);
+    if (diagnosticContext.voltage) lines.push(`Tensao: ${diagnosticContext.voltage}`);
+    if (diagnosticContext.pressure) lines.push(`Pressao: ${diagnosticContext.pressure}`);
+    if (diagnosticContext.temperature) lines.push(`Temperatura: ${diagnosticContext.temperature}`);
+    if (diagnosticContext.refrigerant) lines.push(`Fluido refrigerante: ${diagnosticContext.refrigerant}`);
+    if (diagnosticContext.ihmOn) lines.push(`IHM energizada: ${diagnosticContext.ihmOn}`);
+    if (diagnosticContext.compressorStarts) lines.push(`Compressor parte: ${diagnosticContext.compressorStarts}`);
+
+    if (lines.length === 0) return '';
+
+    return [
+        '[CONTEXTO ESTRUTURADO DO ATENDIMENTO]',
+        `Modo selecionado: ${MODE_NAMES[mode]}`,
+        `Canal atual: ${isOnline ? 'Online' : 'Offline'}`,
+        ...lines
+    ].join('\n');
+};
+
+const readFileAsDataUrl = (file: File): Promise<SelectedSupportFile | null> =>
+    new Promise(resolve => {
+        const isImage = file.type.startsWith('image/');
+        const isAudio = file.type.startsWith('audio/') || file.type.startsWith('video/');
+
+        if (!isImage && !isAudio) {
+            resolve(null);
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            resolve({
+                id: crypto.randomUUID(),
+                name: file.name,
+                data: reader.result as string,
+                mime: file.type,
+                type: isImage ? 'image' : 'audio'
+            });
+        };
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+    });
 
 const formatText = (text: string, isUser: boolean) => {
     return text.split('\n').map((line, i) => {
@@ -28,6 +151,7 @@ const formatText = (text: string, isUser: boolean) => {
 const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = React.memo(({ msg, onImageLoad }) => {
     const isUser = msg.role === 'user';
     const isError = msg.isError;
+    const hasText = Boolean(msg.text.trim());
 
     return (
         <div className={`flex flex-col max-w-[95%] mb-4 animate-slide-up ${isUser ? 'self-end items-end' : 'self-start items-start'}`}>
@@ -44,22 +168,27 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = Rea
                 )}
                 <div
                     className={`max-w-[min(560px,78vw)] p-4 sm:p-5 text-sm leading-relaxed shadow-lg font-sans border ${isUser
-                            ? 'bg-[#2a3646] text-white rounded-[22px] border-[#4a5c73]'
-                            : 'bg-[#3b4c61]/92 text-white rounded-b-[24px] rounded-tl-[4px] rounded-tr-[24px] border-[#4a5c73] shadow-[0_10px_24px_rgba(24,35,49,0.18)]'
-                        } ${isError ? '!bg-red-500/20 !border-red-500 !text-red-100' : ''}`}
+                        ? 'bg-[#2a3646] text-white rounded-[22px] border-[#4a5c73]'
+                        : 'bg-[#3b4c61]/92 text-white rounded-b-[24px] rounded-tl-[4px] rounded-tr-[24px] border-[#4a5c73] shadow-[0_10px_24px_rgba(24,35,49,0.18)]'
+                    } ${isError ? '!bg-red-500/20 !border-red-500 !text-red-100' : ''}`}
                 >
                     {msg.files && msg.files.length > 0 && (
                         <div className="grid grid-cols-2 gap-2 mb-3">
                             {msg.files.map((file, index) => (
-                                <div key={index}>
+                                <div key={file.id || `${index}-${file.mime}`}>
                                     {file.type === 'image' && (
-                                        <img src={file.data} alt={`Evidencia ${index + 1}`} className="w-full rounded-lg border border-white/10" onLoad={onImageLoad} />
+                                        <img
+                                            src={file.data}
+                                            alt={file.name || `Evidencia ${index + 1}`}
+                                            className="w-full rounded-lg border border-white/10"
+                                            onLoad={onImageLoad}
+                                        />
                                     )}
                                     {file.type === 'audio' && (
                                         <div className="w-full">
                                             <p className="text-[10px] font-bold uppercase mb-1 opacity-70">
                                                 <i className="fa-solid fa-volume-high mr-1"></i>
-                                                Audio {index + 1}
+                                                {file.name || `Audio ${index + 1}`}
                                             </p>
                                             <audio controls src={file.data} className="w-full h-8 rounded opacity-90" />
                                         </div>
@@ -68,9 +197,45 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = Rea
                             ))}
                         </div>
                     )}
-                    <div className="text-[15px] leading-relaxed font-medium">
-                        {formatText(msg.text, isUser)}
-                    </div>
+
+                    {hasText ? (
+                        <div className="text-[15px] leading-relaxed font-medium">
+                            {formatText(msg.text, isUser)}
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1.5 text-[#00d9ff]">
+                            <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>
+                            <span className="w-2 h-2 rounded-full bg-current animate-pulse [animation-delay:120ms]"></span>
+                            <span className="w-2 h-2 rounded-full bg-current animate-pulse [animation-delay:240ms]"></span>
+                        </div>
+                    )}
+
+                    {msg.isStreaming && hasText && (
+                        <div className="mt-2 flex items-center gap-1 text-[#00d9ff]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse [animation-delay:120ms]"></span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse [animation-delay:240ms]"></span>
+                        </div>
+                    )}
+
+                    {msg.sources && msg.sources.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-white/10">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9ca7b8] mb-2">Fontes externas</p>
+                            <div className="flex flex-wrap gap-2">
+                                {msg.sources.map((source, index) => (
+                                    <a
+                                        key={`${source.uri}-${index}`}
+                                        href={source.uri}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-[11px] px-2.5 py-1 rounded-full border border-white/10 bg-black/15 hover:border-[#00d9ff]/50 transition-colors"
+                                    >
+                                        {source.title || 'Link'}
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -78,97 +243,202 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = Rea
 });
 
 export const Tool_Assistant: React.FC = () => {
-    const [messages, setMessages] = useState<ChatMessage[]>([
-        {
-            id: 'welcome',
-            role: 'model',
-            text: 'Olá! Sou o Assistente Técnico Ordemilk. Como posso ajudar você hoje?\nDescreva o problema ou envie fotos/áudios para análise.'
-        }
-    ]);
-    const [input, setInput] = useState('');
-    const [mode, setMode] = useState<'AUTO' | 'REF' | 'ELEC'>('AUTO');
-    const [selectedFiles, setSelectedFiles] = useState<{ id: string; data: string; mime: string; type: 'image' | 'audio' }[]>([]);
+    const initialSnapshotRef = useRef(supportSessionService.load());
+    const restoredSnapshot = initialSnapshotRef.current;
+    const restoredMessages = restoredSnapshot ? supportSessionService.hydrateMessages(restoredSnapshot) : [];
+
+    const [messages, setMessages] = useState<ChatMessage[]>(() =>
+        restoredMessages.length > 0 ? restoredMessages : [createWelcomeMessage()]
+    );
+    const messagesRef = useRef(messages);
+    const [input, setInput] = useState(() => restoredSnapshot?.draft ?? '');
+    const [mode, setMode] = useState<SupportMode>(() => restoredSnapshot?.mode ?? 'AUTO');
+    const [diagnosticContext, setDiagnosticContext] = useState<SupportDiagnosticContext>(() => restoredSnapshot?.diagnosticContext ?? EMPTY_DIAGNOSTIC_CONTEXT);
+    const [selectedFiles, setSelectedFiles] = useState<SelectedSupportFile[]>([]);
+    const [pendingAttachmentMeta, setPendingAttachmentMeta] = useState<SupportAttachmentMeta[]>(() => restoredSnapshot?.attachmentsMeta ?? []);
     const [isLoadingChat, setIsLoadingChat] = useState(false);
+    const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
+    const [isGuideOpen, setIsGuideOpen] = useState(() =>
+        Boolean(restoredSnapshot?.draft || restoredSnapshot?.attachmentsMeta.length || hasDiagnosticContext(restoredSnapshot?.diagnosticContext ?? EMPTY_DIAGNOSTIC_CONTEXT))
+    );
+    const [showRestoreNotice, setShowRestoreNotice] = useState(() =>
+        Boolean(restoredSnapshot && (restoredMessages.length > 1 || restoredSnapshot.draft || restoredSnapshot.attachmentsMeta.length))
+    );
+
     const chatContainerRef = useRef<HTMLDivElement>(null);
-    const bottomRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (mode === 'AUTO') return;
-        const modeNames = { REF: 'Refrigeração', ELEC: 'Elétrica' };
-        setMessages(prev => [
-            ...prev,
-            { id: Date.now().toString(), role: 'model', text: `Modo de Diagnóstico Focado em **${modeNames[mode]}** ativado. Descreva o problema detalhadamente.` }
-        ]);
-    }, [mode]);
+        messagesRef.current = messages;
+    }, [messages]);
 
     const scrollToBottom = React.useCallback(() => {
-        setTimeout(() => {
+        window.setTimeout(() => {
             if (chatContainerRef.current) {
-                chatContainerRef.current.scrollTo({ top: chatContainerRef.current.scrollHeight, behavior: 'smooth' });
+                chatContainerRef.current.scrollTo({
+                    top: chatContainerRef.current.scrollHeight,
+                    behavior: 'smooth'
+                });
             }
         }, 100);
     }, []);
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages, scrollToBottom]);
+    }, [messages, selectedFiles, pendingAttachmentMeta, isGuideOpen, scrollToBottom]);
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            const base64Data = reader.result as string;
-            const type = file.type.startsWith('image') ? 'image' : 'audio';
-            setSelectedFiles(prev => [
-                ...prev,
-                {
-                    id: crypto.randomUUID(),
-                    data: base64Data,
-                    mime: file.type,
-                    type
-                }
-            ]);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
         };
-        reader.readAsDataURL(file);
+    }, []);
+
+    useEffect(() => {
+        const timeoutId = window.setTimeout(() => {
+            supportSessionService.save({
+                mode,
+                draft: input,
+                messages,
+                diagnosticContext,
+                attachmentsMeta: pendingAttachmentMeta
+            });
+        }, 150);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [mode, input, messages, diagnosticContext, pendingAttachmentMeta]);
+
+    const updateDiagnosticField = <K extends keyof SupportDiagnosticContext>(key: K, value: SupportDiagnosticContext[K] | '') => {
+        setDiagnosticContext(prev => {
+            const next: SupportDiagnosticContext = { ...prev };
+
+            if (!value) {
+                delete next[key];
+            } else {
+                next[key] = value as SupportDiagnosticContext[K];
+            }
+
+            return next;
+        });
+    };
+
+    const handleModeSelect = (nextMode: SupportMode) => {
+        if (nextMode === mode || isLoadingChat) return;
+
+        setMode(nextMode);
+        if (nextMode !== 'AUTO') {
+            setMessages(prev => [...prev, createModeMessage(nextMode)]);
+        }
+    };
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(event.target.files ?? []);
+        if (files.length === 0) return;
+
+        const nextFiles = (await Promise.all(files.map(readFileAsDataUrl))).filter(
+            (file): file is SelectedSupportFile => Boolean(file)
+        );
+
+        if (nextFiles.length > 0) {
+            setSelectedFiles(prev => [...prev, ...nextFiles]);
+            setPendingAttachmentMeta(prev => [...prev, ...buildAttachmentMeta(nextFiles)]);
+        }
+
+        if (nextFiles.length !== files.length) {
+            window.alert('Apenas imagens e audios sao suportados neste atendimento.');
+        }
+
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const removeSelectedFile = (fileId: string) => {
+        setSelectedFiles(prev => prev.filter(file => file.id !== fileId));
+        setPendingAttachmentMeta(prev => prev.filter(file => file.id !== fileId));
+    };
+
+    const applyLocalFallback = (modelMessageId: string, prompt: string, attachmentCount: number) => {
+        const { text } = localSupportService.generateResponse(prompt, mode, diagnosticContext);
+        const finalText = attachmentCount > 0
+            ? `${text}\n\nANEXOS: Os anexos visuais ficam pendentes ate a conexao voltar.`
+            : text;
+
+        setMessages(prev =>
+            prev.map(msg =>
+                msg.id === modelMessageId ? { ...msg, text: finalText, isError: false, isStreaming: false } : msg
+            )
+        );
     };
 
     const sendMessage = async () => {
-        let textToSend = input;
-        if (!textToSend && selectedFiles.length > 0) {
-            textToSend = `[${selectedFiles.length} ARQUIVO(S) ENVIADO(S) PARA ANALISE]`;
+        if (isLoadingChat) return;
+
+        let textToSend = input.trim();
+        const filesToSend = [...selectedFiles];
+
+        if (!textToSend && filesToSend.length > 0) {
+            textToSend = `[${filesToSend.length} arquivo(s) enviado(s) para analise]`;
         }
 
-        if (!textToSend.trim() && selectedFiles.length === 0) return;
+        if (!textToSend && filesToSend.length === 0) return;
 
         const userMsg: ChatMessage = {
             id: crypto.randomUUID(),
             role: 'user',
             text: textToSend,
-            files: selectedFiles
+            files: filesToSend,
+            createdAt: Date.now()
         };
 
-        setMessages(prev => [...prev, userMsg]);
+        const modelMessageId = crypto.randomUUID();
+        setMessages(prev => [
+            ...prev,
+            userMsg,
+            { id: modelMessageId, role: 'model', text: '', isStreaming: true, createdAt: Date.now() }
+        ]);
         setInput('');
         setSelectedFiles([]);
+        setPendingAttachmentMeta([]);
         setIsLoadingChat(true);
+        setShowRestoreNotice(false);
 
-        const modelMessageId = crypto.randomUUID();
-        setMessages(prev => [...prev, { id: modelMessageId, role: 'model', text: '', isStreaming: true }]);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+
+        const localPrompt = textToSend.startsWith('[')
+            ? 'Analise os anexos enviados e conduza um diagnostico tecnico objetivo.'
+            : textToSend;
+
+        if (!isOnline) {
+            applyLocalFallback(modelMessageId, localPrompt, filesToSend.length);
+            setIsLoadingChat(false);
+            return;
+        }
 
         try {
-            const historyForApi = [...messages, userMsg].map(m => {
-                const parts: any[] = [];
+            const structuredContext = buildStructuredSupportContext(mode, diagnosticContext, isOnline);
 
-                if (m.text && !m.text.startsWith('[')) {
-                    parts.push({ text: m.text });
-                } else if (m.text && m.text.startsWith('[') && (!m.files || m.files.length === 0)) {
-                    parts.push({ text: m.text });
+            const historyForApi = [...messagesRef.current, userMsg].map(message => {
+                const parts: any[] = [];
+                let effectiveText = message.text;
+
+                if (message.id === userMsg.id && structuredContext) {
+                    effectiveText = [structuredContext, effectiveText].filter(Boolean).join('\n\n');
                 }
 
-                m.files?.forEach(file => {
+                const isAttachmentPlaceholder = message.text.startsWith('[') && Boolean(message.files?.length);
+
+                if (effectiveText && (!isAttachmentPlaceholder || effectiveText !== message.text || !message.files?.length)) {
+                    parts.push({ text: effectiveText });
+                } else if (effectiveText && !message.files?.length) {
+                    parts.push({ text: effectiveText });
+                }
+
+                message.files?.forEach(file => {
                     parts.push({
                         inlineData: {
                             mimeType: file.mime,
@@ -177,54 +447,67 @@ export const Tool_Assistant: React.FC = () => {
                     });
                 });
 
-                if (parts.length === 0) parts.push({ text: m.text || 'Analise de arquivo.' });
-                return { role: m.role, parts };
+                if (parts.length === 0) parts.push({ text: effectiveText || 'Analise de arquivo.' });
+                return { role: message.role, parts };
             });
 
             await generateChatResponseStream(
                 historyForApi,
                 (chunkText: string) => {
                     setMessages(prev =>
-                        prev.map(msg =>
-                            msg.id === modelMessageId ? { ...msg, text: chunkText } : msg
-                        )
+                        prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: chunkText } : msg))
                     );
                 },
                 (finalText, sources) => {
                     setMessages(prev =>
-                        prev.map(msg =>
-                            msg.id === modelMessageId ? { ...msg, text: finalText, sources, isStreaming: false } : msg
-                        )
+                        prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: finalText, sources, isStreaming: false } : msg))
                     );
                 },
                 mode
             );
         } catch (error: any) {
             console.error('Chat Error:', error?.message || 'Unknown error');
-            const errorMessage = error.message || 'FALHA DE CONEXAO. Tente novamente.';
-            setMessages(prev =>
-                prev.map(msg =>
-                    msg.id === modelMessageId ? { ...msg, text: errorMessage, isError: true, isStreaming: false } : msg
-                )
-            );
+
+            const errorMessage = error?.message || 'FALHA DE CONEXAO. Tente novamente.';
+            const browserOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+            const shouldUseLocalFallback = browserOffline || /503|conex|fetch|network/i.test(errorMessage.toLowerCase());
+
+            if (shouldUseLocalFallback) {
+                applyLocalFallback(modelMessageId, localPrompt, filesToSend.length);
+            } else {
+                setMessages(prev =>
+                    prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: errorMessage, isError: true, isStreaming: false } : msg))
+                );
+            }
         } finally {
             setIsLoadingChat(false);
         }
     };
 
     const resetMessages = () => {
-        setIsLoadingChat(false);
-        setMessages([
-            {
-                id: 'welcome',
-                role: 'model',
-                text: 'Olá! Sou o Assistente Técnico Ordemilk. Como posso ajudar você hoje?\nDescreva o problema ou envie fotos/áudios para análise.'
-            }
-        ]);
+        if (!window.confirm('Deseja apagar o historico deste atendimento?')) return;
+
+        supportSessionService.clear();
+        setMessages([createWelcomeMessage()]);
         setInput('');
         setMode('AUTO');
+        setDiagnosticContext(EMPTY_DIAGNOSTIC_CONTEXT);
         setSelectedFiles([]);
+        setPendingAttachmentMeta([]);
+        setIsGuideOpen(false);
+        setIsLoadingChat(false);
+        setShowRestoreNotice(false);
+
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
+
+    const filledDiagnosticCount = Object.values(diagnosticContext).filter(Boolean).length;
+    const hasRestoredAttachmentMeta = pendingAttachmentMeta.length > 0 && selectedFiles.length === 0;
+    const modeOptions: Array<{ value: SupportMode; label: string; icon: string }> = [
+        { value: 'AUTO', label: 'AUTO (IA)', icon: 'fa-robot' },
+        { value: 'REF', label: 'REFRIGERACAO', icon: 'fa-snowflake' },
+        { value: 'ELEC', label: 'ELETRICA', icon: 'fa-bolt' }
+    ];
 
     return (
         <div className="animate-fadeIn h-full flex flex-col">
@@ -238,92 +521,192 @@ export const Tool_Assistant: React.FC = () => {
                 </div>
             </div>
 
+            {showRestoreNotice && (
+                <div className="mb-3 rounded-[20px] border border-[#00d9ff]/35 bg-[#00d9ff]/10 px-4 py-3 text-[12px] text-[#d9f6ff]">
+                    <div className="flex items-start justify-between gap-3">
+                        <p className="leading-relaxed font-medium">Sessao restaurada neste dispositivo. Historico, rascunho e contexto tecnico seguem salvos localmente.</p>
+                        <button onClick={() => setShowRestoreNotice(false)} className="w-6 h-6 rounded-full border border-white/10 text-white/70 hover:text-white shrink-0" aria-label="Fechar aviso">
+                            <i className="fa-solid fa-xmark text-[11px]"></i>
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <div className="mb-3 rounded-[24px] bg-[#3b4c61]/72 border border-[#4a5c73] backdrop-blur-xl overflow-hidden">
+                <button onClick={() => setIsGuideOpen(prev => !prev)} className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left" aria-expanded={isGuideOpen}>
+                    <div>
+                        <p className="text-[#ff9900] text-[11px] font-bold tracking-[0.18em] uppercase font-heading">Coleta guiada</p>
+                        <p className="text-white text-[14px] font-semibold mt-1">Dados tecnicos que entram automaticamente no proximo atendimento</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className="px-2.5 py-1 rounded-full border border-white/10 bg-black/15 text-[11px] text-[#cdd7e4]">{filledDiagnosticCount > 0 ? `${filledDiagnosticCount} dado(s)` : 'Sem dados'}</span>
+                        <span className={`w-9 h-9 rounded-full border border-white/10 flex items-center justify-center text-white/80 transition-transform ${isGuideOpen ? 'rotate-180' : ''}`}>
+                            <i className="fa-solid fa-chevron-down text-[12px]"></i>
+                        </span>
+                    </div>
+                </button>
+
+                {isGuideOpen && (
+                    <div className="px-4 pb-4 border-t border-white/5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3">
+                            {GUIDE_FIELDS.map(field => (
+                                <label key={field.key} className="rounded-[18px] bg-[#2a3646]/95 border border-[#4a5c73] px-3 py-2.5">
+                                    <span className="text-[11px] uppercase tracking-[0.14em] text-[#9ca7b8] font-bold flex items-center gap-2">
+                                        <i className={`fa-solid ${field.icon} text-[#00d9ff]`}></i>
+                                        {field.label}
+                                    </span>
+                                    <input
+                                        type="text"
+                                        value={diagnosticContext[field.key] ?? ''}
+                                        onChange={(event) => updateDiagnosticField(field.key, event.target.value)}
+                                        className="mt-2 w-full bg-transparent text-[14px] text-white placeholder:text-[#7d8a9a] outline-none"
+                                        placeholder={field.placeholder}
+                                    />
+                                </label>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3">
+                            {[
+                                { key: 'ihmOn' as const, label: 'IHM energizada?' },
+                                { key: 'compressorStarts' as const, label: 'Compressor parte?' }
+                            ].map(field => (
+                                <div key={field.key} className="rounded-[18px] bg-[#2a3646]/95 border border-[#4a5c73] px-3 py-3">
+                                    <p className="text-[11px] uppercase tracking-[0.14em] text-[#9ca7b8] font-bold mb-2">{field.label}</p>
+                                    <div className="flex gap-2">
+                                        {(['sim', 'nao'] as const).map(option => (
+                                            <button
+                                                key={option}
+                                                onClick={() => updateDiagnosticField(field.key, diagnosticContext[field.key] === option ? '' : option)}
+                                                className={`flex-1 h-10 rounded-[14px] border text-[12px] font-bold transition-all ${diagnosticContext[field.key] === option
+                                                    ? option === 'sim'
+                                                        ? 'bg-[#00d9ff]/18 border-[#00d9ff]/50 text-white'
+                                                        : 'bg-[#ff6600]/18 border-[#ff6600]/50 text-white'
+                                                    : 'bg-[#1f2937] border-[#4a5c73] text-[#cdd7e4]'
+                                                }`}
+                                            >
+                                                {option.toUpperCase()}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                            <p className="text-[11px] text-[#9ca7b8] leading-relaxed">Esses dados entram automaticamente na proxima pergunta enviada para a IA ou para o modo local.</p>
+                            {filledDiagnosticCount > 0 && (
+                                <button onClick={() => setDiagnosticContext(EMPTY_DIAGNOSTIC_CONTEXT)} className="px-3 py-1.5 rounded-full border border-white/10 text-[11px] font-bold text-white/80 hover:text-white">
+                                    Limpar dados
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
             <div className="flex-1 flex flex-col min-h-0 relative">
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-5 pr-1 flex flex-col pb-4 no-scrollbar">
-                    {messages.map((m, i) => <ChatBubble key={m.id || i} msg={m} onImageLoad={scrollToBottom} />)}
-                    {isLoadingChat && (
-                        <div className="px-4 py-3 bg-[#3b4c61]/88 rounded-[20px] border border-[#4a5c73] w-20 h-12 animate-pulse self-start ml-12 shadow-lg">
-                            ...
+                    {!isOnline && (
+                        <div className="self-stretch rounded-[18px] border border-[#ff6600]/35 bg-[#ff6600]/10 px-4 py-3 text-[12px] text-[#ffe0cc]">
+                            Sem internet no momento. O suporte usa consulta local automatica para nao te deixar sem resposta.
                         </div>
                     )}
-                    <div ref={bottomRef} />
+
+                    {hasRestoredAttachmentMeta && (
+                        <div className="self-stretch rounded-[18px] border border-[#00d9ff]/25 bg-[#00d9ff]/8 px-4 py-3 text-[12px] text-[#d7f5ff]">
+                            <p className="font-semibold mb-2">Anexos pendentes da sessao restaurada</p>
+                            <div className="flex flex-wrap gap-2">
+                                {pendingAttachmentMeta.map(file => (
+                                    <span key={file.id} className="px-2.5 py-1 rounded-full bg-black/20 border border-white/10">
+                                        {file.name || `${file.type} pendente`}
+                                    </span>
+                                ))}
+                            </div>
+                            <p className="mt-2 text-[#9edfff]">Reanexe os arquivos se quiser envia-los novamente para analise.</p>
+                        </div>
+                    )}
+
+                    {messages.map((message, index) => (
+                        <ChatBubble key={message.id || index} msg={message} onImageLoad={scrollToBottom} />
+                    ))}
                 </div>
+
+                {selectedFiles.length > 0 && (
+                    <div className="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {selectedFiles.map(file => (
+                            <div key={file.id} className="relative rounded-[18px] overflow-hidden border border-[#4a5c73] bg-[#2a3646]/95 group">
+                                {file.type === 'image' ? (
+                                    <img src={file.data} alt={file.name || 'Preview'} className="w-full h-20 object-cover" />
+                                ) : (
+                                    <div className="w-full h-20 flex flex-col items-center justify-center text-[#00d9ff] gap-1">
+                                        <i className="fa-solid fa-file-audio text-xl"></i>
+                                        <span className="text-[10px] text-white/70 px-2 text-center truncate w-full">{file.name || 'Audio'}</span>
+                                    </div>
+                                )}
+                                <button onClick={() => removeSelectedFile(file.id)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity" aria-label={`Remover ${file.name || 'anexo'}`}>
+                                    <i className="fa-solid fa-xmark text-[10px]"></i>
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <div className="mt-auto pt-3 pb-1">
                     <div className="p-3 rounded-[28px] bg-[#3b4c61]/88 backdrop-blur-xl border border-[#4a5c73] shadow-[0_16px_32px_rgba(24,35,49,0.18)]">
-                        <div className="flex items-center gap-2 mb-3">
-                            <button
-                                onClick={() => setMode('AUTO')}
-                                className={`flex-1 h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${mode === 'AUTO'
+                        <div className="grid grid-cols-3 gap-2 mb-3">
+                            {modeOptions.map(option => (
+                                <button
+                                    key={option.value}
+                                    onClick={() => handleModeSelect(option.value)}
+                                    disabled={isLoadingChat}
+                                    className={`h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${mode === option.value
                                         ? 'bg-gradient-to-r from-[#00d9ff] to-[#0088ff] text-white border-transparent shadow-[0_0_15px_rgba(0,217,255,0.3)]'
                                         : 'bg-[#2a3646] text-white/80 border-[#4a5c73] hover:text-white'
-                                    }`}
-                            >
-                                <i className="fa-solid fa-robot text-[12px]"></i>
-                                <span>AUTO (IA)</span>
-                            </button>
-
-                            <button
-                                onClick={() => setMode('REF')}
-                                className={`flex-1 h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${mode === 'REF'
-                                        ? 'bg-gradient-to-r from-[#00d9ff] to-[#0088ff] text-white border-transparent shadow-[0_0_15px_rgba(0,217,255,0.3)]'
-                                        : 'bg-[#2a3646] text-white/80 border-[#4a5c73] hover:text-white'
-                                    }`}
-                            >
-                                <i className="fa-solid fa-snowflake text-[12px]"></i>
-                                <span>REFRIGERAÇÃO</span>
-                            </button>
-
-                            <button
-                                onClick={() => setMode('ELEC')}
-                                className={`flex-1 h-11 rounded-[18px] font-bold text-[11px] tracking-wide transition-all duration-300 flex items-center justify-center gap-2 border ${mode === 'ELEC'
-                                        ? 'bg-gradient-to-r from-[#00d9ff] to-[#0088ff] text-white border-transparent shadow-[0_0_15px_rgba(0,217,255,0.3)]'
-                                        : 'bg-[#2a3646] text-white/80 border-[#4a5c73] hover:text-white'
-                                    }`}
-                            >
-                                <i className="fa-solid fa-bolt text-[12px]"></i>
-                                <span>ELÉTRICA</span>
-                            </button>
+                                    } ${isLoadingChat ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                >
+                                    <i className={`fa-solid ${option.icon} text-[12px]`}></i>
+                                    <span>{option.label}</span>
+                                </button>
+                            ))}
                         </div>
 
                         <div className="flex gap-2 items-center">
-                            <button
-                                onClick={resetMessages}
-                                className="w-11 h-11 rounded-[14px] bg-[#2a3646] border border-[#3b4c61] text-[#9ca7b8] hover:bg-[#344458] hover:text-white transition-all flex items-center justify-center shrink-0"
-                                aria-label="Limpar conversa"
-                            >
+                            <button onClick={resetMessages} className="w-11 h-11 rounded-[14px] bg-[#2a3646] border border-[#3b4c61] text-[#9ca7b8] hover:bg-[#344458] hover:text-white transition-all flex items-center justify-center shrink-0" aria-label="Limpar conversa">
                                 <i className="fa-solid fa-trash-can text-[12px]"></i>
                             </button>
 
                             <button
                                 onClick={() => fileInputRef.current?.click()}
+                                disabled={isLoadingChat}
                                 className={`w-11 h-11 rounded-[14px] bg-[#2a3646] border border-[#3b4c61] transition-all flex items-center justify-center shrink-0 ${selectedFiles.length > 0
-                                        ? 'text-[#00d9ff] border-[#00d9ff]/50 bg-[#00d9ff]/10'
-                                        : 'text-[#9ca7b8] hover:bg-[#344458] hover:text-white'
-                                    }`}
+                                    ? 'text-[#00d9ff] border-[#00d9ff]/50 bg-[#00d9ff]/10'
+                                    : 'text-[#9ca7b8] hover:bg-[#344458] hover:text-white'
+                                } ${isLoadingChat ? 'opacity-70 cursor-not-allowed' : ''}`}
                                 aria-label="Anexar arquivo"
                             >
                                 <i className="fa-solid fa-paperclip text-[12px]"></i>
-                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*,video/*" onChange={handleFileUpload} multiple />
                             </button>
 
                             <div className="flex-1 relative">
                                 <input
                                     type="text"
                                     value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                                    className="w-full h-11 rounded-[18px] px-4 text-[16px] bg-[#00000026] border border-[#4a5c73] text-[#F8FAFC] font-medium focus:border-[#00d9ff]/60 outline-none transition-all placeholder:text-[#8896a8] placeholder:font-normal"
-                                    placeholder="Digite sua mensagem..."
+                                    onChange={(event) => setInput(event.target.value)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === 'Enter') {
+                                            event.preventDefault();
+                                            void sendMessage();
+                                        }
+                                    }}
+                                    disabled={isLoadingChat}
+                                    className="w-full h-11 rounded-[18px] px-4 text-[16px] bg-[#00000026] border border-[#4a5c73] text-[#F8FAFC] font-medium focus:border-[#00d9ff]/60 outline-none transition-all placeholder:text-[#8896a8] placeholder:font-normal disabled:opacity-70"
+                                    placeholder={isOnline ? 'Digite sua mensagem...' : 'Sem internet: descreva o sintoma para consulta local...'}
                                 />
                             </div>
 
-                            <button
-                                onClick={() => sendMessage()}
-                                disabled={isLoadingChat}
-                                className="w-11 h-11 rounded-[14px] bg-gradient-to-r from-[#ff6600] to-[#ff8833] text-white flex items-center justify-center shadow-[0_0_15px_rgba(255,102,0,0.35)] active:scale-95 transition-all hover:brightness-105 shrink-0"
-                                aria-label="Enviar mensagem"
-                            >
+                            <button onClick={() => void sendMessage()} disabled={isLoadingChat} className="w-11 h-11 rounded-[14px] bg-gradient-to-r from-[#ff6600] to-[#ff8833] text-white flex items-center justify-center shadow-[0_0_15px_rgba(255,102,0,0.35)] active:scale-95 transition-all hover:brightness-105 shrink-0 disabled:opacity-70 disabled:cursor-not-allowed" aria-label="Enviar mensagem">
                                 <i className="fa-solid fa-paper-plane text-[13px] translate-x-[1px]"></i>
                             </button>
                         </div>

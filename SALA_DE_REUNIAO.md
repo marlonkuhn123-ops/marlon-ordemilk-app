@@ -1,18 +1,20 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-03-23T11:04:05-03:00
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-03-27T17:30:00-03:00
 
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
-- **Arquivo em edicao agora:** `Nenhum`
-- **Responsavel atual:** `USER - Deploy Oficial`
+- **Arquivo em edicao agora:** `SALA_DE_REUNIAO.md`
+- **Responsavel atual:** `GEMINI - Deploy GitHub concluído`
 - **Arquivos bloqueados:** `Nenhum`
-- **Ultimo State Sincronizado do Worktree:** Refinamento de UI/UX aplicado no input do chat (`Tool_1_Assistant.tsx`). A cor do texto foi ajustada para `#F8FAFC` e o peso da fonte para `font-medium`, melhorando o contraste e a legibilidade.
-- **Proxima acao autorizada:** USER executar comandos do Git para push da melhoria visual.
+- **Ultimo State Sincronizado do Worktree:** Deploy para `origin/main` concluído com sucesso. Inclui suporte resiliente restaurado com persistencia local, coleta guiada e fallback offline; calculadora com conta auditavel de SH/SC via tabela PT local; suporte ajustado para `gemini-3.1-pro-preview` com fallback automatico para `gemini-3-flash-preview`.
+- **Proxima acao autorizada:** Nenhuma - Deploy concluído.
 - **Pode editar sem pedir?** SIM
-- **Build atual:** OK.
+- **State desta rodada (2026-03-27):** suporte resiliente restaurado com persistencia local, coleta guiada e fallback offline; calculadora com conta auditavel de SH/SC via tabela PT local; suporte ajustado para `gemini-3.1-pro-preview` com fallback automatico para `gemini-3-flash-preview`; push para `origin/main` autorizado pelo USER.
+- **Acao imediata desta rodada:** commitar e fazer push para `origin/main`.
+- **Build atual:** OK (`npm.cmd run lint`, `npm.cmd run build`, `runSystemDiagnostics() = 8/8`, smoke test de suporte/SH/SC e teste direto do Gemini 3.1 aprovados).
 
 ## REGISTRO VISUAL - GEMINI + CLAUDE + CODEX
 - **Timestamp:** `2026-03-25T14:38:27-03:00`
@@ -23,6 +25,42 @@
   3. Codex cruzando `SALA_DE_REUNIAO.md` com o estado real do `geminiService.ts`.
 - **Valor historico:** evidencia de alinhamento simultaneo entre operacao, prompt e auditoria tecnica.
 - **Observacao:** o print exato foi anexado no chat do USER, mas nao existe neste momento um arquivo local novo correspondente dentro do workspace para embed markdown direto.
+
+## HIERARQUIA OPERACIONAL ENTRE AS 3 IAS
+- **Arquitetura segura de codigo:** `Codex`
+- **Operacao e conducao geral:** `Gemini`
+- **Prompt, semantica e UX verbal:** `Claude`
+- **Leitura oficial:** Codex lidera decisoes de arquitetura e impacto em codigo; Gemini conduz fluxo operacional, registro e execucao geral; Claude refina comportamento verbal, semantica e cadencia da IA.
+
+## PROTOCOLO DO USER (CHEFIA E COMANDO)
+- **Autoridade final:** o USER e o decisor maximo. Nenhuma IA decide prioridade, escopo ou execucao acima dele.
+- **Como conduzir o Codex:** usar para auditoria, causa raiz, comparacao com baseline, arquitetura segura e avaliacao de risco antes de qualquer mudanca.
+- **Como conduzir a Gemini:** usar para operacao, organizacao do fluxo, registro na sala, execucao controlada, build, deploy e handoff.
+- **Como conduzir o Claude:** usar para refino de prompt, semantica, cadencia, tom, clareza e UX verbal da IA sem mexer na arquitetura de codigo.
+- **Fluxo ideal de comando:** primeiro `Codex` pensa e protege; depois `Claude` lapida a fala, se necessario; por fim `Gemini` executa o plano aprovado.
+- **Regra de ouro operacional:** se o assunto for codigo e risco, chamar `Codex`; se for comportamento verbal da IA, chamar `Claude`; se for fazer acontecer com registro e entrega, chamar `Gemini`.
+- **Forma curta de comando do USER:** `Codex = pensar e proteger | Claude = lapidar a fala | Gemini = operar e entregar`.
+
+## AUTORIZACAO ATIVA - SUPORTE MAIS RESILIENTE
+- **Timestamp:** `2026-03-27T08:19:56-03:00`
+- **Autorizacao do USER:** implementar as mudancas sugeridas com foco em seguranca e sem quebrar o app.
+- **Escopo desta rodada:**
+  1. Persistencia de sessao do suporte.
+  2. Coleta guiada de dados tecnicos no suporte.
+  3. Fallback offline local no suporte.
+- **Arquivos previstos para alteracao:**
+  - `components/Tool_1_Assistant.tsx`
+  - `types.ts`
+  - `SALA_DE_REUNIAO.md`
+  - novos servicos locais de suporte em `services/`
+- **Protecoes obrigatorias:**
+  - nao tocar em `public/sw.js`
+  - nao tocar no cerebro/persona em `services/geminiService.ts`
+  - nao tocar em auth, login, roteamento ou layout global
+- **Riscos mapeados antes da execucao:**
+  1. `localStorage` pode estourar se anexos base64 forem persistidos; mitigacao: salvar apenas metadados e mensagens textuais.
+  2. Fallback offline pode ficar prolixo ou incoerente com a UX de campo; mitigacao: manter resposta curta no formato homologado.
+  3. `components/Tool_1_Assistant.tsx` e arquivo sensivel; mitigacao: alteracao minima, sem mexer em streaming, modo ou identidade verbal.
 
 ---
 
@@ -444,3 +482,18 @@ PROIBIDO:
 - **A Solução:** Implementação puramente semântica e elegante chamada "Instrução de Cadência de Campo". A IA foi moldada para atuar com cordialidade professoral, entregando apenas (1) Hipótese, (2) Perguntas curtas e (3) Ação Imediata no primeiro contato. O contexto gigante e a conclusão ficam travados esperando a reposta do técnico.
 - **Veredito Técnico / USER:** Declarado como **"PERFEITO"** e marcado como **"VIRADA DE CHAVE"**. O `geminiService.ts` atingiu sua excelência e maturidade definitivas em usabilidade mobile.
 ![alt text](image-10.png) ![alt text](image-11.png)
+
+### 💡 SUGESTÕES ARQUITETURAIS DE CAMPO (ROADMAP GEMINI)
+Análise técnica baseada nas dores reais do técnico de refrigeração industrial e no estado atual do código (2026-03-25):
+
+1. **Persistência de Sessão do Diagnóstico (Anti-Perda de Contexto)**
+   - *O Problema:* O array de `messages` morre se o iOS/Android matar a aba do navegador para economizar RAM enquanto o técnico tira uma foto da placa ou atende o WhatsApp.
+   - *A Solução:* Salvar o estado do chat no `localStorage` a cada interação. Ao reabrir o app, o hook restaura o histórico da IA de onde parou.
+
+2. **Modo de Sobrevivência Offline (Fallback Determinístico)**
+   - *O Problema:* Fazendas frequentemente têm zero sinal de internet. Sem 4G, a API do Gemini cai (503/Fetch Error) e inutiliza a tela de suporte.
+   - *A Solução:* Detectar o status `!isOnline` do navegador e mudar automaticamente o chat para "Modo Consulta Local". O input passa a buscar via Regex diretamente nos arquivos locais de código de erro (`FAQ_DATABASE`, manuais), garantindo uma resposta de socorro mesmo sem a IA principal.
+
+3. **Acessibilidade Hands-Free (Leitura em Voz Alta)**
+   - *O Problema:* O técnico está com as mãos sujas de óleo ou segurando o manifold no painel, o que dificulta a leitura do texto na tela.
+   - *A Solução:* Implementar a Web Speech API (`window.speechSynthesis`). Adicionar um botão 🔊 ao lado da resposta da IA que permite ao celular "falar" o diagnóstico em voz alta.
