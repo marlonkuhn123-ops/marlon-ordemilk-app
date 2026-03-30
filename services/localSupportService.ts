@@ -103,7 +103,7 @@ const buildQuestions = (route: OfflineRoute, context: SupportDiagnosticContext) 
         pushIfMissing(Boolean(context.compressorStarts), 'A contatora fecha ou o compressor nao chega a partir?');
     } else if (route === 'refrigeration') {
         pushIfMissing(hasValue(context.pressure), 'Qual pressao voce mediu no sistema antes do desarme?');
-        pushIfMissing(hasValue(context.temperature), 'Qual temperatura voce mediu na linha ou no leite?');
+        pushIfMissing(hasValue(context.temperature), 'Qual temperatura do leite voce mediu?');
         pushIfMissing(hasValue(context.model), 'Qual e o modelo ou capacidade do tanque?');
     } else {
         pushIfMissing(hasValue(context.model), 'Qual e o modelo ou capacidade do tanque?');

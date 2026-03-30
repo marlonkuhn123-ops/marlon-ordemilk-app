@@ -26,20 +26,24 @@ type SelectedSupportFile = {
 };
 
 const GUIDE_FIELDS: Array<{
-    key: keyof Pick<SupportDiagnosticContext, 'model' | 'code' | 'voltage' | 'pressure' | 'temperature' | 'refrigerant'>;
+    key: keyof Pick<SupportDiagnosticContext, 'model' | 'voltage' | 'pressure' | 'temperature' | 'refrigerant'>;
     label: string;
     placeholder: string;
     icon: string;
 }> = [
     { key: 'model', label: 'Modelo', placeholder: 'Ex: TK 3000 / painel Full Gauge', icon: 'fa-cubes' },
-    { key: 'code', label: 'Codigo ou alarme', placeholder: 'Ex: E04 / AL-02', icon: 'fa-triangle-exclamation' },
     { key: 'voltage', label: 'Tensao medida', placeholder: 'Ex: 220V trifasico / 24V comando', icon: 'fa-bolt' },
     { key: 'pressure', label: 'Pressao', placeholder: 'Ex: 28 psi baixa / 250 psi alta', icon: 'fa-gauge-high' },
-    { key: 'temperature', label: 'Temperatura', placeholder: 'Ex: leite 8C / descarga 95C', icon: 'fa-temperature-half' },
-    { key: 'refrigerant', label: 'Fluido refrigerante', placeholder: 'Ex: R404A / R134a', icon: 'fa-snowflake' }
+    { key: 'temperature', label: 'Leite', placeholder: 'Ex: leite 8C', icon: 'fa-temperature-half' },
+    { key: 'refrigerant', label: 'Fluido refrigerante', placeholder: '', icon: 'fa-snowflake' }
 ];
 
 const EMPTY_DIAGNOSTIC_CONTEXT: SupportDiagnosticContext = {};
+
+const stripDeprecatedGuideFields = (context: SupportDiagnosticContext): SupportDiagnosticContext => {
+    const { code, ihmOn, compressorStarts, ...safeContext } = context;
+    return safeContext;
+};
 
 const createWelcomeMessage = (): ChatMessage => ({
     id: 'welcome',
@@ -66,13 +70,10 @@ const buildAttachmentMeta = (files: SelectedSupportFile[]): SupportAttachmentMet
 const hasDiagnosticContext = (context: SupportDiagnosticContext) =>
     Boolean(
         context.model ||
-        context.code ||
         context.voltage ||
         context.pressure ||
         context.temperature ||
-        context.refrigerant ||
-        context.ihmOn ||
-        context.compressorStarts
+        context.refrigerant
     );
 
 const buildStructuredSupportContext = (
@@ -83,13 +84,10 @@ const buildStructuredSupportContext = (
     const lines: string[] = [];
 
     if (diagnosticContext.model) lines.push(`Modelo: ${diagnosticContext.model}`);
-    if (diagnosticContext.code) lines.push(`Codigo/alarme: ${diagnosticContext.code}`);
     if (diagnosticContext.voltage) lines.push(`Tensao: ${diagnosticContext.voltage}`);
     if (diagnosticContext.pressure) lines.push(`Pressao: ${diagnosticContext.pressure}`);
-    if (diagnosticContext.temperature) lines.push(`Temperatura: ${diagnosticContext.temperature}`);
+    if (diagnosticContext.temperature) lines.push(`Temperatura do leite: ${diagnosticContext.temperature}`);
     if (diagnosticContext.refrigerant) lines.push(`Fluido refrigerante: ${diagnosticContext.refrigerant}`);
-    if (diagnosticContext.ihmOn) lines.push(`IHM energizada: ${diagnosticContext.ihmOn}`);
-    if (diagnosticContext.compressorStarts) lines.push(`Compressor parte: ${diagnosticContext.compressorStarts}`);
 
     if (lines.length === 0) return '';
 
@@ -245,6 +243,7 @@ const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = Rea
 export const Tool_Assistant: React.FC = () => {
     const initialSnapshotRef = useRef(supportSessionService.load());
     const restoredSnapshot = initialSnapshotRef.current;
+    const restoredDiagnosticContext = stripDeprecatedGuideFields(restoredSnapshot?.diagnosticContext ?? EMPTY_DIAGNOSTIC_CONTEXT);
     const restoredMessages = restoredSnapshot ? supportSessionService.hydrateMessages(restoredSnapshot) : [];
 
     const [messages, setMessages] = useState<ChatMessage[]>(() =>
@@ -253,13 +252,13 @@ export const Tool_Assistant: React.FC = () => {
     const messagesRef = useRef(messages);
     const [input, setInput] = useState(() => restoredSnapshot?.draft ?? '');
     const [mode, setMode] = useState<SupportMode>(() => restoredSnapshot?.mode ?? 'AUTO');
-    const [diagnosticContext, setDiagnosticContext] = useState<SupportDiagnosticContext>(() => restoredSnapshot?.diagnosticContext ?? EMPTY_DIAGNOSTIC_CONTEXT);
+    const [diagnosticContext, setDiagnosticContext] = useState<SupportDiagnosticContext>(() => restoredDiagnosticContext);
     const [selectedFiles, setSelectedFiles] = useState<SelectedSupportFile[]>([]);
     const [pendingAttachmentMeta, setPendingAttachmentMeta] = useState<SupportAttachmentMeta[]>(() => restoredSnapshot?.attachmentsMeta ?? []);
     const [isLoadingChat, setIsLoadingChat] = useState(false);
     const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
     const [isGuideOpen, setIsGuideOpen] = useState(() =>
-        Boolean(restoredSnapshot?.draft || restoredSnapshot?.attachmentsMeta.length || hasDiagnosticContext(restoredSnapshot?.diagnosticContext ?? EMPTY_DIAGNOSTIC_CONTEXT))
+        Boolean(restoredSnapshot?.draft || restoredSnapshot?.attachmentsMeta.length || hasDiagnosticContext(restoredDiagnosticContext))
     );
     const [showRestoreNotice, setShowRestoreNotice] = useState(() =>
         Boolean(restoredSnapshot && (restoredMessages.length > 1 || restoredSnapshot.draft || restoredSnapshot.attachmentsMeta.length))
@@ -306,7 +305,7 @@ export const Tool_Assistant: React.FC = () => {
                 mode,
                 draft: input,
                 messages,
-                diagnosticContext,
+                diagnosticContext: stripDeprecatedGuideFields(diagnosticContext),
                 attachmentsMeta: pendingAttachmentMeta
             });
         }, 150);
@@ -501,7 +500,9 @@ export const Tool_Assistant: React.FC = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const filledDiagnosticCount = Object.values(diagnosticContext).filter(Boolean).length;
+    const filledDiagnosticCount = GUIDE_FIELDS.reduce((count, field) => (
+        diagnosticContext[field.key] ? count + 1 : count
+    ), 0);
     const hasRestoredAttachmentMeta = pendingAttachmentMeta.length > 0 && selectedFiles.length === 0;
     const modeOptions: Array<{ value: SupportMode; label: string; icon: string }> = [
         { value: 'AUTO', label: 'AUTO (IA)', icon: 'fa-robot' },
@@ -555,41 +556,26 @@ export const Tool_Assistant: React.FC = () => {
                                         <i className={`fa-solid ${field.icon} text-[#00d9ff]`}></i>
                                         {field.label}
                                     </span>
-                                    <input
-                                        type="text"
-                                        value={diagnosticContext[field.key] ?? ''}
-                                        onChange={(event) => updateDiagnosticField(field.key, event.target.value)}
-                                        className="mt-2 w-full bg-transparent text-[14px] text-white placeholder:text-[#7d8a9a] outline-none"
-                                        placeholder={field.placeholder}
-                                    />
+                                    {field.key === 'refrigerant' ? (
+                                        <select
+                                            value={diagnosticContext.refrigerant ?? ''}
+                                            onChange={(event) => updateDiagnosticField('refrigerant', event.target.value)}
+                                            className="mt-2 w-full bg-transparent text-[14px] text-white outline-none"
+                                        >
+                                            <option value="" className="bg-[#243041] text-[#7d8a9a]">Selecione</option>
+                                            <option value="R-404A" className="bg-[#243041] text-white">R-404A</option>
+                                            <option value="R-22" className="bg-[#243041] text-white">R-22</option>
+                                        </select>
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            value={diagnosticContext[field.key] ?? ''}
+                                            onChange={(event) => updateDiagnosticField(field.key, event.target.value)}
+                                            className="mt-2 w-full bg-transparent text-[14px] text-white placeholder:text-[#7d8a9a] outline-none"
+                                            placeholder={field.placeholder}
+                                        />
+                                    )}
                                 </label>
-                            ))}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-3">
-                            {[
-                                { key: 'ihmOn' as const, label: 'IHM energizada?' },
-                                { key: 'compressorStarts' as const, label: 'Compressor parte?' }
-                            ].map(field => (
-                                <div key={field.key} className="rounded-[18px] bg-[#2a3646]/95 border border-[#4a5c73] px-3 py-3">
-                                    <p className="text-[11px] uppercase tracking-[0.14em] text-[#9ca7b8] font-bold mb-2">{field.label}</p>
-                                    <div className="flex gap-2">
-                                        {(['sim', 'nao'] as const).map(option => (
-                                            <button
-                                                key={option}
-                                                onClick={() => updateDiagnosticField(field.key, diagnosticContext[field.key] === option ? '' : option)}
-                                                className={`flex-1 h-10 rounded-[14px] border text-[12px] font-bold transition-all ${diagnosticContext[field.key] === option
-                                                    ? option === 'sim'
-                                                        ? 'bg-[#00d9ff]/18 border-[#00d9ff]/50 text-white'
-                                                        : 'bg-[#ff6600]/18 border-[#ff6600]/50 text-white'
-                                                    : 'bg-[#1f2937] border-[#4a5c73] text-[#cdd7e4]'
-                                                }`}
-                                            >
-                                                {option.toUpperCase()}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
                             ))}
                         </div>
 
