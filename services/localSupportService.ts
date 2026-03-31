@@ -104,6 +104,7 @@ const buildQuestions = (route: OfflineRoute, context: SupportDiagnosticContext) 
     } else if (route === 'refrigeration') {
         pushIfMissing(hasValue(context.pressure), 'Qual pressao voce mediu no sistema antes do desarme?');
         pushIfMissing(hasValue(context.temperature), 'Qual temperatura do leite voce mediu?');
+        pushIfMissing(hasValue(context.refrigerant), 'Qual e o fluido refrigerante do sistema?');
         pushIfMissing(hasValue(context.model), 'Qual e o modelo ou capacidade do tanque?');
     } else {
         pushIfMissing(hasValue(context.model), 'Qual e o modelo ou capacidade do tanque?');

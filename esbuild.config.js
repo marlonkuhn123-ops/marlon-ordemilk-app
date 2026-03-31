@@ -18,6 +18,9 @@ const define = {
   'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
   'process.env.GEMINI_API_KEY': JSON.stringify(apiKey || '__GEMINI_API_KEY_PLACEHOLDER__'),
   'process.env.API_KEY': JSON.stringify(apiKey || '__GEMINI_API_KEY_PLACEHOLDER__'),
+  'process.env.GEMINI_TEXT_MODEL': JSON.stringify(process.env.GEMINI_TEXT_MODEL || ''),
+  'process.env.GEMINI_SUPPORT_MODEL': JSON.stringify(process.env.GEMINI_SUPPORT_MODEL || ''),
+  'process.env.GEMINI_SUPPORT_FALLBACK_MODEL': JSON.stringify(process.env.GEMINI_SUPPORT_FALLBACK_MODEL || ''),
   'GEMINI_API_KEY': JSON.stringify(apiKey || '__GEMINI_API_KEY_PLACEHOLDER__'),
 };
 

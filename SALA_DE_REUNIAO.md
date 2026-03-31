@@ -497,3 +497,70 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 3. **Acessibilidade Hands-Free (Leitura em Voz Alta)**
    - *O Problema:* O técnico está com as mãos sujas de óleo ou segurando o manifold no painel, o que dificulta a leitura do texto na tela.
    - *A Solução:* Implementar a Web Speech API (`window.speechSynthesis`). Adicionar um botão 🔊 ao lado da resposta da IA que permite ao celular "falar" o diagnóstico em voz alta.
+
+### CORRECAO ESTRUTURAL GEMINI POS-REVISAO - 2026-03-31T11:47:30-03:00
+- Contexto:
+  - A Claude restaurou partes importantes do conhecimento técnico em `constants.ts`.
+  - Na revisão fria do Codex ainda restaram 3 riscos reais de produção, mesmo com `build` limpo.
+- Problemas confirmados:
+  1. `constants.ts` ficou em conflito com o cálculo real do app:
+     - Prompt dizia `SH 5-10K` e `SR 3-5K`.
+     - Motor real do app usa `SH 7-12K` e `SC 4-8K`.
+  2. As variáveis `GEMINI_TEXT_MODEL`, `GEMINI_SUPPORT_MODEL` e `GEMINI_SUPPORT_FALLBACK_MODEL` eram lidas em `config/env.ts`, mas não entravam no bundle web porque `esbuild.config.js` só injetava a chave de API.
+  3. O fallback do suporte para outro modelo Gemini ainda podia perder a blindagem de retry se o modelo de fallback também retornasse `503`.
+- Correcoes aplicadas:
+  1. `constants.ts`
+     - Alinhado o conhecimento técnico do prompt com o motor do app:
+       - `SH` = `7 a 12K`
+       - `SC` = `4 a 8K`
+     - Padronizada a sigla `SC` no texto técnico, evitando mistura `SR/SC`.
+  2. `esbuild.config.js`
+     - Passou a injetar no front:
+       - `process.env.GEMINI_TEXT_MODEL`
+       - `process.env.GEMINI_SUPPORT_MODEL`
+       - `process.env.GEMINI_SUPPORT_FALLBACK_MODEL`
+  3. `services/geminiService.ts`
+     - Criado retry interno para stream por modelo.
+     - O modelo principal agora tenta com retry.
+     - Se houver indisponibilidade de modelo, o fallback também tenta com retry antes de falhar.
+- Garantias preservadas:
+  - Persona nao foi reescrita.
+  - Cadencia da primeira resposta foi preservada.
+  - Regra critica `CLP vs Full Gauge` permaneceu intacta.
+- Validacao:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Observacao operacional:
+  - Existe alteracao visual local separada em `components/Tool_1_Assistant.tsx` ainda nao registrada neste bloco, para nao misturar suporte Gemini com ajuste de interface.
+
+### MARCO DE UX DO SUPORTE - DADOS BASE APROVADOS - 2026-03-31T14:34:09-03:00
+- Solicitacao do USER:
+  - Criar um bloco antes da pergunta do tecnico com `modelo do tanque`, `tensao` e `tipo de fluido`.
+  - Fazer a IA sair na frente com esses dados ja injetados no suporte.
+  - Depois, reduzir visualmente esse bloco e fazer a aba minimizar sozinha quando os dados estivessem preenchidos.
+- Implementacao aplicada:
+  1. `components/Tool_1_Assistant.tsx`
+     - Criado o bloco `Dados Base` acima do chat.
+     - Campos adicionados:
+       - `Modelo do tanque`
+       - `Tensao`
+       - `Fluido refrigerante`
+     - Os dados passaram a ser persistidos/restaurados com a sessao local.
+     - O cartao foi compactado para ocupar menos altura visual.
+     - Quando os 3 campos ficam preenchidos, o cartao minimiza automaticamente.
+     - Quando minimizado, mostra apenas um resumo em pills e pode ser reaberto manualmente pela seta.
+  2. `services/geminiService.ts`
+     - Os `Dados Base` entram automaticamente no prompt antes da pergunta do tecnico.
+     - Se o modelo/capacidade indicar tanque `>= 4000L`, o suporte recebe uma regra operacional explicita:
+       - tratar como arquitetura `CLP Panasonic`
+       - nao perguntar `Full Gauge`, `Ageon` ou controlador comercial
+  3. `services/localSupportService.ts`
+     - O fallback local passou a considerar tambem o `fluido refrigerante` como dado conhecido.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Veredito do USER:
+  - `esta perfeita`
+- Observacao:
+  - Nenhum deploy foi realizado.
+  - Regra operacional do USER registrada: jamais fazer deploy sem pedido explicito.

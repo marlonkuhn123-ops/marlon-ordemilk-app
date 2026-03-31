@@ -4,6 +4,7 @@ import { knowledgeService } from "./knowledgeService";
 import { FAQ_DATABASE } from "../data/faq_data";
 import { KNOWLEDGE_BASE } from "../data/knowledge_base";
 import { ENV } from "../config/env";
+import { SupportDiagnosticContext } from "../types";
 
 const DEFAULT_TEXT_MODEL = ENV.GEMINI_TEXT_MODEL;
 const SUPPORT_PRIMARY_MODEL = ENV.GEMINI_SUPPORT_MODEL;
@@ -73,7 +74,52 @@ const isModelAvailabilityError = (error: any) => {
   );
 };
 
-const getSupportConfig = (systemInstruction: string, modelName: string) => {
+const isRetryableStreamError = (error: any) => String(error?.message || "").includes("503");
+const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const hasContextValue = (value?: string) => Boolean(value && value.trim());
+const normalizeText = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+const extractTankCapacityLiters = (model?: string): number | null => {
+  if (!hasContextValue(model)) return null;
+
+  const normalized = normalizeText(model!);
+  const thousandMatch = normalized.match(/(\d+(?:[.,]\d+)?)\s*(k|mil)\b/);
+  if (thousandMatch) {
+    const parsed = parseFloat(thousandMatch[1].replace(',', '.'));
+    return Number.isFinite(parsed) ? Math.round(parsed * 1000) : null;
+  }
+
+  const litersMatch = normalized.match(/(\d{1,3}(?:[.\s]\d{3})+|\d+(?:[.,]\d+)?)\s*(l|litros?)\b/);
+  const rawNumber = litersMatch?.[1] || normalized.match(/\b(\d{4,6})\b/)?.[1];
+  if (!rawNumber) return null;
+
+  const parsed = parseFloat(rawNumber.replace(/[.\s]/g, '').replace(',', '.'));
+  return Number.isFinite(parsed) ? Math.round(parsed) : null;
+};
+
+const getDiagnosticContextInstruction = (diagnosticContext: SupportDiagnosticContext) => {
+  const lines: string[] = [];
+
+  if (hasContextValue(diagnosticContext.model)) {
+    lines.push(`- Modelo/capacidade do tanque informado previamente: ${diagnosticContext.model}`);
+  }
+  if (hasContextValue(diagnosticContext.voltage)) {
+    lines.push(`- Tensão informada previamente: ${diagnosticContext.voltage}`);
+  }
+  if (hasContextValue(diagnosticContext.refrigerant)) {
+    lines.push(`- Fluido refrigerante informado previamente: ${diagnosticContext.refrigerant}`);
+  }
+
+  const tankCapacity = extractTankCapacityLiters(diagnosticContext.model);
+  if (tankCapacity !== null && tankCapacity >= 4000) {
+    lines.push(`- REGRA OPERACIONAL: trate este equipamento como tanque >= 4000L com arquitetura CLP Panasonic. Nao pergunte sobre Full Gauge, Ageon ou controlador comercial.`);
+  }
+
+  if (lines.length === 0) return "";
+  return `\n\n[CONTEXTO BASE DO EQUIPAMENTO - INFORMADO ANTES DA PERGUNTA]\n${lines.join('\n')}`;
+};
+
+const getSupportConfig = (systemInstruction: string, modelName: string, isFirstReply: boolean) => {
   const baseConfig: Record<string, any> = {
     systemInstruction,
     temperature: 0.2,
@@ -81,18 +127,25 @@ const getSupportConfig = (systemInstruction: string, modelName: string) => {
 
   if (modelName.startsWith("gemini-3")) {
     baseConfig.thinkingConfig = {
-      thinkingLevel: "medium",
+      thinkingLevel: isFirstReply ? "low" : "medium",
     };
   }
 
   return baseConfig;
 };
 
-const getFullSystemInstruction = async (toolType: string, userPrompt: string = "", mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO') => {
+const getFullSystemInstruction = async (
+  toolType: string,
+  userPrompt: string = "",
+  mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO',
+  diagnosticContext: SupportDiagnosticContext = {},
+  includeExtendedKnowledge = true
+) => {
   const fieldKnowledge = knowledgeService.getKnowledgeContext();
   const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
   const brandManual = getDynamicBrandContext(userPrompt);
   const electricalContext = await getElectricalContext(userPrompt);
+  const equipmentContext = getDiagnosticContextInstruction(diagnosticContext);
 
   let modeInstruction = "";
   if (mode === 'ELEC') {
@@ -120,10 +173,10 @@ Olá. Vou te ajudar com um diagnóstico rápido e direto.
 **⚠️ Faça agora:** [1 ação segura, concreta e imediata]
 
 REGRA DE OURO:
-- Não entregue laudo completo na primeira resposta.
-- Não liste causas possíveis em bloco grande.
-- Não despeje teoria de uma vez.
-- Só aprofunde depois que o técnico responder com dados reais ou pedir detalhes.
+- Mantenha a resposta concisa e focada no formato acima.
+- Evite listar todas as causas possíveis ou despejar teoria na primeira interação.
+- **Mesmo sendo breve, demonstre seu conhecimento técnico e autoridade no assunto.**
+- Aprofunde o diagnóstico e forneça detalhes adicionais SOMENTE depois que o técnico responder com dados reais ou pedir mais informações.
 
 SOMENTE após o técnico responder, você pode entregar:
 - causa provável fechada
@@ -133,9 +186,13 @@ SOMENTE após o técnico responder, você pode entregar:
 - conclusão técnica completa`;
   }
 
-  const faqContext = `\n\n[PACOTE DE CONHECIMENTO DE REFERÊNCIA]\nO conteúdo abaixo são casos frequentes e diagnósticos recomendados pela Ordemilk. Use-os como base de conhecimento e inspiração para suas análises, mas sinta-se livre para adaptar o diagnóstico conforme a situação específica relatada pelo técnico. Não trate como regras rígidas, mas como um guia de experiência acumulada.\n${FAQ_DATABASE}`;
+  const faqContext = includeExtendedKnowledge
+    ? `\n\n[PACOTE DE CONHECIMENTO DE REFERÊNCIA]\nO conteúdo abaixo são casos frequentes e diagnósticos recomendados pela Ordemilk. Use-os como base de conhecimento e inspiração para suas análises, mas sinta-se livre para adaptar o diagnóstico conforme a situação específica relatada pelo técnico. Não trate como regras rígidas, mas como um guia de experiência acumulada.\n${FAQ_DATABASE}`
+    : "";
 
-  const structuredKnowledge = `\n\n[BASE DE CONHECIMENTO TÉCNICO ESTRUTURADA EM 4 CAMADAS]\n${KNOWLEDGE_BASE}`;
+  const structuredKnowledge = includeExtendedKnowledge
+    ? `\n\n[BASE DE CONHECIMENTO TÉCNICO ESTRUTURADA EM 4 CAMADAS]\n${KNOWLEDGE_BASE}`
+    : "";
 
   const diagnosticGuidance = `
 [DIRETRIZES DE RACIOCÍNIO TÉCNICO]
@@ -146,7 +203,7 @@ SOMENTE após o técnico responder, você pode entregar:
 5. CAUSA RAIZ: Lembre-se que falhas elétricas muitas vezes são causadas por problemas mecânicos/frigoríficos.
 `;
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${equipmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
 };
 
 export const generateTechResponse = async (
@@ -184,11 +241,17 @@ export const generateChatResponseStream = async (
   onChunk?: (text: string) => void,
   onFinished?: (text: string, sources?: { title: string, uri: string }[]) => void,
   mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO',
+  diagnosticContext: SupportDiagnosticContext = {},
   retries = 2
 ): Promise<string> => {
+  const userTurnCount = history.filter(item => item.role === 'user').length;
+  const isFirstReply = userTurnCount <= 1;
+  const primaryModel = isFirstReply ? DEFAULT_TEXT_MODEL : SUPPORT_PRIMARY_MODEL;
+  const fallbackModel = primaryModel === SUPPORT_PRIMARY_MODEL ? SUPPORT_FALLBACK_MODEL : SUPPORT_PRIMARY_MODEL;
+
   const runStream = async (modelName: string): Promise<string> => {
-  const apiKey = ENV.GEMINI_API_KEY;
-  const ai = new GoogleGenAI({ apiKey });
+    const apiKey = ENV.GEMINI_API_KEY;
+    const ai = new GoogleGenAI({ apiKey });
 
     const contents = history;
 
@@ -196,12 +259,12 @@ export const generateChatResponseStream = async (
       .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
       .join(' ');
 
-    let systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode);
+    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode, diagnosticContext, !isFirstReply);
 
     const responseStream = await ai.models.generateContentStream({
       model: modelName,
       contents,
-      config: getSupportConfig(systemInstruction, modelName)
+      config: getSupportConfig(systemInstruction, modelName, isFirstReply)
     });
 
     let fullText = "";
@@ -225,18 +288,29 @@ export const generateChatResponseStream = async (
     return fullText;
   };
 
-  try {
-    return await runStream(SUPPORT_PRIMARY_MODEL);
-  } catch (error: any) {
-    if (SUPPORT_FALLBACK_MODEL !== SUPPORT_PRIMARY_MODEL && isModelAvailabilityError(error)) {
-      console.warn(`Modelo de suporte ${SUPPORT_PRIMARY_MODEL} indisponivel. Recuando para ${SUPPORT_FALLBACK_MODEL}.`);
-      return runStream(SUPPORT_FALLBACK_MODEL);
+  const runStreamWithRetry = async (modelName: string, retriesLeft: number): Promise<string> => {
+    try {
+      return await runStream(modelName);
+    } catch (error: any) {
+      if (retriesLeft > 0 && isRetryableStreamError(error)) {
+        console.warn(`Erro 503 detectado no stream (${modelName}). Tentando novamente em 2s... (${retriesLeft} tentativas restantes)`);
+        await wait(2000);
+        return runStreamWithRetry(modelName, retriesLeft - 1);
+      }
+      throw error;
     }
+  };
 
-    if (retries > 0 && error?.message?.includes("503")) {
-      console.warn(`Erro 503 detectado no stream. Tentando novamente em 2s... (${retries} tentativas restantes)`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return generateChatResponseStream(history, onChunk, onFinished, mode, retries - 1);
+  try {
+    return await runStreamWithRetry(primaryModel, retries);
+  } catch (error: any) {
+    if (fallbackModel !== primaryModel && isModelAvailabilityError(error)) {
+      console.warn(`Modelo de suporte ${primaryModel} indisponivel. Recuando para ${fallbackModel}.`);
+      try {
+        return await runStreamWithRetry(fallbackModel, retries);
+      } catch (fallbackError: any) {
+        throw new Error(handleApiError(fallbackError));
+      }
     }
     throw new Error(handleApiError(error));
   }
