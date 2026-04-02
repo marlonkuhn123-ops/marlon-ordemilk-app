@@ -15,6 +15,15 @@ const hasStorage = () => typeof window !== 'undefined' && typeof window.localSto
 const isSupportMode = (value: unknown): value is SupportMode => value === 'AUTO' || value === 'REF' || value === 'ELEC';
 const isChatRole = (value: unknown): value is 'user' | 'model' => value === 'user' || value === 'model';
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+const clearStoredSnapshot = () => {
+    if (!hasStorage()) return;
+
+    try {
+        localStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+        console.warn('Falha ao limpar sessao do suporte:', error);
+    }
+};
 
 const sanitizeDiagnosticContext = (value: unknown): SupportDiagnosticContext => {
     if (!value || typeof value !== 'object') return {};
@@ -112,7 +121,7 @@ export const supportSessionService = {
                 !isSupportMode(parsed.mode) ||
                 typeof parsed.draft !== 'string'
             ) {
-                localStorage.removeItem(STORAGE_KEY);
+                clearStoredSnapshot();
                 return null;
             }
 
@@ -127,7 +136,7 @@ export const supportSessionService = {
             };
         } catch (error) {
             console.warn('Falha ao restaurar sessao do suporte:', error);
-            localStorage.removeItem(STORAGE_KEY);
+            clearStoredSnapshot();
             return null;
         }
     },
@@ -160,7 +169,7 @@ export const supportSessionService = {
 
     clear() {
         if (!hasStorage()) return;
-        localStorage.removeItem(STORAGE_KEY);
+        clearStoredSnapshot();
     },
 
     hydrateMessages

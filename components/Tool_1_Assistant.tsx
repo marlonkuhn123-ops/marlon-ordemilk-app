@@ -32,6 +32,27 @@ type SelectedSupportFile = {
     type: 'image' | 'audio';
 };
 
+const createSupportId = () =>
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `support-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+const showSupportAlert = (message: string) => {
+    if (typeof window === 'undefined' || typeof window.alert !== 'function') {
+        console.warn(`[Tool_1_Assistant] Aviso nao exibido: ${message}`);
+        return;
+    }
+
+    window.alert(message);
+};
+const confirmSupportHistoryReset = () => {
+    if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
+        console.warn('[Tool_1_Assistant] Confirmacao indisponivel para apagar historico do atendimento.');
+        return false;
+    }
+
+    return window.confirm('Deseja apagar o historico deste atendimento?');
+};
+
 const createWelcomeMessage = (): ChatMessage => ({
     id: 'welcome',
     role: 'model',
@@ -40,7 +61,7 @@ const createWelcomeMessage = (): ChatMessage => ({
 });
 
 const createModeMessage = (mode: Exclude<SupportMode, 'AUTO'>): ChatMessage => ({
-    id: crypto.randomUUID(),
+    id: createSupportId(),
     role: 'model',
     text: `Modo de Diagnóstico Focado em **${MODE_NAMES[mode]}** ativado. Descreva o problema detalhadamente.`,
     createdAt: Date.now()
@@ -57,7 +78,7 @@ const buildAttachmentMeta = (files: SelectedSupportFile[]): SupportAttachmentMet
 const readFileAsDataUrl = (file: File): Promise<SelectedSupportFile | null> =>
     new Promise(resolve => {
         const isImage = file.type.startsWith('image/');
-        const isAudio = file.type.startsWith('audio/') || file.type.startsWith('video/');
+        const isAudio = file.type.startsWith('audio/');
 
         if (!isImage && !isAudio) {
             resolve(null);
@@ -67,7 +88,7 @@ const readFileAsDataUrl = (file: File): Promise<SelectedSupportFile | null> =>
         const reader = new FileReader();
         reader.onloadend = () => {
             resolve({
-                id: crypto.randomUUID(),
+                id: createSupportId(),
                 name: file.name,
                 data: reader.result as string,
                 mime: file.type,
@@ -318,7 +339,7 @@ export const Tool_Assistant: React.FC = () => {
         }
 
         if (nextFiles.length !== files.length) {
-            window.alert('Apenas imagens e audios sao suportados neste atendimento.');
+            showSupportAlert('Apenas imagens e audios sao suportados neste atendimento.');
         }
 
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -355,14 +376,14 @@ export const Tool_Assistant: React.FC = () => {
         if (!textToSend && filesToSend.length === 0) return;
 
         const userMsg: ChatMessage = {
-            id: crypto.randomUUID(),
+            id: createSupportId(),
             role: 'user',
             text: textToSend,
             files: filesToSend,
             createdAt: Date.now()
         };
 
-        const modelMessageId = crypto.randomUUID();
+        const modelMessageId = createSupportId();
         setMessages(prev => [
             ...prev,
             userMsg,
@@ -447,7 +468,7 @@ export const Tool_Assistant: React.FC = () => {
     };
 
     const resetMessages = () => {
-        if (!window.confirm('Deseja apagar o historico deste atendimento?')) return;
+        if (!confirmSupportHistoryReset()) return;
 
         supportSessionService.clear();
         setMessages([createWelcomeMessage()]);
@@ -641,7 +662,7 @@ export const Tool_Assistant: React.FC = () => {
                                 aria-label="Anexar arquivo"
                             >
                                 <i className="fa-solid fa-paperclip text-[12px]"></i>
-                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*,video/*" onChange={handleFileUpload} multiple />
+                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
                             </button>
 
                             <div className="flex-1 relative">

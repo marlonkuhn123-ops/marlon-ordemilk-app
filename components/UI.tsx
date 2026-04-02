@@ -112,10 +112,19 @@ export const FileUpload: React.FC<{ onChange: (e: React.ChangeEvent<HTMLInputEle
 export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?: string }> = ({ content, isLoading, title = "ANÁLISE DO SISTEMA" }) => {
     const [copied, setCopied] = useState(false);
 
-    const handleCopy = () => {
-        navigator.clipboard.writeText(content);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
+    const handleCopy = async () => {
+        if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+            console.warn('[UI] Clipboard API indisponivel para copiar conteudo.');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(content);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (error) {
+            console.warn('[UI] Falha ao copiar conteudo para a area de transferencia:', error);
+        }
     };
 
     if (isLoading) {

@@ -14,7 +14,30 @@ import { Tool_Report } from './components/Tool_5_Report';
 import { Tool_Catalog } from './components/Tool_6_Catalog';
 
 import { ViewState } from './types';
-import { GlobalProvider, useGlobal } from './contexts/GlobalContext';
+import { GlobalProvider, readStoredTechData, useGlobal } from './contexts/GlobalContext';
+
+const AUTH_STORAGE_KEY = 'om_auth_time';
+const AUTH_SESSION_HOURS = 8;
+const hasStorage = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+const clearStoredAuthTimestamp = () => {
+    if (!hasStorage()) return;
+
+    try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch (error) {
+        console.warn('[App] Falha ao limpar horario de autenticacao:', error);
+    }
+};
+
+const readStoredAuthTimestamp = (): number | null => {
+    if (!hasStorage()) return null;
+
+    const authTime = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!authTime) return null;
+
+    const parsed = Number(authTime);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
 
 // Fallback visual enquanto a ferramenta é carregada
 const ToolLoader = () => (
@@ -65,25 +88,32 @@ const AppContent: React.FC = () => {
     const { view, setView, techData, updateTechData } = useGlobal();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
     const [isTutorialActive, setIsTutorialActive] = useState(false);
     const [isSizingUnlocked, setIsSizingUnlocked] = useState(false);
     const [isCatalogUnlocked, setIsCatalogUnlocked] = useState(false);
 
     useEffect(() => {
+        if (typeof window === 'undefined') {
+            setIsCheckingAuth(false);
+            return;
+        }
+
         const checkAuth = () => {
-            const authTime = localStorage.getItem('om_auth_time');
-            if (authTime) {
-                const loginDate = new Date(parseInt(authTime));
+            const authTime = readStoredAuthTimestamp();
+            if (authTime !== null) {
+                const loginDate = new Date(authTime);
                 const now = new Date();
                 const diffHours = (now.getTime() - loginDate.getTime()) / (1000 * 60 * 60);
 
                 // Sessão expira em 8 horas
-                if (diffHours < 8) {
+                if (diffHours < AUTH_SESSION_HOURS) {
                     setIsAuthenticated(true);
                 } else {
-                    localStorage.removeItem('om_auth_time');
+                    clearStoredAuthTimestamp();
                 }
+            } else {
+                clearStoredAuthTimestamp();
             }
             setIsCheckingAuth(false);
         };
@@ -99,16 +129,16 @@ const AppContent: React.FC = () => {
         };
     }, []);
 
-    const handleLogin = (success: boolean) => {
-        if (success) {
-            const saved = localStorage.getItem('ordemilk_tech_data');
-            if (saved) {
-                const data = JSON.parse(saved);
-                updateTechData(data);
-            }
-            localStorage.setItem('om_auth_time', Date.now().toString());
-            setIsAuthenticated(true);
+    const handleLogin = (loginTechData: { name: string; company: string }) => {
+        updateTechData(loginTechData);
+
+        try {
+            localStorage.setItem(AUTH_STORAGE_KEY, Date.now().toString());
+        } catch (error) {
+            console.warn('[App] Falha ao persistir horario de autenticacao:', error);
         }
+
+        setIsAuthenticated(true);
     };
 
     const handleUnlock = (password: string, type: 'sizing' | 'catalog') => {

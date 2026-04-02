@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, Button, Input } from './UI';
 
 interface LoginScreenProps {
-    onLogin: (success: boolean) => void;
+    onLogin: (techData: { name: string; company: string }) => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
@@ -24,9 +24,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
         }
 
         if (inputPass === 'om2026') {
-            // Salva o nome no localStorage para o contexto global usar
-            localStorage.setItem('ordemilk_tech_data', JSON.stringify({ name: inputName, company: 'Ordemilk' }));
-            onLogin(true);
+            onLogin({ name: inputName, company: 'Ordemilk' });
             return;
         }
         setError(true);

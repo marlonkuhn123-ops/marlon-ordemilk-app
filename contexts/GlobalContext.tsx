@@ -8,6 +8,35 @@ interface TechData {
     company: string;
 }
 
+const STORAGE_KEY = 'ordemilk_tech_data';
+const EMPTY_TECH_DATA: TechData = { name: '', company: '' };
+const hasStorage = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+
+const isTechData = (value: unknown): value is TechData => {
+    if (!value || typeof value !== 'object') return false;
+
+    const candidate = value as Partial<TechData>;
+    return (
+        typeof candidate.name === 'string' &&
+        typeof candidate.company === 'string'
+    );
+};
+
+export const readStoredTechData = (): TechData => {
+    if (!hasStorage()) return EMPTY_TECH_DATA;
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return EMPTY_TECH_DATA;
+
+    try {
+        const parsed = JSON.parse(saved);
+        return isTechData(parsed) ? parsed : EMPTY_TECH_DATA;
+    } catch (error) {
+        console.warn('[GlobalContext] Falha ao ler dados do tecnico do localStorage:', error);
+        return EMPTY_TECH_DATA;
+    }
+};
+
 interface GlobalState {
     techData: TechData;
     // Added view state to tracking current navigation position
@@ -39,14 +68,17 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const [view, setView] = useState<ViewState>(ViewState.DIAGNOSTIC);
 
     // --- ESTADO 3: DADOS DO TÉCNICO ---
-    const [techData, setTechData] = useState<TechData>(() => {
-        const saved = localStorage.getItem('ordemilk_tech_data');
-        return saved ? JSON.parse(saved) : { name: '', company: '' };
-    });
+    const [techData, setTechData] = useState<TechData>(() => readStoredTechData());
 
     // Persistência dos Dados do Técnico
     useEffect(() => {
-        localStorage.setItem('ordemilk_tech_data', JSON.stringify(techData));
+        if (!hasStorage()) return;
+
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(techData));
+        } catch (error) {
+            console.warn('[GlobalContext] Falha ao salvar dados do tecnico no localStorage:', error);
+        }
     }, [techData]);
 
     const updateTechData = (data: Partial<TechData>) => {

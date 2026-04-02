@@ -564,3 +564,306 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 - Observacao:
   - Nenhum deploy foi realizado.
   - Regra operacional do USER registrada: jamais fazer deploy sem pedido explicito.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DO SHELL - 2026-04-02T16:36:31-03:00
+- Autorizacao do USER:
+  - Aplicar mudancas uma a uma, com revisao antes de cada etapa, sem ambicao e sem tocar no cerebro da IA.
+- Arquivos alterados:
+  - `services/knowledgeService.ts`
+  - `contexts/GlobalContext.tsx`
+  - `App.tsx`
+  - `components/Tool_1_Assistant.tsx`
+  - `README.md`
+- Mudancas aplicadas:
+  1. `services/knowledgeService.ts`
+     - Blindada a leitura de `om_field_knowledge` com `try/catch`.
+     - Validacao de shape dos itens de memoria de campo antes de usar no app.
+  2. `contexts/GlobalContext.tsx`
+     - Criado helper seguro para leitura de `ordemilk_tech_data`.
+     - Fallback explicito para `{ name: '', company: '' }` em caso de JSON invalido.
+  3. `App.tsx`
+     - Login passou a reutilizar a leitura segura de `ordemilk_tech_data`.
+     - Leitura de `om_auth_time` ficou explicita e tolerante a valor invalido, mantendo a mesma expiracao de 8 horas.
+  4. `components/Tool_1_Assistant.tsx`
+     - Removida a promessa errada de `video/*` no anexo.
+     - O input agora aceita apenas `image/*` e `audio/*`, alinhado ao fluxo real do componente.
+  5. `README.md`
+     - Atualizado para refletir o runtime vivo da raiz, comandos reais e status de `src/` como legado.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica por etapa:
+  - `npm.cmd run lint` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em hardening conservador de storage, sessao, coerencia de anexo e documentacao.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DO LOGIN - 2026-04-02T16:41:45-03:00
+- Autorizacao do USER:
+  - Seguir com a proxima mudanca mantendo o mesmo criterio de revisao previa, patch minimo e zero ambicao.
+- Arquivos alterados:
+  - `components/LoginScreen.tsx`
+  - `App.tsx`
+- Mudancas aplicadas:
+  1. `components/LoginScreen.tsx`
+     - Removida a dependencia de `localStorage` cru no ato do login.
+     - O componente passou a enviar os dados do tecnico diretamente para o `App`.
+  2. `App.tsx`
+     - O fluxo de login deixou de depender de um round-trip por `ordemilk_tech_data`.
+     - A autenticacao continua com a mesma UX, mas agora usa o nome recebido da tela de login para atualizar o estado global.
+     - Persistencia de `om_auth_time` ficou protegida com `try/catch`.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em robustez do login e reducao de acoplamento com `localStorage`.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DA MEMORIA DE CAMPO - 2026-04-02T16:44:36-03:00
+- Autorizacao do USER:
+  - Seguir com a proxima mudanca mantendo revisao antes de editar, patch minimo e validacao ao fim.
+- Arquivos alterados:
+  - `services/knowledgeService.ts`
+- Mudancas aplicadas:
+  1. `services/knowledgeService.ts`
+     - Blindadas as escritas de `om_field_knowledge` com `try/catch`.
+     - Salvar e excluir dicas de campo passaram a falhar de forma segura, com aviso em console, sem derrubar o fluxo.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em resiliencia de persistencia local da memoria de campo.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DO CONTEXTO GLOBAL - 2026-04-02T16:53:27-03:00
+- Autorizacao do USER:
+  - Seguir com revisao previa, patch minimo e sem ambicao, mantendo distancia total do cerebro da IA.
+- Arquivos alterados:
+  - `contexts/GlobalContext.tsx`
+- Mudancas aplicadas:
+  1. `contexts/GlobalContext.tsx`
+     - Adicionado guard para ambientes sem `localStorage`.
+     - Persistencia de `ordemilk_tech_data` passou a usar `try/catch`.
+     - Falha de escrita agora gera aviso em console em vez de derrubar o fluxo global.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em resiliencia de persistencia do contexto global do tecnico.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DA SESSAO DO SUPORTE - 2026-04-02T16:55:15-03:00
+- Autorizacao do USER:
+  - Seguir sem interrupcao, mantendo revisao antes de editar e evitando qualquer ambicao sobre a IA.
+- Arquivos alterados:
+  - `services/supportSessionService.ts`
+- Mudancas aplicadas:
+  1. `services/supportSessionService.ts`
+     - Criado helper seguro para limpar `om_support_session_v1`.
+     - Remocoes de snapshot invalido ou limpeza manual passaram a usar `try/catch`.
+     - Falha de limpeza agora gera aviso em console em vez de explodir dentro do fluxo do suporte.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em resiliencia da limpeza da sessao local do suporte.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DA SESSAO DE AUTH - 2026-04-02T16:56:37-03:00
+- Autorizacao do USER:
+  - Seguir no mesmo ritmo, sem pedir a cada passo, mantendo revisao previa e patch minimo.
+- Arquivos alterados:
+  - `App.tsx`
+- Mudancas aplicadas:
+  1. `App.tsx`
+     - Adicionado guard para ambientes sem `localStorage` na leitura da sessao.
+     - Criado helper seguro para limpar `om_auth_time`.
+     - Limpeza de sessao invalida ou expirada passou a usar `try/catch`.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em resiliencia da leitura e limpeza da sessao de autenticacao.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DA MEMORIA DE CAMPO EM AMBIENTE SEM STORAGE - 2026-04-02T16:57:48-03:00
+- Autorizacao do USER:
+  - Seguir sem interromper, mantendo o mesmo criterio de revisao, patch minimo e validacao.
+- Arquivos alterados:
+  - `services/knowledgeService.ts`
+- Mudancas aplicadas:
+  1. `services/knowledgeService.ts`
+     - Adicionado guard para ambiente sem `localStorage`.
+     - Leitura passa a retornar lista vazia de forma segura quando storage nao existir.
+     - Salvar e excluir deixam de tentar gravar quando storage nao estiver disponivel.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em compatibilidade e resiliencia da memoria de campo fora do browser completo.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DO ESTADO ONLINE NO SHELL - 2026-04-02T17:01:01-03:00
+- Autorizacao do USER:
+  - Seguir autonomamente, mantendo distancia do cerebro da IA e preferencia por microajustes seguros.
+- Arquivos alterados:
+  - `App.tsx`
+- Mudancas aplicadas:
+  1. `App.tsx`
+     - Inicializacao de `isOnline` passou a ser segura para ambiente sem `navigator`.
+     - Shell global agora segue o mesmo padrao conservador ja usado no `Tool_1_Assistant`.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em robustez do shell em ambiente sem browser completo.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DA COPIA PARA CLIPBOARD - 2026-04-02T17:02:06-03:00
+- Autorizacao do USER:
+  - Seguir autonomamente, com patch minimo, validacao completa e sem tocar na IA.
+- Arquivos alterados:
+  - `components/UI.tsx`
+- Mudancas aplicadas:
+  1. `components/UI.tsx`
+     - O botao de copiar da `AIOutputBox` passou a verificar disponibilidade da Clipboard API.
+     - A copia agora usa `try/catch` e falha de forma segura com aviso em console.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em robustez de interacao da UI compartilhada.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DO BOOTSTRAP SEM WINDOW - 2026-04-02T17:03:05-03:00
+- Autorizacao do USER:
+  - Seguir autonomamente, mantendo patches minimos e revisao tecnica antes de cada etapa.
+- Arquivos alterados:
+  - `App.tsx`
+- Mudancas aplicadas:
+  1. `App.tsx`
+     - `useEffect` inicial agora sai de forma segura se `window` nao existir.
+     - O shell evita depender implicitamente de browser completo logo na largada.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em robustez do bootstrap do shell fora do browser completo.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DO ID DA MEMORIA DE CAMPO - 2026-04-02T17:03:59-03:00
+- Autorizacao do USER:
+  - Seguir autonomamente, com preferencia por microajustes seguros fora do cerebro da IA.
+- Arquivos alterados:
+  - `services/knowledgeService.ts`
+- Mudancas aplicadas:
+  1. `services/knowledgeService.ts`
+     - Criado fallback local para geracao de ID quando `crypto.randomUUID` nao existir.
+     - A memoria de campo continua funcional mesmo em ambiente com suporte incompleto da Web Crypto API.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em compatibilidade e resiliencia da memoria de campo.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DA LIMPEZA DE SESSAO SEM STORAGE - 2026-04-02T17:04:55-03:00
+- Autorizacao do USER:
+  - Seguir autonomamente, preservando o mesmo metodo conservador.
+- Arquivos alterados:
+  - `services/supportSessionService.ts`
+- Mudancas aplicadas:
+  1. `services/supportSessionService.ts`
+     - O helper de limpeza de snapshot passou a verificar explicitamente se existe `localStorage`.
+     - A sessao local do suporte fica mais segura em ambiente parcial ou nao-browser.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em compatibilidade da limpeza de sessao local do suporte.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DOS IDS DO SUPORTE - 2026-04-02T17:13:20-03:00
+- Autorizacao do USER:
+  - Seguir autonomamente, com microajustes seguros e validacao completa.
+- Arquivos alterados:
+  - `components/Tool_1_Assistant.tsx`
+- Mudancas aplicadas:
+  1. `components/Tool_1_Assistant.tsx`
+     - Criado fallback local para geracao de IDs quando `crypto.randomUUID` nao existir.
+     - O suporte continua funcional em ambiente com suporte incompleto da Web Crypto API.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em compatibilidade interna do fluxo de mensagens do suporte.
+
+### EXECUCAO CODEX - HARDENING CONSERVADOR DOS ALERTAS DO SUPORTE - 2026-04-02T17:14:33-03:00
+- Autorizacao do USER:
+  - Seguir autonomamente, preservando patch minimo, revisao previa e zero toque no cerebro da IA.
+- Arquivos alterados:
+  - `components/Tool_1_Assistant.tsx`
+- Mudancas aplicadas:
+  1. `components/Tool_1_Assistant.tsx`
+     - `alert` e `confirm` do suporte passaram a usar wrappers seguros.
+     - Em ambiente sem essas APIs, o fluxo falha de forma controlada com aviso em console.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, cadencia, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo.
+  - Rodada focada apenas em robustez das interacoes locais do suporte.
