@@ -8,7 +8,7 @@ export const EXTERNAL_MANUALS: Record<string, string> = {
     - O resfriador Reafrio geralmente utiliza controladores da marca EVERY CONTROL ou FULL GAUGE (modelos antigos).
     - ERROS COMUNS REAFRIO:
       * E1/E2: Erro de sensor (NTC).
-      * Defeito recorrente: O agitador possui um temporizador cíclico físico dentro do painel em modelos antigos (não é no display).
+      * Defeito recorrente: O agitador possui um temporizador cíclico físico dentro do painel em modelos antigos (não é no display). Se o agitador para e volta em ciclos regulares, investigar esse temporizador antes de qualquer outra coisa.
     - LÓGICA DE GÁS: Trabalham com expansão por capilar em modelos até 2000L.
     `,
 

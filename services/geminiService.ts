@@ -78,6 +78,11 @@ const isRetryableStreamError = (error: any) => String(error?.message || "").incl
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const hasContextValue = (value?: string) => Boolean(value && value.trim());
 const normalizeText = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const isBaseEquipmentContextComplete = (diagnosticContext: SupportDiagnosticContext) =>
+  hasContextValue(diagnosticContext.model) &&
+  hasContextValue(diagnosticContext.voltage) &&
+  hasContextValue(diagnosticContext.refrigerant) &&
+  hasContextValue(diagnosticContext.temperature);
 
 const extractTankCapacityLiters = (model?: string): number | null => {
   if (!hasContextValue(model)) return null;
@@ -97,7 +102,7 @@ const extractTankCapacityLiters = (model?: string): number | null => {
   return Number.isFinite(parsed) ? Math.round(parsed) : null;
 };
 
-const getDiagnosticContextInstruction = (diagnosticContext: SupportDiagnosticContext) => {
+const getDiagnosticContextInstruction = (diagnosticContext: SupportDiagnosticContext, userPrompt: string = "") => {
   const lines: string[] = [];
 
   if (hasContextValue(diagnosticContext.model)) {
@@ -109,10 +114,23 @@ const getDiagnosticContextInstruction = (diagnosticContext: SupportDiagnosticCon
   if (hasContextValue(diagnosticContext.refrigerant)) {
     lines.push(`- Fluido refrigerante informado previamente: ${diagnosticContext.refrigerant}`);
   }
+  if (hasContextValue(diagnosticContext.temperature)) {
+    lines.push(`- Temperatura atual do leite informada previamente: ${diagnosticContext.temperature}`);
+  }
+
+  if (isBaseEquipmentContextComplete(diagnosticContext)) {
+    lines.push(`- ATALHO INTELIGENTE ATIVO: modelo, tensao, fluido refrigerante e temperatura atual do leite foram preenchidos manualmente pelo tecnico e sao fatos confirmados.`);
+    lines.push(`- REGRA DE CONDUTA: nao pergunte novamente modelo, tensao, fluido refrigerante ou temperatura atual do leite.`);
+    lines.push(`- PRIMEIRA RESPOSTA: use esses 4 dados para elevar a hipotese inicial e pergunte apenas o que ainda falta para fechar o diagnostico.`);
+  }
 
   const tankCapacity = extractTankCapacityLiters(diagnosticContext.model);
   if (tankCapacity !== null && tankCapacity >= 4000) {
     lines.push(`- REGRA OPERACIONAL: trate este equipamento como tanque >= 4000L com arquitetura CLP Panasonic. Nao pergunte sobre Full Gauge, Ageon ou controlador comercial.`);
+    const normalizedPrompt = normalizeText(userPrompt);
+    if (normalizedPrompt.includes('full gauge') || normalizedPrompt.includes('ageon')) {
+      lines.push(`- CORRECAO OBRIGATORIA NA PRIMEIRA LINHA: o tecnico mencionou Full Gauge ou Ageon, o que NAO existe neste tanque. Comece a resposta corrigindo isso: diga que este tanque usa CLP Panasonic, nao Full Gauge nem Ageon.`);
+    }
   }
 
   if (lines.length === 0) return "";
@@ -145,7 +163,7 @@ const getFullSystemInstruction = async (
   const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
   const brandManual = getDynamicBrandContext(userPrompt);
   const electricalContext = await getElectricalContext(userPrompt);
-  const equipmentContext = getDiagnosticContextInstruction(diagnosticContext);
+  const equipmentContext = getDiagnosticContextInstruction(diagnosticContext, userPrompt);
 
   let modeInstruction = "";
   if (mode === 'ELEC') {

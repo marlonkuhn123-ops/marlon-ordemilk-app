@@ -10,7 +10,7 @@ import {
     SupportMode
 } from '../types';
 
-const WELCOME_TEXT = 'Olá! Sou o Assistente Técnico Ordemilk. Como posso ajudar você hoje?\nDescreva o problema ou envie fotos/áudios para análise.';
+const WELCOME_TEXT = 'Ola! Sou o Assistente Tecnico Ordemilk.\nDescreva o sintoma, informe o alarme ou envie foto/audio para analise.';
 
 const MODE_NAMES: Record<SupportMode, string> = {
     AUTO: 'Auto (IA)',
@@ -23,6 +23,20 @@ const FLUID_OPTIONS = [
     { value: Refrigerant.R404A, label: Refrigerant.R404A },
     { value: Refrigerant.R22, label: Refrigerant.R22 }
 ];
+
+const VOLTAGE_OPTIONS = [
+    { value: '', label: 'Tensao' },
+    { value: '220 mono', label: '220 mono' },
+    { value: '220 3f', label: '220 3f' },
+    { value: '380v 3f', label: '380v 3f' }
+];
+
+const DIAGNOSTIC_FIELD_META = {
+    model: { icon: 'fa-barcode', placeholder: 'Modelo do tanque' },
+    voltage: { icon: 'fa-bolt', placeholder: 'Tensao' },
+    refrigerant: { icon: 'fa-snowflake', placeholder: 'Fluido refrigerante' },
+    temperature: { icon: 'fa-temperature-half', placeholder: 'Temp. atual do leite' }
+} as const;
 
 type SelectedSupportFile = {
     id: string;
@@ -63,7 +77,7 @@ const createWelcomeMessage = (): ChatMessage => ({
 const createModeMessage = (mode: Exclude<SupportMode, 'AUTO'>): ChatMessage => ({
     id: createSupportId(),
     role: 'model',
-    text: `Modo de Diagnóstico Focado em **${MODE_NAMES[mode]}** ativado. Descreva o problema detalhadamente.`,
+    text: `Modo de diagnostico focado em **${MODE_NAMES[mode]}** ativado. Descreva o sintoma com o maximo de detalhe possivel.`,
     createdAt: Date.now()
 });
 
@@ -100,13 +114,37 @@ const readFileAsDataUrl = (file: File): Promise<SelectedSupportFile | null> =>
     });
 
 const hasDiagnosticContextValue = (context?: SupportDiagnosticContext) =>
-    Boolean(context && (context.model?.trim() || context.voltage?.trim() || context.refrigerant?.trim()));
+    Boolean(context && (context.model?.trim() || context.voltage?.trim() || context.refrigerant?.trim() || context.temperature?.trim()));
 
 const isDiagnosticContextComplete = (context?: SupportDiagnosticContext) =>
-    Boolean(context?.model?.trim() && context?.voltage?.trim() && context?.refrigerant?.trim());
+    Boolean(context?.model?.trim() && context?.voltage?.trim() && context?.refrigerant?.trim() && context?.temperature?.trim());
 
 const getDiagnosticContextSummary = (context: SupportDiagnosticContext) =>
-    [context.model, context.voltage, context.refrigerant].filter(Boolean) as string[];
+    [
+        context.model?.trim()
+            ? { key: 'model', icon: DIAGNOSTIC_FIELD_META.model.icon, text: context.model.trim() }
+            : undefined,
+        context.voltage?.trim()
+            ? { key: 'voltage', icon: DIAGNOSTIC_FIELD_META.voltage.icon, text: context.voltage.trim() }
+            : undefined,
+        context.refrigerant?.trim()
+            ? { key: 'refrigerant', icon: DIAGNOSTIC_FIELD_META.refrigerant.icon, text: context.refrigerant.trim() }
+            : undefined,
+        context.temperature?.trim()
+            ? { key: 'temperature', icon: DIAGNOSTIC_FIELD_META.temperature.icon, text: `Leite ${context.temperature.trim()}` }
+            : undefined
+    ].filter(Boolean) as Array<{ key: string; icon: string; text: string }>;
+
+const INPUT_BASE_CLASSNAME = 'w-full h-9 rounded-[14px] text-[13px] bg-[#00000022] border border-[#4a5c73] text-[#F8FAFC] font-medium focus:border-[#00d9ff]/60 outline-none transition-all placeholder:text-[#8896a8] placeholder:font-normal disabled:opacity-70';
+
+const DiagnosticFieldShell: React.FC<{ icon: string; children: React.ReactNode }> = ({ icon, children }) => (
+    <div className="relative">
+        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 w-5.5 h-5.5 rounded-full border border-[#00d9ff]/12 bg-[#00d9ff]/8 text-[#a7efff]/72 flex items-center justify-center pointer-events-none shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <i className={`fa-solid ${icon} text-[9px]`}></i>
+        </span>
+        {children}
+    </div>
+);
 
 const formatText = (text: string, isUser: boolean) => {
     return text.split('\n').map((line, i) => {
@@ -131,13 +169,20 @@ const formatText = (text: string, isUser: boolean) => {
     });
 };
 
-const ChatBubble: React.FC<{ msg: ChatMessage; onImageLoad?: () => void }> = React.memo(({ msg, onImageLoad }) => {
+const ChatBubble: React.FC<{
+    msg: ChatMessage;
+    onImageLoad?: () => void;
+    onMount?: (messageId: string, element: HTMLDivElement | null) => void;
+}> = React.memo(({ msg, onImageLoad, onMount }) => {
     const isUser = msg.role === 'user';
     const isError = msg.isError;
     const hasText = Boolean(msg.text.trim());
 
     return (
-        <div className={`flex flex-col max-w-[95%] mb-4 animate-slide-up ${isUser ? 'self-end items-end' : 'self-start items-start'}`}>
+        <div
+            ref={(element) => onMount?.(msg.id, element)}
+            className={`flex flex-col max-w-[95%] mb-4 animate-slide-up scroll-mt-4 ${isUser ? 'self-end items-end' : 'self-start items-start'}`}
+        >
             {!isUser && (
                 <span className="text-[10px] font-bold uppercase mb-1.5 px-1 tracking-[0.18em] font-heading text-[#ff9900]">
                     SUPORTE ORDEMILK
@@ -249,6 +294,7 @@ export const Tool_Assistant: React.FC = () => {
     );
 
     const chatContainerRef = useRef<HTMLDivElement>(null);
+    const messageElementRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
     const wasDiagnosticContextCompleteRef = useRef(isDiagnosticContextComplete(restoredSnapshot?.diagnosticContext));
 
@@ -267,9 +313,43 @@ export const Tool_Assistant: React.FC = () => {
         }, 100);
     }, []);
 
+    const registerMessageElement = React.useCallback((messageId: string, element: HTMLDivElement | null) => {
+        if (element) {
+            messageElementRefs.current[messageId] = element;
+            return;
+        }
+
+        delete messageElementRefs.current[messageId];
+    }, []);
+
+    const scrollMessageToReadingStart = React.useCallback((messageId: string) => {
+        window.setTimeout(() => {
+            const container = chatContainerRef.current;
+            const element = messageElementRefs.current[messageId];
+
+            if (!container || !element) return;
+
+            const nextTop = Math.max(
+                0,
+                element.offsetTop - container.offsetTop - 12
+            );
+
+            container.scrollTo({
+                top: nextTop,
+                behavior: 'smooth'
+            });
+        }, 120);
+    }, []);
+
     useEffect(() => {
         scrollToBottom();
-    }, [messages, selectedFiles, pendingAttachmentMeta, scrollToBottom]);
+    }, [pendingAttachmentMeta, scrollToBottom, selectedFiles]);
+
+    useEffect(() => {
+        if (restoredMessages.length > 0) {
+            scrollToBottom();
+        }
+    }, [restoredMessages.length, scrollToBottom]);
 
     useEffect(() => {
         const handleOnline = () => setIsOnline(true);
@@ -321,7 +401,9 @@ export const Tool_Assistant: React.FC = () => {
 
         setMode(nextMode);
         if (nextMode !== 'AUTO') {
-            setMessages(prev => [...prev, createModeMessage(nextMode)]);
+            const modeMessage = createModeMessage(nextMode);
+            setMessages(prev => [...prev, modeMessage]);
+            scrollMessageToReadingStart(modeMessage.id);
         }
     };
 
@@ -389,6 +471,7 @@ export const Tool_Assistant: React.FC = () => {
             userMsg,
             { id: modelMessageId, role: 'model', text: '', isStreaming: true, createdAt: Date.now() }
         ]);
+        scrollMessageToReadingStart(modelMessageId);
         setInput('');
         setSelectedFiles([]);
         setPendingAttachmentMeta([]);
@@ -479,6 +562,7 @@ export const Tool_Assistant: React.FC = () => {
         setPendingAttachmentMeta([]);
         setIsLoadingChat(false);
         setShowRestoreNotice(false);
+        scrollToBottom();
 
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -506,7 +590,7 @@ export const Tool_Assistant: React.FC = () => {
             {showRestoreNotice && (
                 <div className="mb-3 rounded-[20px] border border-[#00d9ff]/35 bg-[#00d9ff]/10 px-4 py-3 text-[12px] text-[#d9f6ff]">
                     <div className="flex items-start justify-between gap-3">
-                        <p className="leading-relaxed font-medium">Sessao restaurada neste dispositivo. Historico, rascunho e dados base do equipamento seguem salvos localmente.</p>
+                        <p className="leading-relaxed font-medium">Sessao restaurada neste dispositivo. Historico, rascunho e dados base seguem salvos localmente.</p>
                         <button onClick={() => setShowRestoreNotice(false)} className="w-6 h-6 rounded-full border border-white/10 text-white/70 hover:text-white shrink-0" aria-label="Fechar aviso">
                             <i className="fa-solid fa-xmark text-[11px]"></i>
                         </button>
@@ -514,17 +598,19 @@ export const Tool_Assistant: React.FC = () => {
                 </div>
             )}
 
-            <div className="mb-3 rounded-[20px] border border-[#4a5c73] bg-[#3b4c61]/70 px-3.5 py-2.5 shadow-[0_10px_24px_rgba(24,35,49,0.12)]">
+            <div className="mb-3 rounded-[20px] border border-[#4a5c73] bg-[#3b4c61]/70 px-4 py-3 shadow-[0_10px_24px_rgba(24,35,49,0.12)]">
                 <div className="flex items-start justify-between gap-3">
-                    <div>
-                        <p className="text-[#ff9900] text-[11px] font-bold tracking-[0.18em] uppercase font-heading">Dados Base</p>
+                    <div className="min-w-0">
+                        <p className="text-[#ff9900] text-[10px] font-bold tracking-[0.22em] uppercase font-heading">Dados Base</p>
                         {!isDiagnosticContextCollapsed && (
-                            <p className="text-[12px] text-white/90 font-medium leading-relaxed mt-0.5">Modelo, tensao e fluido entram automaticamente no suporte.</p>
+                            <p className="max-w-[42ch] text-[11px] text-white/82 font-medium leading-[1.45] mt-1">
+                                Preencha os 4 dados para ativar o atalho inteligente antes da primeira resposta.
+                            </p>
                         )}
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                        <span className="px-2.5 py-1 rounded-full border border-[#00d9ff]/20 bg-[#00d9ff]/10 text-[10px] font-bold uppercase tracking-[0.14em] text-[#b8f4ff] shrink-0">
-                            Automatico
+                        <span className="px-2.5 py-1 rounded-full border border-[#00d9ff]/18 bg-[#00d9ff]/9 text-[9px] font-bold uppercase tracking-[0.16em] text-[#b8f4ff] shrink-0">
+                            Auto
                         </span>
                         <button
                             type="button"
@@ -538,45 +624,69 @@ export const Tool_Assistant: React.FC = () => {
                 </div>
 
                 {isDiagnosticContextCollapsed ? (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
+                    <div className="mt-2.5 flex flex-wrap gap-1.5">
                         {diagnosticSummary.length > 0 ? diagnosticSummary.map(item => (
-                            <span key={item} className="px-2.5 py-1 rounded-full border border-white/10 bg-black/15 text-[11px] text-white/90">
-                                {item}
+                            <span key={item.key} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/10 bg-black/15 text-[10.5px] font-medium tracking-[0.01em] text-white/88">
+                                <span className="w-4.5 h-4.5 rounded-full border border-[#00d9ff]/12 bg-[#00d9ff]/8 text-[#a7efff]/72 flex items-center justify-center shrink-0">
+                                    <i className={`fa-solid ${item.icon} text-[8px]`}></i>
+                                </span>
+                                <span>{item.text}</span>
                             </span>
                         )) : (
-                            <span className="text-[11px] text-white/65">Preencha os 3 dados para minimizar automaticamente.</span>
+                            <span className="text-[11px] text-white/65">Modelo, tensao, fluido e leite atual ativam o atalho inteligente.</span>
                         )}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2.5">
-                        <input
-                            type="text"
-                            value={diagnosticContext.model ?? ''}
-                            onChange={(event) => handleDiagnosticContextChange('model', event.target.value)}
-                            disabled={isLoadingChat}
-                            className="w-full h-9 rounded-[14px] px-3 text-[13px] bg-[#00000022] border border-[#4a5c73] text-[#F8FAFC] font-medium focus:border-[#00d9ff]/60 outline-none transition-all placeholder:text-[#8896a8] placeholder:font-normal disabled:opacity-70"
-                            placeholder="Modelo do tanque"
-                        />
-                        <input
-                            type="text"
-                            value={diagnosticContext.voltage ?? ''}
-                            onChange={(event) => handleDiagnosticContextChange('voltage', event.target.value)}
-                            disabled={isLoadingChat}
-                            className="w-full h-9 rounded-[14px] px-3 text-[13px] bg-[#00000022] border border-[#4a5c73] text-[#F8FAFC] font-medium focus:border-[#00d9ff]/60 outline-none transition-all placeholder:text-[#8896a8] placeholder:font-normal disabled:opacity-70"
-                            placeholder="Tensao"
-                        />
-                        <select
-                            value={diagnosticContext.refrigerant ?? ''}
-                            onChange={(event) => handleDiagnosticContextChange('refrigerant', event.target.value)}
-                            disabled={isLoadingChat}
-                            className="w-full h-9 rounded-[14px] px-3 text-[13px] bg-[#00000022] border border-[#4a5c73] text-[#F8FAFC] font-medium focus:border-[#00d9ff]/60 outline-none transition-all disabled:opacity-70"
-                        >
-                            {FLUID_OPTIONS.map(option => (
-                                <option key={option.value || 'blank'} value={option.value} className="text-black">
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mt-3">
+                        <DiagnosticFieldShell icon={DIAGNOSTIC_FIELD_META.model.icon}>
+                            <input
+                                type="text"
+                                value={diagnosticContext.model ?? ''}
+                                onChange={(event) => handleDiagnosticContextChange('model', event.target.value)}
+                                disabled={isLoadingChat}
+                                className={`${INPUT_BASE_CLASSNAME} pl-10 pr-3`}
+                                placeholder={DIAGNOSTIC_FIELD_META.model.placeholder}
+                            />
+                        </DiagnosticFieldShell>
+                        <DiagnosticFieldShell icon={DIAGNOSTIC_FIELD_META.voltage.icon}>
+                            <select
+                                value={diagnosticContext.voltage ?? ''}
+                                onChange={(event) => handleDiagnosticContextChange('voltage', event.target.value)}
+                                disabled={isLoadingChat}
+                                className={`${INPUT_BASE_CLASSNAME} pl-10 pr-3`}
+                            >
+                                {VOLTAGE_OPTIONS.map(option => (
+                                    <option key={option.value || 'blank'} value={option.value} className="text-black">
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </DiagnosticFieldShell>
+                        <DiagnosticFieldShell icon={DIAGNOSTIC_FIELD_META.refrigerant.icon}>
+                            <select
+                                value={diagnosticContext.refrigerant ?? ''}
+                                onChange={(event) => handleDiagnosticContextChange('refrigerant', event.target.value)}
+                                disabled={isLoadingChat}
+                                className={`${INPUT_BASE_CLASSNAME} pl-10 pr-3`}
+                            >
+                                {FLUID_OPTIONS.map(option => (
+                                    <option key={option.value || 'blank'} value={option.value} className="text-black">
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </DiagnosticFieldShell>
+                        <DiagnosticFieldShell icon={DIAGNOSTIC_FIELD_META.temperature.icon}>
+                            <input
+                                type="text"
+                                inputMode="decimal"
+                                value={diagnosticContext.temperature ?? ''}
+                                onChange={(event) => handleDiagnosticContextChange('temperature', event.target.value)}
+                                disabled={isLoadingChat}
+                                className={`${INPUT_BASE_CLASSNAME} pl-10 pr-3`}
+                                placeholder={DIAGNOSTIC_FIELD_META.temperature.placeholder}
+                            />
+                        </DiagnosticFieldShell>
                     </div>
                 )}
             </div>
@@ -585,13 +695,13 @@ export const Tool_Assistant: React.FC = () => {
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-5 pr-1 flex flex-col pb-4 no-scrollbar">
                     {!isOnline && (
                         <div className="self-stretch rounded-[18px] border border-[#ff6600]/35 bg-[#ff6600]/10 px-4 py-3 text-[12px] text-[#ffe0cc]">
-                            Sem internet no momento. O suporte usa consulta local automatica para nao te deixar sem resposta.
+                            Sem internet agora. O suporte troca para consulta local para nao te deixar sem orientacao.
                         </div>
                     )}
 
                     {hasRestoredAttachmentMeta && (
                         <div className="self-stretch rounded-[18px] border border-[#00d9ff]/25 bg-[#00d9ff]/8 px-4 py-3 text-[12px] text-[#d7f5ff]">
-                            <p className="font-semibold mb-2">Anexos pendentes da sessao restaurada</p>
+                            <p className="font-semibold mb-2">Anexos pendentes da sessao</p>
                             <div className="flex flex-wrap gap-2">
                                 {pendingAttachmentMeta.map(file => (
                                     <span key={file.id} className="px-2.5 py-1 rounded-full bg-black/20 border border-white/10">
@@ -599,12 +709,17 @@ export const Tool_Assistant: React.FC = () => {
                                     </span>
                                 ))}
                             </div>
-                            <p className="mt-2 text-[#9edfff]">Reanexe os arquivos se quiser envia-los novamente para analise.</p>
+                            <p className="mt-2 text-[#9edfff]">Reanexe os arquivos se quiser envia-los outra vez para analise.</p>
                         </div>
                     )}
 
                     {messages.map((message, index) => (
-                        <ChatBubble key={message.id || index} msg={message} onImageLoad={scrollToBottom} />
+                        <ChatBubble
+                            key={message.id || index}
+                            msg={message}
+                            onImageLoad={scrollToBottom}
+                            onMount={registerMessageElement}
+                        />
                     ))}
                 </div>
 

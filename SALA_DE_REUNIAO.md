@@ -867,3 +867,122 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 - Risco residual:
   - Baixo.
   - Rodada focada apenas em robustez das interacoes locais do suporte.
+
+### EXECUCAO CODEX - ATALHO INTELIGENTE DOS DADOS BASE NO SUPORTE - 2026-04-06T09:39:05-03:00
+- Autorizacao do USER:
+  - Implementar com extremo cuidado o atalho inteligente dos Dados Base sem descaracterizar a IA e sem quebrar o fluxo automatico atual.
+- Arquivos alterados:
+  - `components/Tool_1_Assistant.tsx`
+  - `services/geminiService.ts`
+- Mudancas aplicadas:
+  1. `components/Tool_1_Assistant.tsx`
+     - Adicionado o campo obrigatorio `temperatura atual do leite` ao bloco `Dados Base`.
+     - `Tensao` passou a usar selecao controlada com as 3 opcoes operacionais definidas pelo USER: `220 mono`, `220 3f`, `380v 3f`.
+     - O atalho inteligente agora so e considerado completo quando `modelo`, `tensao`, `fluido` e `temperatura atual do leite` estao preenchidos.
+     - O resumo minimizado passou a refletir os 4 dados base.
+  2. `services/geminiService.ts`
+     - O contexto base do equipamento passou a incluir tambem a `temperatura atual do leite`.
+     - Quando os 4 dados base estao completos, o prompt recebe uma instrucao forte de `ATALHO INTELIGENTE ATIVO`.
+     - A IA passa a ser instruida a tratar esses 4 dados como fatos confirmados e a nao perguntar novamente sobre eles na primeira resposta.
+- Garantias preservadas:
+  - Nenhuma alteracao em `constants.ts` ou `config/env.ts`.
+  - Nenhuma troca de modelo Gemini.
+  - Nenhuma reescrita ampla da persona do suporte.
+  - O comportamento automatico anterior continua valendo quando os 4 dados base nao estiverem completos.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Baixo a medio.
+  - A mudanca toca a primeira leitura contextual do suporte, mas foi mantida em recorte minimo: UI dos Dados Base + instrucao adicional no `geminiService`.
+
+### EXECUCAO CODEX - ICONOGRAFIA DISCRETA E LEITURA MELHOR DO STREAMING NO SUPORTE - 2026-04-06T14:28:00-03:00
+- Autorizacao do USER:
+  - Ajustar a UX do suporte com extremo cuidado, sem poluir a tela e sem obrigar o tecnico a subir para reencontrar o inicio da resposta da IA.
+- Arquivos alterados:
+  - `components/Tool_1_Assistant.tsx`
+- Mudancas aplicadas:
+  1. `components/Tool_1_Assistant.tsx`
+     - Adicionados icones pequenos e discretos aos 4 campos de `Dados Base`: modelo, tensao, fluido e temperatura.
+     - O resumo minimizado dos `Dados Base` passou a mostrar os valores com a mesma iconografia compacta.
+     - O auto-scroll bruto do chat foi removido do fluxo de streaming da IA.
+     - Quando uma nova resposta do suporte comeca, o chat agora ancora a leitura no inicio do balao da IA, preservando o comeco da fala em vez de empurrar o tecnico para o rodape do texto.
+     - O comportamento de minimizacao automatica dos `Dados Base` apos completar os 4 campos foi preservado.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, modelos Gemini ou logica central da IA.
+  - Nenhum deploy realizado.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+  - Teste real em navegador = OK
+    - Os `Dados Base` continuaram minimizando apos preenchimento completo.
+    - O topo da resposta da IA permaneceu visivel durante o inicio do streaming.
+- Risco residual:
+  - Baixo.
+  - A rodada ficou restrita a refinamento visual local e comportamento de scroll do chat do suporte.
+
+### EXECUCAO CODEX - LAPIDACAO VISUAL FINA DOS ICONES DOS DADOS BASE - 2026-04-06T14:34:00-03:00
+- Autorizacao do USER:
+  - Refinar o visual final dos icones dos `Dados Base` com capricho fino, sem alterar a logica do suporte.
+- Arquivos alterados:
+  - `components/Tool_1_Assistant.tsx`
+- Mudancas aplicadas:
+  1. `components/Tool_1_Assistant.tsx`
+     - Os icones dos 4 campos foram encapsulados em micro-badges circulares mais discretos e mais bem integrados ao input.
+     - O resumo minimizado passou a usar a mesma linguagem visual compacta dos icones, com chips ligeiramente mais refinados.
+     - O espaçamento interno dos campos foi ajustado para acomodar a iconografia sem roubar area util de leitura.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, modelos Gemini ou logica central da IA.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Muito baixo.
+  - Rodada puramente visual, sem impacto na regra do atalho inteligente nem no fluxo do suporte.
+
+### EXECUCAO CODEX - MICROTIPOGRAFIA E ESPACAMENTO DOS DADOS BASE - 2026-04-06T14:40:00-03:00
+- Autorizacao do USER:
+  - Fazer um passe fino de microtipografia e espacamento na mesma area, sem tocar em logica.
+- Arquivos alterados:
+  - `components/Tool_1_Assistant.tsx`
+- Mudancas aplicadas:
+  1. `components/Tool_1_Assistant.tsx`
+     - Refinado o bloco `Dados Base` com mais respiro interno e hierarquia tipografica mais discreta.
+     - O texto auxiliar ficou menor, mais legivel e com largura mais controlada.
+     - O badge `Automatico` e os chips minimizados ficaram um pouco mais contidos e consistentes com a linguagem da tela.
+     - Ajustado o espacamento entre cabecalho, resumo e grid dos campos para a area respirar melhor sem ocupar mais tela.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, modelos Gemini ou logica central da IA.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Muito baixo.
+  - Rodada exclusivamente visual, sem impacto funcional no suporte.
+
+### EXECUCAO CODEX - LAPIDACAO DOS TEXTOS VISIVEIS DO SUPORTE - 2026-04-06T14:46:00-03:00
+- Autorizacao do USER:
+  - Revisar os textos visiveis do suporte para ficar mais claro e consistente, sem mexer em logica nem na IA.
+- Arquivos alterados:
+  - `components/Tool_1_Assistant.tsx`
+- Mudancas aplicadas:
+  1. `components/Tool_1_Assistant.tsx`
+     - A mensagem inicial do suporte ficou mais direta para tecnico de campo.
+     - O texto do modo focado ficou mais claro sobre o que o tecnico deve informar.
+     - O aviso de sessao restaurada foi encurtado.
+     - O texto auxiliar dos `Dados Base` passou a explicar melhor quando o atalho inteligente entra.
+     - O badge `Automatico` foi simplificado para `Auto`.
+     - O aviso offline e o bloco de anexos pendentes ficaram mais objetivos.
+- Garantias preservadas:
+  - Nenhuma alteracao em `services/geminiService.ts`, `constants.ts` ou `config/env.ts`.
+  - Nenhuma alteracao em prompt, persona, modelos Gemini ou logica central da IA.
+- Validacao tecnica:
+  - `npm.cmd run lint` = OK
+  - `npm.cmd run build` = OK
+- Risco residual:
+  - Muito baixo.
+  - Rodada apenas textual, sem impacto funcional no suporte.
