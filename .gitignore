@@ -10,3 +10,10 @@ build/
 .playwright-cli/
 server.err.log
 server.out.log
+.playwright-test-server.log
+.playwright-test-server.pid
+.tmp/
+reports/
+scripts/run_conversation_test.js
+scripts/run_support_battery.js
+test_ai.js
