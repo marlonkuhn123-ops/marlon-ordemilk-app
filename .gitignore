@@ -16,4 +16,5 @@ server.out.log
 reports/
 scripts/run_conversation_test.js
 scripts/run_support_battery.js
+scripts/run_support_battery_100.js
 test_ai.js
