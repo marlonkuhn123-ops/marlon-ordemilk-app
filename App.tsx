@@ -92,12 +92,33 @@ const AppContent: React.FC = () => {
     const [isTutorialActive, setIsTutorialActive] = useState(false);
     const [isSizingUnlocked, setIsSizingUnlocked] = useState(false);
     const [isCatalogUnlocked, setIsCatalogUnlocked] = useState(false);
+    const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<any>(null);
+    const [isIOSDevice] = useState(() => {
+        if (typeof navigator === 'undefined') return false;
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    });
+    const [isAndroidDevice] = useState(() => {
+        if (typeof navigator === 'undefined') return false;
+        return /Android/i.test(navigator.userAgent);
+    });
+    const [isAppInstalled, setIsAppInstalled] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    });
 
     useEffect(() => {
         if (typeof window === 'undefined') {
             setIsCheckingAuth(false);
             return;
         }
+
+        const installHandler = (e: Event) => {
+            e.preventDefault();
+            setDeferredInstallPrompt(e);
+        };
+        const handleAppInstalled = () => setIsAppInstalled(true);
+        window.addEventListener('beforeinstallprompt', installHandler);
+        window.addEventListener('appinstalled', handleAppInstalled);
 
         const checkAuth = () => {
             const authTime = readStoredAuthTimestamp();
@@ -124,6 +145,8 @@ const AppContent: React.FC = () => {
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
         return () => {
+            window.removeEventListener('beforeinstallprompt', installHandler);
+            window.removeEventListener('appinstalled', handleAppInstalled);
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
@@ -151,7 +174,7 @@ const AppContent: React.FC = () => {
     };
 
     if (isCheckingAuth) return null;
-    if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} />;
+    if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} installPrompt={deferredInstallPrompt} isIOS={isIOSDevice} isAndroid={isAndroidDevice} isInstalled={isAppInstalled} />;
 
     const renderView = () => {
         switch (view) {
