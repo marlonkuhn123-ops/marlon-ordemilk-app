@@ -38,7 +38,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
     const handleLogin = () => {
         const inputPass = password.trim();
         const inputName = name.trim();
-        
+
         if (!inputName) {
             setError(true);
             setShake(true);
@@ -50,6 +50,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
             onLogin({ name: inputName, company: 'Ordemilk' });
             return;
         }
+
         setError(true);
         setShake(true);
         setTimeout(() => setShake(false), 500);
@@ -57,7 +58,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
 
     return (
         <div className="h-dvh w-full max-w-md mx-auto flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden">
-
             {showInstallBar && (
                 <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-2 border-b border-white/5" style={{ background: 'rgba(10,14,20,0.92)' }}>
                     <button
@@ -77,7 +77,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
                 <div className="fixed inset-0 z-50 flex items-end" onClick={() => setInstallSheet(null)}>
                     <div
                         className="w-full max-w-md mx-auto bg-[#111827] border-t border-[#f97316]/20 rounded-t-2xl p-6 animate-slide-up"
-                        onClick={e => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <div className="flex items-center justify-between mb-5">
                             <h3 className="text-sm font-black uppercase tracking-widest text-white">
@@ -107,8 +107,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
                                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-0.5">Passo 2</p>
                                     <p className="text-xs text-white/70">
                                         {installSheet === 'ios'
-                                            ? <>Toque em <span className="text-white font-bold">Adicionar à Tela de Início</span></>
-                                            : <>Toque em <span className="text-white font-bold">Instalar app</span> ou <span className="text-white font-bold">Adicionar à tela inicial</span></>}
+                                            ? <>Toque em <span className="text-white font-bold">{'Adicionar \u00e0 Tela de In\u00edcio'}</span></>
+                                            : <>Toque em <span className="text-white font-bold">Instalar app</span> ou <span className="text-white font-bold">{'Adicionar \u00e0 tela inicial'}</span></>}
                                     </p>
                                 </div>
                             </div>
@@ -122,16 +122,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
                     </div>
                 </div>
             )}
-            
-            <div className="absolute inset-0 pointer-events-none opacity-[0.03]" 
-                style={{ 
-                    backgroundImage: `linear-gradient(#555 1px, transparent 1px), linear-gradient(90deg, #555 1px, transparent 1px)`, 
-                    backgroundSize: '25px 25px' 
+
+            <div
+                className="absolute inset-0 pointer-events-none opacity-[0.03]"
+                style={{
+                    backgroundImage: 'linear-gradient(#555 1px, transparent 1px), linear-gradient(90deg, #555 1px, transparent 1px)',
+                    backgroundSize: '25px 25px'
                 }}
             ></div>
 
             <div className="w-full max-w-sm z-10 animate-slide-up">
-                
                 <div className="flex flex-col items-center mb-10 select-none">
                     <div className="relative mb-4">
                         <div className="w-16 h-16 rounded-2xl bg-[#111827] border border-[#3d3d3d] flex items-center justify-center shadow-[0_0_30px_rgba(189,195,199,0.15)] transform rotate-3">
@@ -146,13 +146,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
                         <h1 className="flex items-baseline gap-2 mb-1">
                             <span className="font-inter font-black italic text-2xl tracking-tighter leading-none text-[#ce1126]">TECH V51</span>
                         </h1>
-                        <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[#E8EAF6]/60">Terminal TÃ©cnico Privado</p>
+                        <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[#E8EAF6]/60">{'Terminal T\u00e9cnico Privado'}</p>
                     </div>
                 </div>
 
                 <Card className={`border-t-4 border-t-[#00d9ff]/50 ${shake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
                     <div className="mb-6 text-center">
-                        <h2 className="text-[#E8EAF6] font-bold text-sm uppercase tracking-wide mb-1">AutenticaÃ§Ã£o</h2>
+                        <h2 className="text-[#E8EAF6] font-bold text-sm uppercase tracking-wide mb-1">{'Autentica\u00e7\u00e3o'}</h2>
                         <p className="text-[10px] text-[#E8EAF6]/60">
                             Identifique-se para acessar o sistema.
                         </p>
@@ -160,9 +160,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Input 
-                                type="text" 
-                                placeholder="NOME DO TÃ‰CNICO" 
+                            <Input
+                                type="text"
+                                placeholder={'NOME DO T\u00c9CNICO'}
                                 value={name}
                                 onChange={(e) => {
                                     setName(e.target.value.toUpperCase());
@@ -170,10 +170,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
                                 }}
                                 className={`text-center tracking-widest font-bold text-xs !py-3 transition-all duration-300 ${error && !name ? '!border-red-600' : ''}`}
                             />
-                            
-                            <Input 
-                                type="password" 
-                                placeholder="SENHA DE ACESSO" 
+
+                            <Input
+                                type="password"
+                                placeholder="SENHA DE ACESSO"
                                 value={password}
                                 onChange={(e) => {
                                     setPassword(e.target.value);
@@ -198,11 +198,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
                 </Card>
 
                 <div className="mt-8 text-center opacity-20">
-                    <p className="text-[9px] font-mono text-gray-600 tracking-widest uppercase">Ordemilk Engineering Â© 2026</p>
+                    <p className="text-[9px] font-mono text-gray-600 tracking-widest uppercase">{'Ordemilk Engineering \u00a9 2026'}</p>
                 </div>
             </div>
-            
-             <style>{`
+
+            <style>{`
                 @keyframes shake {
                     0%, 100% { transform: translateX(0); }
                     10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
