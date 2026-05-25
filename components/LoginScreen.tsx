@@ -46,7 +46,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
             return;
         }
 
-        if (inputPass === 'om2026') {
+        if (inputPass === '627566') {
             onLogin({ name: inputName, company: 'Ordemilk' });
             return;
         }

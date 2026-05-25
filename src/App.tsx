@@ -168,7 +168,7 @@ const AppContent: React.FC = () => {
     };
 
     const handleUnlock = (password: string, type: 'sizing' | 'catalog') => {
-        if (password === 'om20266') {
+        if (password === '627566') {
             if (type === 'sizing') setIsSizingUnlocked(true);
             else setIsCatalogUnlocked(true);
             return true;

@@ -75,6 +75,10 @@ const isModelAvailabilityError = (error: any) => {
 };
 
 const isRetryableStreamError = (error: any) => String(error?.message || "").includes("503");
+const isQuotaError = (error: any) => {
+  const message = String(error?.message || "").toLowerCase();
+  return message.includes("429") || message.includes("quota");
+};
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const hasContextValue = (value?: string) => Boolean(value && value.trim());
 const normalizeText = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -322,8 +326,8 @@ export const generateChatResponseStream = async (
   try {
     return await runStreamWithRetry(primaryModel, retries);
   } catch (error: any) {
-    if (fallbackModel !== primaryModel && isModelAvailabilityError(error)) {
-      console.warn(`Modelo de suporte ${primaryModel} indisponivel. Recuando para ${fallbackModel}.`);
+    if (fallbackModel !== primaryModel && (isModelAvailabilityError(error) || isQuotaError(error))) {
+      console.warn(`Modelo de suporte ${primaryModel} indisponivel ou sem cota. Recuando para ${fallbackModel}.`);
       try {
         return await runStreamWithRetry(fallbackModel, retries);
       } catch (fallbackError: any) {

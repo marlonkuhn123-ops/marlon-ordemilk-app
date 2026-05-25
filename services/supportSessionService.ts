@@ -15,6 +15,10 @@ const hasStorage = () => typeof window !== 'undefined' && typeof window.localSto
 const isSupportMode = (value: unknown): value is SupportMode => value === 'AUTO' || value === 'REF' || value === 'ELEC';
 const isChatRole = (value: unknown): value is 'user' | 'model' => value === 'user' || value === 'model';
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+const isStaleQuotaError = (message: { role: 'user' | 'model'; text: string; isError?: boolean }) =>
+    message.role === 'model' &&
+    message.isError === true &&
+    /limite de uso excedido|quota|429/i.test(message.text);
 const clearStoredSnapshot = () => {
     if (!hasStorage()) return;
 
@@ -129,7 +133,7 @@ export const supportSessionService = {
                 version: SNAPSHOT_VERSION,
                 mode: parsed.mode,
                 draft: parsed.draft,
-                messages,
+                messages: messages.filter(message => !isStaleQuotaError(message)),
                 diagnosticContext: sanitizeDiagnosticContext(parsed.diagnosticContext),
                 attachmentsMeta: sanitizeAttachmentsMeta(parsed.attachmentsMeta),
                 updatedAt: isFiniteNumber(parsed.updatedAt) ? parsed.updatedAt : Date.now()
