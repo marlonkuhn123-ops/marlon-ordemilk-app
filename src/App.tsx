@@ -73,7 +73,7 @@ const InstallPrompt = () => {
         // Verifica se é iOS (que não suporta beforeinstallprompt nativo)
         const iOSInfo = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-        
+
         if (iOSInfo && !isStandalone) {
             setIsIOS(true);
             setShowInstall(true);
@@ -168,7 +168,7 @@ const AppContent: React.FC = () => {
     };
 
     const handleUnlock = (password: string, type: 'sizing' | 'catalog') => {
-        if (password === '627566') {
+        if (password === 'om20266') {
             if (type === 'sizing') setIsSizingUnlocked(true);
             else setIsCatalogUnlocked(true);
             return true;

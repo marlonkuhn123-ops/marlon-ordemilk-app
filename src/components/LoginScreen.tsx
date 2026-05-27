@@ -23,7 +23,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
             return;
         }
 
-        if (inputPass === '627566') {
+        if (inputPass === 'om2026') {
             localStorage.setItem('ordemilk_tech_data', JSON.stringify({ name: inputName, company: 'Ordemilk' }));
             
             // Rastrear login na Vercel
