@@ -38,10 +38,18 @@ const DIAGNOSTIC_FIELD_META = {
     temperature: { icon: 'fa-temperature-half', placeholder: 'Temp. atual do leite' }
 } as const;
 
+const ATTACHMENT_ANALYSIS_MARKER = '[ANEXO_TECNICO_ORDEMILK]';
+
 type SelectedSupportFile = {
     id: string;
     name?: string;
     data: string;
+    mime: string;
+    type: 'image' | 'audio';
+};
+
+type AttachmentPromptFile = {
+    name?: string;
     mime: string;
     type: 'image' | 'audio';
 };
@@ -88,6 +96,40 @@ const buildAttachmentMeta = (files: SelectedSupportFile[]): SupportAttachmentMet
         mime: file.mime,
         type: file.type
     }));
+
+const getAttachmentLabel = (file: AttachmentPromptFile, index: number) => {
+    const kind = file.type === 'image' ? 'imagem' : 'audio';
+    return `${index + 1}. ${kind}${file.name ? ` (${file.name})` : ''} - ${file.mime}`;
+};
+
+const buildAttachmentAnalysisPrompt = (files: AttachmentPromptFile[], text?: string) => {
+    const userText = text?.trim();
+    const visiblePlaceholder = userText?.startsWith('[');
+    const technicianText = userText && !visiblePlaceholder
+        ? `Relato do tecnico: ${userText}`
+        : 'O tecnico enviou anexo(s) para analise tecnica.';
+
+    return [
+        ATTACHMENT_ANALYSIS_MARKER,
+        technicianText,
+        `Anexos recebidos:\n${files.map(getAttachmentLabel).join('\n')}`,
+        '',
+        'Analise os anexos como evidencia tecnica de campo da Ordemilk.',
+        'Se houver imagem, leia primeiro o que aparece nela: IHM/display, alarme, placa de identificacao, borneira, painel, controlador, CLP, contatora, disjuntor-motor, pressostato, sensor, condensador, compressor, evaporador, visor de liquido, gelo, sujeira, vazamento ou qualquer indicio visual.',
+        'Depois responda com hipotese inicial, duas confirmacoes objetivas e uma acao segura imediata. Se a imagem estiver ruim, diga exatamente qual foto nova o tecnico deve tirar.'
+    ].join('\n');
+};
+
+const buildAttachmentDisplayText = (files: AttachmentPromptFile[]) => {
+    const imageCount = files.filter(file => file.type === 'image').length;
+    const audioCount = files.filter(file => file.type === 'audio').length;
+    const parts = [
+        imageCount > 0 ? `${imageCount} imagem(ns)` : '',
+        audioCount > 0 ? `${audioCount} audio(s)` : ''
+    ].filter(Boolean);
+
+    return `[${parts.join(' + ')} enviado(s) para analise tecnica]`;
+};
 
 const readFileAsDataUrl = (file: File): Promise<SelectedSupportFile | null> =>
     new Promise(resolve => {
@@ -452,7 +494,7 @@ export const Tool_Assistant: React.FC = () => {
         const filesToSend = [...selectedFiles];
 
         if (!textToSend && filesToSend.length > 0) {
-            textToSend = `[${filesToSend.length} arquivo(s) enviado(s) para analise]`;
+            textToSend = buildAttachmentDisplayText(filesToSend);
         }
 
         if (!textToSend && filesToSend.length === 0) return;
@@ -481,7 +523,7 @@ export const Tool_Assistant: React.FC = () => {
         if (fileInputRef.current) fileInputRef.current.value = '';
 
         const localPrompt = textToSend.startsWith('[')
-            ? 'Analise os anexos enviados e conduza um diagnostico tecnico objetivo.'
+            ? buildAttachmentAnalysisPrompt(filesToSend, textToSend)
             : textToSend;
 
         if (!isOnline) {
@@ -494,16 +536,16 @@ export const Tool_Assistant: React.FC = () => {
             const historyForApi = [...messagesRef.current, userMsg].map(message => {
                 const parts: any[] = [];
                 const effectiveText = message.text;
+                const files = message.files ?? [];
+                const apiText = files.length > 0
+                    ? buildAttachmentAnalysisPrompt(files, effectiveText)
+                    : effectiveText;
 
-                const isAttachmentPlaceholder = message.text.startsWith('[') && Boolean(message.files?.length);
-
-                if (effectiveText && (!isAttachmentPlaceholder || effectiveText !== message.text || !message.files?.length)) {
-                    parts.push({ text: effectiveText });
-                } else if (effectiveText && !message.files?.length) {
-                    parts.push({ text: effectiveText });
+                if (apiText) {
+                    parts.push({ text: apiText });
                 }
 
-                message.files?.forEach(file => {
+                files.forEach(file => {
                     parts.push({
                         inlineData: {
                             mimeType: file.mime,

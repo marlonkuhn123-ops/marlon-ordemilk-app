@@ -6,6 +6,22 @@
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-06-26T16:16:42-03:00
+- **Autorizacao direta do USER:** "faca todos os processos com muito cuidado"; contexto: mais de 200 pessoas usando o app.
+- **Escopo autorizado:** corrigir leitura/interpretacao de imagens e anexos no suporte, com patch conservador.
+- **Arquivos bloqueados nesta rodada:** `components/Tool_1_Assistant.tsx`, `services/geminiService.ts`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** nao tocar em `public/sw.js`, auth/login, navegacao, layout global, `index.html`, `index.tsx`, commit, push ou deploy sem nova ordem direta.
+- **Plano de validacao:** `npm.cmd run lint`, `npm.cmd run build`, revisao de diff e relato de risco residual.
+- **Resultado tecnico:** patch aplicado em branch local `fix/suporte-leitura-imagens-20260626`; imagens/anexos agora recebem instrucao tecnica explicita antes do inlineData; Gemini usa modelo de suporte e conhecimento estendido quando ha imagem.
+- **Validacao executada:** `npm.cmd run lint` OK; `npm.cmd run build` OK; build local avisou ausencia de chave Gemini e usou placeholder, sem testar chamada real de API.
+- **Validacao ampliada apos pedido "teste tudo":**
+  - `npm.cmd ci` OK; npm reportou 9 vulnerabilidades conhecidas em dependencias, sem `audit fix` para nao alterar lock/deps fora do escopo.
+  - `runSystemDiagnostics()` OK: 8/8 testes internos passaram.
+  - Smoke test em navegador local `http://127.0.0.1:3000`: login OK, Suporte OK, dados base OK, upload/preview de imagem OK, envio offline com fallback OK, Erros OK, Superaq OK, Servicos OK, Diagnostico do Sistema OK, Dimensionamento protegido OK, Dados Tecnicos protegido OK, consulta BOM local OK.
+  - Residuo de ambiente local: sem `GEMINI_API_KEY`, Dimensionamento/IA real retorna erro esperado de chave e a analise real da imagem pelo Gemini nao foi chamada localmente.
+  - Console local: erro `Unexpected token '<'` veio de `/_vercel/insights/script.js` servido como HTML pelo servidor estatico local; warning existente do Tailwind CDN em producao. Ambos registrados como risco/ambiente, nao gerados pelo patch de imagem.
+- **Publicacao:** USER autorizou commit/push para o GitHub nesta sessao. Deploy direto na Vercel nao foi executado por Codex.
+
 - **Arquivo em edicao agora:** `SALA_DE_REUNIAO.md`
 - **Responsavel atual:** `GEMINI - Deploy GitHub concluído`
 - **Arquivos bloqueados:** `Nenhum`

@@ -9,6 +9,7 @@ import { SupportDiagnosticContext } from "../types";
 const DEFAULT_TEXT_MODEL = ENV.GEMINI_TEXT_MODEL;
 const SUPPORT_PRIMARY_MODEL = ENV.GEMINI_SUPPORT_MODEL;
 const SUPPORT_FALLBACK_MODEL = ENV.GEMINI_SUPPORT_FALLBACK_MODEL;
+const ATTACHMENT_ANALYSIS_MARKER = "[ANEXO_TECNICO_ORDEMILK]";
 
 const handleApiError = (error: any) => {
   // Log seguro: apenas a mensagem, evitando expor o objeto de erro completo que pode conter a chave de API no config
@@ -141,6 +142,18 @@ const getDiagnosticContextInstruction = (diagnosticContext: SupportDiagnosticCon
   return `\n\n[CONTEXTO BASE DO EQUIPAMENTO - INFORMADO ANTES DA PERGUNTA]\n${lines.join('\n')}`;
 };
 
+const getAttachmentContextInstruction = (userPrompt: string) => {
+  if (!userPrompt.includes(ATTACHMENT_ANALYSIS_MARKER)) return "";
+
+  return `
+
+[LEITURA TECNICA DE ANEXOS - REGRA OBRIGATORIA]
+O tecnico enviou anexo(s) como evidencia de campo. Nao trate isso como pergunta vaga.
+Antes de diagnosticar, extraia sinais concretos do anexo: display/IHM, alarme, placa, modelo, tensao, borneira, painel, CLP, controlador, contatora, disjuntor-motor, pressostato, sensor, compressor, condensador, evaporador, gelo, sujeira, vazamento, oxidacao ou ligacao irregular.
+Se a imagem nao permitir leitura confiavel, diga isso objetivamente e peca a foto exata que falta.
+Mesmo na primeira resposta, use a evidencia visual para formular uma hipotese inicial tecnica, mantendo a resposta curta.`;
+};
+
 const getSupportConfig = (systemInstruction: string, modelName: string, isFirstReply: boolean) => {
   const baseConfig: Record<string, any> = {
     systemInstruction,
@@ -168,6 +181,7 @@ const getFullSystemInstruction = async (
   const brandManual = getDynamicBrandContext(userPrompt);
   const electricalContext = await getElectricalContext(userPrompt);
   const equipmentContext = getDiagnosticContextInstruction(diagnosticContext, userPrompt);
+  const attachmentContext = getAttachmentContextInstruction(userPrompt);
 
   let modeInstruction = "";
   if (mode === 'ELEC') {
@@ -225,7 +239,7 @@ SOMENTE após o técnico responder, você pode entregar:
 5. CAUSA RAIZ: Lembre-se que falhas elétricas muitas vezes são causadas por problemas mecânicos/frigoríficos.
 `;
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${equipmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
 };
 
 export const generateTechResponse = async (
@@ -268,7 +282,10 @@ export const generateChatResponseStream = async (
 ): Promise<string> => {
   const userTurnCount = history.filter(item => item.role === 'user').length;
   const isFirstReply = userTurnCount <= 1;
-  const primaryModel = isFirstReply ? DEFAULT_TEXT_MODEL : SUPPORT_PRIMARY_MODEL;
+  const hasImageAttachment = history.some(item =>
+    item.parts.some(part => String(part?.inlineData?.mimeType || "").startsWith("image/"))
+  );
+  const primaryModel = hasImageAttachment ? SUPPORT_PRIMARY_MODEL : (isFirstReply ? DEFAULT_TEXT_MODEL : SUPPORT_PRIMARY_MODEL);
   const fallbackModel = primaryModel === SUPPORT_PRIMARY_MODEL ? SUPPORT_FALLBACK_MODEL : SUPPORT_PRIMARY_MODEL;
 
   const runStream = async (modelName: string): Promise<string> => {
@@ -281,7 +298,7 @@ export const generateChatResponseStream = async (
       .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
       .join(' ');
 
-    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode, diagnosticContext, !isFirstReply);
+    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode, diagnosticContext, !isFirstReply || hasImageAttachment);
 
     const responseStream = await ai.models.generateContentStream({
       model: modelName,
