@@ -131,16 +131,70 @@ const buildAttachmentDisplayText = (files: AttachmentPromptFile[]) => {
     return `[${parts.join(' + ')} enviado(s) para analise tecnica]`;
 };
 
-const readFileAsDataUrl = (file: File): Promise<SelectedSupportFile | null> =>
+const IMAGE_MAX_EDGE = 1600;
+const IMAGE_JPEG_QUALITY = 0.86;
+
+const normalizeImageFile = (file: File): Promise<SelectedSupportFile | null> =>
     new Promise(resolve => {
-        const isImage = file.type.startsWith('image/');
-        const isAudio = file.type.startsWith('audio/');
+        const objectUrl = URL.createObjectURL(file);
+        const image = new Image();
 
-        if (!isImage && !isAudio) {
+        image.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            const sourceWidth = image.naturalWidth || image.width;
+            const sourceHeight = image.naturalHeight || image.height;
+
+            if (!sourceWidth || !sourceHeight) {
+                resolve(null);
+                return;
+            }
+
+            const scale = Math.min(1, IMAGE_MAX_EDGE / Math.max(sourceWidth, sourceHeight));
+            const width = Math.max(1, Math.round(sourceWidth * scale));
+            const height = Math.max(1, Math.round(sourceHeight * scale));
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const context = canvas.getContext('2d', { alpha: false });
+
+            if (!context) {
+                resolve(null);
+                return;
+            }
+
+            context.fillStyle = '#ffffff';
+            context.fillRect(0, 0, width, height);
+            context.drawImage(image, 0, 0, width, height);
+
+            resolve({
+                id: createSupportId(),
+                name: file.name || 'imagem-tecnica.jpg',
+                data: canvas.toDataURL('image/jpeg', IMAGE_JPEG_QUALITY),
+                mime: 'image/jpeg',
+                type: 'image'
+            });
+        };
+
+        image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
             resolve(null);
-            return;
-        }
+        };
 
+        image.src = objectUrl;
+    });
+
+const readFileAsDataUrl = async (file: File): Promise<SelectedSupportFile | null> => {
+    const isImage = file.type.startsWith('image/');
+    const isAudio = file.type.startsWith('audio/');
+
+    if (!isImage && !isAudio) return null;
+
+    if (isImage) {
+        const normalizedImage = await normalizeImageFile(file);
+        if (normalizedImage) return normalizedImage;
+    }
+
+    return new Promise(resolve => {
         const reader = new FileReader();
         reader.onloadend = () => {
             resolve({
@@ -154,7 +208,7 @@ const readFileAsDataUrl = (file: File): Promise<SelectedSupportFile | null> =>
         reader.onerror = () => resolve(null);
         reader.readAsDataURL(file);
     });
-
+};
 const hasDiagnosticContextValue = (context?: SupportDiagnosticContext) =>
     Boolean(context && (context.model?.trim() || context.voltage?.trim() || context.refrigerant?.trim() || context.temperature?.trim()));
 
