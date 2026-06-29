@@ -175,6 +175,7 @@ const AppContent: React.FC = () => {
 
     if (isCheckingAuth) return null;
     if (!isAuthenticated) return <LoginScreen onLogin={handleLogin} installPrompt={deferredInstallPrompt} isIOS={isIOSDevice} isAndroid={isAndroidDevice} isInstalled={isAppInstalled} />;
+    const isSupportView = view === ViewState.DIAGNOSTIC;
 
     const renderView = () => {
         switch (view) {
@@ -190,19 +191,21 @@ const AppContent: React.FC = () => {
 
     return (
         <div
-            className="h-dvh w-full flex flex-col relative overflow-hidden bg-transparent text-[#ffffff] select-none"
+            className={`h-dvh w-full flex flex-col relative overflow-hidden text-[#ffffff] select-none ${
+                isSupportView ? 'bg-gradient-to-b from-[#27384b] via-[#6f7f91] to-[#dfe5eb]' : 'bg-transparent'
+            }`}
             onContextMenu={(e) => e.preventDefault()}
         >
-            <Watermark text={techData.name} />
+            {!isSupportView && <Watermark text={techData.name} />}
 
             <div className="absolute inset-0 pointer-events-none opacity-[0.02]"
                 style={{ backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`, backgroundSize: '30px 30px' }}></div>
 
-            <Header isOnline={isOnline} onStartTutorial={() => setIsTutorialActive(true)} />
-            <main className="flex-1 min-h-0 overflow-y-auto no-scrollbar relative w-full pt-4 pb-2 px-5 sm:px-6">
+            <Header isOnline={isOnline} onStartTutorial={() => setIsTutorialActive(true)} compact={isSupportView} />
+            <main className={isSupportView ? 'flex-1 min-h-0 overflow-hidden relative w-full px-0 pt-0 pb-0' : 'flex-1 min-h-0 overflow-y-auto no-scrollbar relative w-full pt-4 pb-2 px-5 sm:px-6'}>
                 {renderView()}
             </main>
-            <BottomNav activeView={view} setView={setView} />
+            <BottomNav activeView={view} setView={setView} compact={isSupportView} />
             <TutorialOverlay isActive={isTutorialActive} onClose={() => setIsTutorialActive(false)} setView={setView} />
 
             <style>{`
