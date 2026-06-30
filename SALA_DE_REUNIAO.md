@@ -1,11 +1,39 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-03-27T17:30:00-03:00
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-06-30T16:35:46-03:00
 
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-06-30T16:35:46-03:00
+- **Autorizacao direta do USER:** "TESTE E FACA O DEPLOY".
+- **Escopo autorizado:** testar a correcao do suporte e publicar no GitHub/Vercel se aprovado.
+- **Arquivos previstos para commit:** `components/Tool_1_Assistant.tsx`, `services/supportDiagnosticEngine.ts`, `services/geminiService.ts`, `services/localSupportService.ts`, `services/testSuite.ts`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** manter `output/` fora do commit; nao tocar em `public/sw.js`, auth/login, navegacao global, calculadora visual ou troca de modelo.
+- **Validacao pre-deploy:** `npm.cmd run lint` OK; `npm.cmd run build` OK; `runSystemDiagnostics()` OK 13/13; servidor local `http://127.0.0.1:3101` OK; smoke local com Playwright OK para login, suporte offline, REF SH/SC alto-baixo e ELEC contatora compressor 02 em tanque 20000L 380V.
+- **Pode editar/commitar/deployar sem pedir?** SIM
+
+### RODADA ATIVA CODEX - 2026-06-30T16:00:33-03:00
+- **Autorizacao direta do USER:** "ARRUME ISSO: SH/SC ainda precisa parser tecnico melhor. Eletrica precisa arvore de decisao propria, nao so prompt. Lembre que temos todos os PDFs e esquemas eletricos aqui."
+- **Escopo autorizado:** adicionar motor tecnico deterministico para SH/SC e arvore eletrica local usando as bases de esquemas/PDFs ja consolidadas no app.
+- **Arquivos alterados nesta rodada:** `services/supportDiagnosticEngine.ts`, `services/geminiService.ts`, `services/localSupportService.ts`, `services/testSuite.ts`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** nao tocar em `public/sw.js`, auth/login, navegacao global, calculadora visual, layout global ou troca de modelo.
+- **Mudancas aplicadas:** parser local reconhece SH/SC em formato `SH=18K`, `SC: 1,2K` e formulas como `SH = -8 - (-25.9) = 17.9K`; matriz SH/SC gera hipotese, 2 perguntas, acao e bloqueios tecnicos; arvore eletrica local cobre contatora, A1/A2, DM/RFF/pressostato/emergencia, compressor individual, IHM/CLP apagado, CLP sem saida, falta de fase, bomba CIP e agitador; tanques >=4000L usam arquitetura CLP Panasonic e referencias dos PDFs/esquemas locais.
+- **Validacao executada ate aqui:** `npm.cmd run lint` OK; `npm.cmd run build` OK; `runSystemDiagnostics()` OK 13/13; teste direto do fallback local OK para REF SH/SC alto-baixo e ELEC contatora compressor 02 em tanque 20000L 380V.
+- **Risco residual:** teste real Gemini em producao depende da chave/modelo do ambiente; localmente o build segue sem GEMINI_API_KEY, como esperado neste ambiente.
+- **Pode editar sem pedir?** SIM
+
+### RODADA ATIVA CODEX - 2026-06-30T15:49:21-03:00
+- **Autorizacao direta do USER:** "RETIRE ISSO Historico de conversa".
+- **Escopo autorizado:** remover o historico antigo da conversa do payload enviado ao Gemini no suporte, mantendo a conversa visivel no chat do tecnico.
+- **Arquivos alterados nesta rodada:** `components/Tool_1_Assistant.tsx`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** nao tocar em `public/sw.js`, auth/login, navegacao global, calculadora, layout global ou troca de modelo.
+- **Mudancas aplicadas:** `generateChatResponseStream` passa a receber somente a pergunta/anexos do turno atual; mensagens antigas do chat nao entram mais na chamada da IA.
+- **Validacao executada ate aqui:** `npm.cmd run lint` OK; `npm.cmd run build` OK.
+- **Risco residual:** follow-ups curtos como "sim" ou "continua igual" dependem menos de historico e precisam trazer mais contexto tecnico na propria pergunta ou nos Dados Base.
+- **Pode editar sem pedir?** SIM
+
 ### RODADA ATIVA CODEX - 2026-06-30T12:05:19-03:00
 - **Autorizacao direta do USER:** "MELHORE ITEM POR ITEM COM CALMA E DEPOIS TESTE, SE FUNCIONAR FACA O DEPLOY".
 - **Escopo autorizado:** melhorar o cerebro do suporte no icone de suporte, corrigindo primeira resposta rasa, contrato de 2 perguntas, fallback de quota/erro, orientacao REF/ELEC e poluicao de historico.

@@ -5,6 +5,7 @@ import { FAQ_DATABASE } from "../data/faq_data";
 import { KNOWLEDGE_BASE } from "../data/knowledge_base";
 import { ENV } from "../config/env";
 import { SupportDiagnosticContext } from "../types";
+import { analyzeSupportCase, buildSupportAnalysisInstruction } from "./supportDiagnosticEngine";
 
 const DEFAULT_TEXT_MODEL = ENV.GEMINI_TEXT_MODEL;
 const SUPPORT_PRIMARY_MODEL = ENV.GEMINI_SUPPORT_MODEL;
@@ -246,6 +247,7 @@ const getFullSystemInstruction = async (
   const equipmentContext = getDiagnosticContextInstruction(diagnosticContext, userPrompt);
   const attachmentContext = getAttachmentContextInstruction(userPrompt);
   const symptomSpecificContext = getSymptomSpecificInstruction(userPrompt, mode);
+  const localAnalysisContext = buildSupportAnalysisInstruction(analyzeSupportCase(userPrompt, mode, diagnosticContext));
 
   let modeInstruction = "";
   if (mode === 'ELEC') {
@@ -310,7 +312,7 @@ SOMENTE após o técnico responder, você pode entregar:
 5. CAUSA RAIZ: Lembre-se que falhas elétricas muitas vezes são causadas por problemas mecânicos/frigoríficos.
 `;
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${SUPPORT_FIELD_BRAIN_PACK}${symptomSpecificContext}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${SUPPORT_FIELD_BRAIN_PACK}${localAnalysisContext}${symptomSpecificContext}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
 };
 
 const enforceFirstReplyContract = (text: string, isFirstReply: boolean) => {

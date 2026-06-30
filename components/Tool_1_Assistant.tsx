@@ -621,9 +621,7 @@ export const Tool_Assistant: React.FC = () => {
         let allowAiUpdates = true;
 
         try {
-            const historyForApi = [...messagesRef.current, userMsg]
-                .filter(message => !isUiOnlySupportMessage(message))
-                .map(message => {
+            const currentTurnForApi = [userMsg].map(message => {
                 const parts: any[] = [];
                 const effectiveText = message.text;
                 const files = message.files ?? [];
@@ -649,7 +647,7 @@ export const Tool_Assistant: React.FC = () => {
             });
 
             const aiResponsePromise = generateChatResponseStream(
-                historyForApi,
+                currentTurnForApi,
                 (chunkText: string) => {
                     if (!allowAiUpdates) return;
                     setMessages(prev =>

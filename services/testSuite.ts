@@ -1,5 +1,6 @@
 
 import { logicService } from './logicService';
+import { analyzeSupportCase } from './supportDiagnosticEngine';
 import { Refrigerant } from '../types';
 
 /**
@@ -119,6 +120,45 @@ export const runSystemDiagnostics = () => {
         const result = logicService.calculateCargaTermica(1000);
         // Valor esperado aproximado baseado na fórmula da Ordemilk
         assert(result.kcal > 7000 && result.kcal < 8500, `Carga térmica fora do esperado: ${result.kcal} kcal`);
+    });
+
+    // --- TESTES DO SUPORTE / MOTOR TECNICO ---
+    test("Suporte: Deve interpretar SH alto e SC baixo de forma deterministica", () => {
+        const analysis = analyzeSupportCase(
+            "R404A com SH=18K e SC: 1,2K no manifold",
+            "REF",
+            { refrigerant: "R-404A" }
+        );
+
+        assert(analysis.shSc?.shKelvin === 18, `SH nao foi lido corretamente. Recebido: ${analysis.shSc?.shKelvin}`);
+        assert(analysis.shSc?.scKelvin === 1.2, `SC decimal nao foi lido corretamente. Recebido: ${analysis.shSc?.scKelvin}`);
+        assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrao SH/SC incorreto. Recebido: ${analysis.shSc?.pattern}`);
+        assert(Boolean(analysis.shSc?.action.includes("Nao abra a VET")), `Acao deveria bloquear abertura de VET. Recebido: ${analysis.shSc?.action}`);
+    });
+
+    test("Suporte: Deve interpretar formula de SH e pegar o resultado final em K", () => {
+        const analysis = analyzeSupportCase(
+            "SH = -8.0C - (-25.9C) = 17.9K e sub-resfriamento 2K",
+            "REF",
+            { refrigerant: "R-404A" }
+        );
+
+        assert(analysis.shSc?.shKelvin === 17.9, `Formula SH deveria usar resultado final 17.9K. Recebido: ${analysis.shSc?.shKelvin}`);
+        assert(analysis.shSc?.scKelvin === 2, `SC deveria ser 2K. Recebido: ${analysis.shSc?.scKelvin}`);
+        assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrao deveria ser SH alto + SC baixo. Recebido: ${analysis.shSc?.pattern}`);
+    });
+
+    test("Suporte: Deve montar arvore eletrica para contatora em tanque grande CLP", () => {
+        const analysis = analyzeSupportCase(
+            "Tanque 20000L 380V, IHM acende, contatora nao fecha no compressor 02",
+            "ELEC",
+            { model: "20000L", voltage: "380v 3f" }
+        );
+
+        assert(analysis.electrical?.symptom === "contatora nao fecha", `Sintoma eletrico incorreto. Recebido: ${analysis.electrical?.symptom}`);
+        assert(Boolean(analysis.electrical?.family.includes("CLP Panasonic")), `Familia deveria indicar CLP Panasonic. Recebido: ${analysis.electrical?.family}`);
+        assert(Boolean(analysis.electrical?.reference.includes("TRIFASICO 380V")), `Referencia PDF 380V esperada. Recebido: ${analysis.electrical?.reference}`);
+        assert(Boolean(analysis.electrical?.action.includes("A1/A2")), `Acao deveria pedir A1/A2. Recebido: ${analysis.electrical?.action}`);
     });
 
     return report;

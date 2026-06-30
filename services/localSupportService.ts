@@ -1,4 +1,5 @@
 import { SupportDiagnosticContext, SupportMode } from '../types';
+import { analyzeSupportCase, SupportCaseAnalysis } from './supportDiagnosticEngine';
 
 type OfflineRoute = 'general' | 'refrigeration' | 'electrical' | 'errors';
 
@@ -84,8 +85,15 @@ const detectRoute = (prompt: string, mode: SupportMode): OfflineRoute => {
     return 'general';
 };
 
-const buildHypothesis = (route: OfflineRoute, prompt: string, context: SupportDiagnosticContext) => {
+const buildHypothesis = (route: OfflineRoute, prompt: string, context: SupportDiagnosticContext, analysis: SupportCaseAnalysis) => {
     const normalizedPrompt = sanitize(prompt);
+
+    if (route === 'electrical' && analysis.electrical) {
+        return analysis.electrical.hypothesis;
+    }
+    if (route === 'refrigeration' && analysis.shSc) {
+        return analysis.shSc.hypothesis;
+    }
 
     if (route === 'errors') {
         if (context.code) {
@@ -120,9 +128,16 @@ const buildHypothesis = (route: OfflineRoute, prompt: string, context: SupportDi
     return 'Ainda falta contexto minimo para fechar a causa com seguranca.';
 };
 
-const buildQuestions = (route: OfflineRoute, context: SupportDiagnosticContext, prompt: string) => {
+const buildQuestions = (route: OfflineRoute, context: SupportDiagnosticContext, prompt: string, analysis: SupportCaseAnalysis) => {
     const questions: string[] = [];
     const normalizedPrompt = sanitize(prompt);
+
+    if (route === 'electrical' && analysis.electrical) {
+        return analysis.electrical.questions.slice(0, 2);
+    }
+    if (route === 'refrigeration' && analysis.shSc) {
+        return analysis.shSc.questions.slice(0, 2);
+    }
 
     const pushIfMissing = (known: boolean, question: string) => {
         if (!known && questions.length < 2) questions.push(question);
@@ -166,8 +181,15 @@ const buildQuestions = (route: OfflineRoute, context: SupportDiagnosticContext, 
     return questions.slice(0, 2);
 };
 
-const buildAction = (route: OfflineRoute, prompt: string) => {
+const buildAction = (route: OfflineRoute, prompt: string, analysis: SupportCaseAnalysis) => {
     const normalizedPrompt = sanitize(prompt);
+
+    if (route === 'electrical' && analysis.electrical) {
+        return analysis.electrical.action;
+    }
+    if (route === 'refrigeration' && analysis.shSc) {
+        return analysis.shSc.action;
+    }
 
     if (route === 'errors') {
         return 'Fotografe a IHM, confirme se ela esta energizada e evite apagar o alarme antes de registrar o codigo.';
@@ -192,10 +214,24 @@ const buildAction = (route: OfflineRoute, prompt: string) => {
 
 export const localSupportService = {
     generateResponse(prompt: string, mode: SupportMode, context: SupportDiagnosticContext) {
-        const route = detectRoute(prompt, mode);
-        const hypothesis = buildHypothesis(route, prompt, context);
-        const questions = buildQuestions(route, context, prompt);
-        const action = buildAction(route, prompt);
+        const analysis = analyzeSupportCase(prompt, mode, context);
+        let route: OfflineRoute;
+
+        if (mode === 'REF' && analysis.shSc) {
+            route = 'refrigeration';
+        } else if (mode === 'ELEC' && analysis.electrical) {
+            route = 'electrical';
+        } else if (analysis.electrical) {
+            route = 'electrical';
+        } else if (analysis.shSc) {
+            route = 'refrigeration';
+        } else {
+            route = detectRoute(prompt, mode);
+        }
+
+        const hypothesis = buildHypothesis(route, prompt, context, analysis);
+        const questions = buildQuestions(route, context, prompt, analysis);
+        const action = buildAction(route, prompt, analysis);
 
         const text = [
             'Ola. Vou te ajudar com um diagnostico rapido e direto.',
