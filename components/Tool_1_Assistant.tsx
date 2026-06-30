@@ -242,21 +242,52 @@ const DiagnosticFieldShell: React.FC<{ icon: string; children: React.ReactNode }
     </div>
 );
 
+const RESPONSE_HEADING_CLASSNAME = 'text-[#073b57] font-black';
+const RESPONSE_STRONG_CLASSNAME = 'text-[#102033] font-black';
+const RESPONSE_LABEL_CLASSNAME = 'text-[#075475] font-black';
+
+const isDiagnosticHeading = (value: string) => {
+    const normalized = value
+        .replace(/\*\*/g, '')
+        .replace(/:$/, '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    return [
+        'hipotese inicial',
+        'preciso confirmar',
+        'faca agora',
+        'acao segura',
+        'verificacao inicial',
+        'causa raiz',
+        'anexos',
+        'leitura da imagem',
+        'modo consulta local'
+    ].includes(normalized);
+};
+
 const formatText = (text: string, isUser: boolean) => {
     return text.split('\n').map((line, i) => {
         if (!line.trim()) return <div key={i} className="h-2" />;
 
-        const parts = line.split(/(\*\*.*?\*\*)|([A-Z ]+?:)/g);
+        const parts = line.split(/(\*\*.*?\*\*)|([A-ZÀ-Ú0-9 .ºª()/-]+?:)/g);
         return (
-            <p key={i} className="min-h-[1em] mb-0.5">
+            <p key={i} className="min-h-[1em] mb-1">
                 {line.trim().startsWith('* ') && <span className="inline-block w-1.5 h-1.5 mr-2 rounded-full bg-[#00d9ff] opacity-80"></span>}
                 {parts.map((part, j) => {
                     if (part === undefined || part === '') return null;
                     if (part.startsWith('**') && part.endsWith('**')) {
-                        return <strong key={j} className={isUser ? 'text-white font-bold' : 'text-[#ff6600] font-bold'}>{part.slice(2, -2)}</strong>;
+                        const cleanPart = part.slice(2, -2);
+                        return (
+                            <strong key={j} className={isUser ? 'text-white font-bold' : isDiagnosticHeading(cleanPart) ? RESPONSE_HEADING_CLASSNAME : RESPONSE_STRONG_CLASSNAME}>
+                                {cleanPart}
+                            </strong>
+                        );
                     }
-                    if (/^[A-Z ]+:$/.test(part)) {
-                        return <span key={j} className="text-[#00d9ff] font-bold">{part}</span>;
+                    if (/^[A-ZÀ-Ú0-9 .ºª()/-]+:$/.test(part)) {
+                        return <span key={j} className={isUser ? 'text-white font-bold' : RESPONSE_LABEL_CLASSNAME}>{part}</span>;
                     }
                     return part;
                 })}
@@ -288,7 +319,7 @@ const ChatBubble: React.FC<{
                 <div
                     className={`max-w-[min(560px,82vw)] p-4 text-sm leading-relaxed shadow-lg font-sans border ${isUser
                         ? 'bg-[#24354a] text-white rounded-[22px] border-[#2f4a67]'
-                        : 'bg-[#8394a6]/75 text-white rounded-2xl rounded-tl-md border-[#18324f] shadow-[#2d3f55]/40'
+                        : 'bg-[#d7e2ec]/95 text-[#122033] rounded-2xl rounded-tl-md border-[#24425f]/55 shadow-[#2d3f55]/35'
                     } ${isError ? '!bg-red-500/20 !border-red-500 !text-red-100' : ''}`}
                 >
                     {msg.files && msg.files.length > 0 && (
@@ -318,7 +349,7 @@ const ChatBubble: React.FC<{
                     )}
 
                     {hasText ? (
-                        <div className="text-[15px] leading-relaxed font-medium">
+                        <div className={`text-[15px] leading-[1.62] ${isUser ? 'font-medium' : 'font-semibold'}`}>
                             {formatText(msg.text, isUser)}
                         </div>
                     ) : (
