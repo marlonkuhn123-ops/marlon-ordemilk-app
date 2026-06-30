@@ -182,6 +182,41 @@ Se a imagem nao permitir leitura confiavel, diga isso objetivamente e peca a fot
 Mesmo na primeira resposta, use a evidencia visual para formular uma hipotese inicial tecnica, mantendo a resposta curta.`;
 };
 
+const getSymptomSpecificInstruction = (userPrompt: string, mode: 'AUTO' | 'REF' | 'ELEC') => {
+  const normalizedPrompt = normalizeText(userPrompt);
+  const lines: string[] = [];
+
+  const hasContactorSymptom =
+    (mode === 'ELEC' || normalizedPrompt.includes('contatora') || normalizedPrompt.includes('contator')) &&
+    (normalizedPrompt.includes('contatora') || normalizedPrompt.includes('contator')) &&
+    (
+      normalizedPrompt.includes('nao fecha') ||
+      normalizedPrompt.includes('nao aciona') ||
+      normalizedPrompt.includes('nao parte') ||
+      normalizedPrompt.includes('nao liga')
+    );
+
+  if (hasContactorSymptom) {
+    lines.push('[REGRA ESPECIFICA - CONTATORA NAO FECHA]');
+    lines.push('- O tecnico ja descreveu sintoma eletrico suficiente para iniciar sequencia de teste.');
+    lines.push('- Na primeira resposta, nao gaste pergunta pedindo capacidade/modelo/controlador se ele pediu sequencia de teste.');
+    lines.push('- As 2 perguntas devem confirmar: tensao A1/A2 da bobina quando pede partida; e se DM/rele termico/pressostato/rele falta de fase esta aberto.');
+    lines.push('- A acao imediata deve mandar verificar protecoes e medir A1/A2 com seguranca antes de forcar partida.');
+  }
+
+  if (
+    (mode === 'REF' || normalizedPrompt.includes('superaquecimento') || normalizedPrompt.includes('subresfriamento')) &&
+    (normalizedPrompt.includes('superaquecimento') || normalizedPrompt.includes(' sh ')) &&
+    (normalizedPrompt.includes('subresfriamento') || normalizedPrompt.includes('sub-resfriamento') || normalizedPrompt.includes(' sc '))
+  ) {
+    lines.push('[REGRA ESPECIFICA - SH/SC INFORMADOS]');
+    lines.push('- Se SH esta alto e SC esta baixo, a primeira hipotese e falta de fluido/vazamento/flash gas.');
+    lines.push('- Nao oriente abrir VET primeiro nesse padrao; confirme carga/vazamento/visor/pressoes.');
+  }
+
+  return lines.length ? `\n\n${lines.join('\n')}` : "";
+};
+
 const getSupportConfig = (systemInstruction: string, modelName: string, isFirstReply: boolean) => {
   const baseConfig: Record<string, any> = {
     systemInstruction,
@@ -210,6 +245,7 @@ const getFullSystemInstruction = async (
   const electricalContext = await getElectricalContext(userPrompt);
   const equipmentContext = getDiagnosticContextInstruction(diagnosticContext, userPrompt);
   const attachmentContext = getAttachmentContextInstruction(userPrompt);
+  const symptomSpecificContext = getSymptomSpecificInstruction(userPrompt, mode);
 
   let modeInstruction = "";
   if (mode === 'ELEC') {
@@ -274,7 +310,7 @@ SOMENTE após o técnico responder, você pode entregar:
 5. CAUSA RAIZ: Lembre-se que falhas elétricas muitas vezes são causadas por problemas mecânicos/frigoríficos.
 `;
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${SUPPORT_FIELD_BRAIN_PACK}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${SUPPORT_FIELD_BRAIN_PACK}${symptomSpecificContext}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
 };
 
 const enforceFirstReplyContract = (text: string, isFirstReply: boolean) => {
