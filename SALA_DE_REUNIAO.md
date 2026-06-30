@@ -15,7 +15,7 @@
 - **Pode editar sem pedir?** SIM
 - **Mudancas aplicadas:** tabela PT refeita com referencia Danfoss Ref Tools em PSIG/gauge; R404A separado em `dew` para SH e `bubble` para SC; prompt da calculadora passou a informar curva correta e conduta conservadora; testes internos corrigidos para reprovar o antigo falso `SC ideal` em R404A 295 PSIG; Analytics desativado em `127.0.0.1` para smoke local sem erro de script.
 - **Validacao executada:** `npm.cmd run lint` OK; `runSystemDiagnostics()` OK 9/9; `npm.cmd run build` OK; smoke Playwright mobile OK em `http://127.0.0.1:3000` com login, Erros, Servicos e Superaq; R404A 295 PSIG + 53 C em SC exibiu `Tsat = 46.6°C`, `SC = -6.4K`, curva `R404A bubble/liquido` e classificacao `BAIXO`; console sem erros.
-- **Publicacao:** pendente nesta etapa: commit/push para `origin/main`; Vercel deve publicar a partir do fluxo GitHub conectado.
+- **Publicacao:** commit `17ad561` enviado para `origin/main`; site publico `https://ordemilk.vercel.app/` validado em smoke Playwright com R404A 295 PSIG + 53 C retornando `SC = -6.4K` e curva `R404A bubble/liquido`.
 
 ### RODADA ATIVA CODEX - 2026-06-26T16:16:42-03:00
 - **Autorizacao direta do USER:** "faca todos os processos com muito cuidado"; contexto: mais de 200 pessoas usando o app.
