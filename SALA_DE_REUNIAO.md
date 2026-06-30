@@ -6,6 +6,17 @@
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-06-30T09:59:30-03:00
+- **Autorizacao direta do USER:** "CORRIGA TODOS OS ERROS E TESTE. SE FUNCIONAR, FAÇA O DEPLOY."
+- **Escopo autorizado:** corrigir a calculadora de superaquecimento/sub-resfriamento, especialmente conversao PT de R22/R404A contra Danfoss Ref Tools, testar localmente e publicar se aprovado.
+- **Arquivos bloqueados nesta rodada:** `data/pt_tables.ts`, `services/logicService.ts`, `services/testSuite.ts`, `components/Tool_3_Calculator.tsx`, `App.tsx`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** nao tocar em `public/sw.js`, auth/login, navegacao global, layout core, prompt/persona do suporte ou `services/geminiService.ts`.
+- **Plano de validacao:** testes deterministas da calculadora, `npm.cmd run lint`, `npm.cmd run build`, diagnostico interno `runSystemDiagnostics()`, smoke test em navegador e deploy somente se passar.
+- **Pode editar sem pedir?** SIM
+- **Mudancas aplicadas:** tabela PT refeita com referencia Danfoss Ref Tools em PSIG/gauge; R404A separado em `dew` para SH e `bubble` para SC; prompt da calculadora passou a informar curva correta e conduta conservadora; testes internos corrigidos para reprovar o antigo falso `SC ideal` em R404A 295 PSIG; Analytics desativado em `127.0.0.1` para smoke local sem erro de script.
+- **Validacao executada:** `npm.cmd run lint` OK; `runSystemDiagnostics()` OK 9/9; `npm.cmd run build` OK; smoke Playwright mobile OK em `http://127.0.0.1:3000` com login, Erros, Servicos e Superaq; R404A 295 PSIG + 53 C em SC exibiu `Tsat = 46.6°C`, `SC = -6.4K`, curva `R404A bubble/liquido` e classificacao `BAIXO`; console sem erros.
+- **Publicacao:** pendente nesta etapa: commit/push para `origin/main`; Vercel deve publicar a partir do fluxo GitHub conectado.
+
 ### RODADA ATIVA CODEX - 2026-06-26T16:16:42-03:00
 - **Autorizacao direta do USER:** "faca todos os processos com muito cuidado"; contexto: mais de 200 pessoas usando o app.
 - **Escopo autorizado:** corrigir leitura/interpretacao de imagens e anexos no suporte, com patch conservador.

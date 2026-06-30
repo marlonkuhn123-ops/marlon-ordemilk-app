@@ -13,9 +13,9 @@ export const Tool_Calculator: React.FC = () => {
     const [result, setResult] = useState('');
     const [loading, setLoading] = useState(false);
     const localAudit = logicService.getCalculatorAudit(fluid, press, temp, mode);
-    const pressureLabel = mode === 'Superaquecimento' ? 'Pressão de Baixa (PSI)' : 'Pressão de Alta (PSI)';
-    const temperatureLabel = mode === 'Superaquecimento' ? 'Temp. Sucção (°C)' : 'Temp. Linha Líquido (°C)';
-    const temperaturePlaceholder = mode === 'Superaquecimento' ? 'Tubulação de sucção' : 'Saída do condensador';
+    const pressureLabel = mode === 'Superaquecimento' ? 'Pressao Baixa (PSIG)' : 'Pressao Alta (PSIG)';
+    const temperatureLabel = mode === 'Superaquecimento' ? 'Temp. Succao (C)' : 'Temp. Linha Liquida (C)';
+    const temperaturePlaceholder = mode === 'Superaquecimento' ? 'Saida evaporador/bulbo' : 'Linha liquida';
 
     const run = async () => {
         if (!press || !temp) return;
@@ -60,8 +60,8 @@ export const Tool_Calculator: React.FC = () => {
                     <i className="fa-solid fa-circle-info mt-0.5 text-xs text-[#00d9ff]"></i>
                     <span>
                         {mode === 'Superaquecimento' 
-                            ? "SUPER AQUECIMENTO (SH): Meça a temperatura na tubulação de sucção, a 10cm do compressor."
-                            : "SUB-RESFRIAMENTO (SC): Meça a temperatura na linha de líquido, na saída do condensador."}
+                            ? "SUPER AQUECIMENTO (SH): use pressao baixa em PSIG. Para ajuste de VET, prefira medir na saida do evaporador/bulbo; perto do compressor vira superaquecimento total."
+                            : "SUB-RESFRIAMENTO (SC): use pressao alta em PSIG. Em R404A o app usa bubble/liquido. Considere o ponto medido: saida do condensador ou antes da VET."}
                     </span>
                 </div>
 
@@ -98,6 +98,13 @@ export const Tool_Calculator: React.FC = () => {
                                     <span className="px-2.5 py-1 rounded-full border border-white/10 bg-black/15 text-[11px] font-semibold">
                                         {localAudit.referenceLabel}
                                     </span>
+                                    <span className="px-2.5 py-1 rounded-full border border-white/10 bg-black/15 text-[11px] font-semibold">
+                                        {localAudit.curveLabel}
+                                    </span>
+                                </div>
+
+                                <div className="mt-3 rounded-[14px] border border-white/10 bg-black/15 px-3 py-2.5 text-[11px] leading-relaxed">
+                                    <strong className="uppercase tracking-[0.12em]">Conduta:</strong> {localAudit.actionLabel}
                                 </div>
 
                                 <p className="mt-3 text-[11px] leading-relaxed opacity-90">

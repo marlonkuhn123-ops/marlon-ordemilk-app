@@ -228,9 +228,11 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-    const isProductionEnv = typeof window !== 'undefined' &&
-        !window.location.hostname.includes('localhost') &&
-        !window.location.hostname.includes('run.app');
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const isLocalHost = hostname === '127.0.0.1' || hostname === '0.0.0.0' || hostname.includes('localhost');
+    const isProductionEnv = Boolean(hostname) &&
+        !isLocalHost &&
+        !hostname.includes('run.app');
 
     return (
         <GlobalProvider>
