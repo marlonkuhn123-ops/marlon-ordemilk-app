@@ -48,6 +48,16 @@ export const runSystemDiagnostics = () => {
         // R-22 a 30 PSIG = -13.9 C na referencia Danfoss. Logo -3.9 C - (-13.9 C) = 10K.
         const p = logicService.formatCalculatorPrompt(Refrigerant.R22, "30", "-3.9", "Superaquecimento");
         assert(p.includes("= 10.0K"), `Cálculo SH com negativos falhou. Esperado 10.0K. Prompt: ${p}`);
+
+        const audit = logicService.getCalculatorAudit(Refrigerant.R22, "30", "-3.9", "Superaquecimento");
+        assert(audit.resultLabel === "SH = -3.9\u00b0C - (-13.9\u00b0C) = 10.0K", `Formula SH negativa sem parenteses. Recebido: ${audit.resultLabel}`);
+    });
+
+    test("Calculadora: Deve exibir parenteses ao subtrair Tsat negativa no R-404A", () => {
+        const audit = logicService.getCalculatorAudit(Refrigerant.R404A, "20", "-8", "Superaquecimento");
+        assert(audit.tsatLabel === "Tsat = -25.9\u00b0C", `Tsat R-404A 20 PSIG incorreta. Recebido: ${audit.tsatLabel}`);
+        assert(audit.resultLabel === "SH = -8.0\u00b0C - (-25.9\u00b0C) = 17.9K", `Formula R-404A SH deveria usar parenteses. Recebido: ${audit.resultLabel}`);
+        assert(audit.classification === "ALTO", `Classificacao esperada ALTO. Recebido: ${audit.classification}`);
     });
 
     test("Calculadora: Deve usar R-404A bubble no sub-resfriamento conforme Danfoss", () => {

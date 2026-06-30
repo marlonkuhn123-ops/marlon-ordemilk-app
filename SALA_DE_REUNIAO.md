@@ -6,6 +6,14 @@
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-06-30T11:10:00-03:00
+- **Autorizacao direta do USER:** "ESSE CALCULO ESTA ERRADO" com print da calculadora SH mostrando `SH = -8.0°C - -25.9°C = 17.9K`.
+- **Diagnostico imediato:** valor tecnico conferido contra Danfoss Ref Tools: R404A a 20 PSIG em dew = -25.85982°C; a conta `-8 - (-25.9) = 17.9K` esta correta, mas a exibicao sem parenteses induz leitura errada.
+- **Escopo autorizado:** corrigir clareza visual da formula em subtracao com temperatura negativa, testar e publicar como hotfix pequeno.
+- **Arquivos bloqueados nesta rodada:** `services/logicService.ts`, `services/testSuite.ts`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** nao tocar em `public/sw.js`, auth/login, navegacao, layout global ou cerebro do suporte.
+- **Pode editar sem pedir?** SIM
+
 ### RODADA ATIVA CODEX - 2026-06-30T09:59:30-03:00
 - **Autorizacao direta do USER:** "CORRIGA TODOS OS ERROS E TESTE. SE FUNCIONAR, FAÇA O DEPLOY."
 - **Escopo autorizado:** corrigir a calculadora de superaquecimento/sub-resfriamento, especialmente conversao PT de R22/R404A contra Danfoss Ref Tools, testar localmente e publicar se aprovado.

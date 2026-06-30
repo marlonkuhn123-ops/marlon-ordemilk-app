@@ -87,6 +87,8 @@ const parseNumericInput = (value: string): number => {
 
 const formatPressure = (value: number) => (Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1));
 const formatTemperature = (value: number) => `${value.toFixed(1)}\u00b0C`;
+const formatSubtractedTemperature = (value: number) =>
+    value < 0 ? `(${formatTemperature(value)})` : formatTemperature(value);
 const formatKelvin = (value: number) => `${value.toFixed(1)}K`;
 
 const getReferenceRange = (mode: CalcMode) => CALCULATOR_REFERENCE_RANGES[mode];
@@ -256,8 +258,8 @@ export const logicService = {
         const classification = classifyCalculation(resultKelvin, mode);
         const actionLabel = getRecommendedAction(mode, classification);
         const resultLabel = mode === 'Superaquecimento'
-            ? `SH = ${formatTemperature(tempMeasured)} - ${formatTemperature(lookup.satTemp)} = ${formatKelvin(resultKelvin)}`
-            : `SC = ${formatTemperature(lookup.satTemp)} - ${formatTemperature(tempMeasured)} = ${formatKelvin(resultKelvin)}`;
+            ? `SH = ${formatTemperature(tempMeasured)} - ${formatSubtractedTemperature(lookup.satTemp)} = ${formatKelvin(resultKelvin)}`
+            : `SC = ${formatTemperature(lookup.satTemp)} - ${formatSubtractedTemperature(tempMeasured)} = ${formatKelvin(resultKelvin)}`;
 
         return {
             ...baseAudit,
