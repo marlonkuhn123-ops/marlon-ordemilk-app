@@ -6,6 +6,16 @@
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-06-30T12:05:19-03:00
+- **Autorizacao direta do USER:** "MELHORE ITEM POR ITEM COM CALMA E DEPOIS TESTE, SE FUNCIONAR FACA O DEPLOY".
+- **Escopo autorizado:** melhorar o cerebro do suporte no icone de suporte, corrigindo primeira resposta rasa, contrato de 2 perguntas, fallback de quota/erro, orientacao REF/ELEC e poluicao de historico.
+- **Arquivos alterados nesta rodada:** `services/geminiService.ts`, `components/Tool_1_Assistant.tsx`, `services/localSupportService.ts`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** nao tocar em `public/sw.js`, auth/login, navegacao global, layout global ou calculadora.
+- **Mudancas aplicadas:** suporte usa modelo de suporte como primario tambem na primeira resposta; base FAQ/knowledge entra desde a primeira resposta; pacote compacto de campo reforca SH/SC, alta pressao, contatora e tanques >=4000L; contrato final remove terceira pergunta na primeira resposta; fallback local cobre 429/quota/timeout/resposta vazia; mensagens de UI do suporte nao entram no historico enviado ao Gemini; fallback local ganhou condutas melhores para contatora, SH/SC e alta pressao.
+- **Validacao executada ate aqui:** `npm.cmd run lint` OK; `npm.cmd run build` OK; smoke local em `http://127.0.0.1:3100` OK; fallback local testado em ELEC/REF/AUTO com exatamente 2 perguntas; icones do suporte testados OK.
+- **Risco residual antes do push:** preview Vercel via CLI nao retornou link dentro de 10 minutos; teste real com Gemini sera validado na producao apos push para `origin/main`.
+- **Pode editar sem pedir?** SIM
+
 ### RODADA ATIVA CODEX - 2026-06-30T11:10:00-03:00
 - **Autorizacao direta do USER:** "ESSE CALCULO ESTA ERRADO" com print da calculadora SH mostrando `SH = -8.0°C - -25.9°C = 17.9K`.
 - **Diagnostico imediato:** valor tecnico conferido contra Danfoss Ref Tools: R404A a 20 PSIG em dew = -25.85982°C; a conta `-8 - (-25.9) = 17.9K` esta correta, mas a exibicao sem parenteses induz leitura errada.

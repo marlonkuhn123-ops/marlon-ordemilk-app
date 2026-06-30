@@ -89,6 +89,11 @@ const createModeMessage = (mode: Exclude<SupportMode, 'AUTO'>): ChatMessage => (
     createdAt: Date.now()
 });
 
+const isUiOnlySupportMessage = (message: ChatMessage) =>
+    message.id === 'welcome' ||
+    message.text === WELCOME_TEXT ||
+    message.text.startsWith('Modo de diagnostico focado em **');
+
 const buildAttachmentMeta = (files: SelectedSupportFile[]): SupportAttachmentMeta[] =>
     files.map(file => ({
         id: file.id,
@@ -613,7 +618,9 @@ export const Tool_Assistant: React.FC = () => {
         }
 
         try {
-            const historyForApi = [...messagesRef.current, userMsg].map(message => {
+            const historyForApi = [...messagesRef.current, userMsg]
+                .filter(message => !isUiOnlySupportMessage(message))
+                .map(message => {
                 const parts: any[] = [];
                 const effectiveText = message.text;
                 const files = message.files ?? [];
@@ -658,7 +665,7 @@ export const Tool_Assistant: React.FC = () => {
 
             const errorMessage = error?.message || 'FALHA DE CONEXAO. Tente novamente.';
             const browserOffline = typeof navigator !== 'undefined' && !navigator.onLine;
-            const shouldUseLocalFallback = browserOffline || /503|conex|fetch|network/i.test(errorMessage.toLowerCase());
+            const shouldUseLocalFallback = browserOffline || /503|429|quota|limite|conex|fetch|network|timeout|socket|indispon|unavailable|empty_support_response/i.test(errorMessage.toLowerCase());
 
             if (shouldUseLocalFallback) {
                 applyLocalFallback(modelMessageId, localPrompt, filesToSend.length);

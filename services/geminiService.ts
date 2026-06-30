@@ -10,6 +10,22 @@ const DEFAULT_TEXT_MODEL = ENV.GEMINI_TEXT_MODEL;
 const SUPPORT_PRIMARY_MODEL = ENV.GEMINI_SUPPORT_MODEL;
 const SUPPORT_FALLBACK_MODEL = ENV.GEMINI_SUPPORT_FALLBACK_MODEL;
 const ATTACHMENT_ANALYSIS_MARKER = "[ANEXO_TECNICO_ORDEMILK]";
+const EMPTY_RESPONSE_ERROR = "EMPTY_SUPPORT_RESPONSE";
+
+const SUPPORT_FIELD_BRAIN_PACK = `
+
+[PACOTE COMPACTO DE CAMPO - USAR DESDE A PRIMEIRA RESPOSTA]
+- Superaquecimento (SH) ideal em campo: 7K a 12K.
+- Sub-resfriamento (SC) ideal em campo: 4K a 8K.
+- SH alto + SC baixo: priorize falta de fluido, vazamento, carga incompleta ou flash gas. Nao mande abrir VET primeiro.
+- SH alto + SC normal/alto: priorize restricao, filtro secador, VET subalimentando, bulbo/igualador ou coluna liquida com restricao.
+- SH baixo: risco de retorno de liquido/golpe; nao force compressor.
+- Alta pressao/desarme por alta: verifique condensador, ventiladores, obstrucao de ar, excesso de fluido e ar no sistema antes de insistir em partida.
+- Compressor liga e desliga: pense primeiro em pressostato, alta condensacao, baixa succao, termico, corrente e ventilacao.
+- IHM acende mas contatora nao fecha: foque em cadeia de comando, DM/rele termico, falta de fase, pressostatos, A1/A2 da bobina e saida do controlador/CLP.
+- Tanques >= 4000L: arquitetura CLP Panasonic; nao sugerir Full Gauge/Ageon.
+- Primeira resposta deve ser curta, mas tecnicamente util para o tecnico no cliente.
+`;
 
 const handleApiError = (error: any) => {
   // Log seguro: apenas a mensagem, evitando expor o objeto de erro completo que pode conter a chave de API no config
@@ -75,11 +91,23 @@ const isModelAvailabilityError = (error: any) => {
   );
 };
 
-const isRetryableStreamError = (error: any) => String(error?.message || "").includes("503");
+const isRetryableStreamError = (error: any) => {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("503") ||
+    message.includes("fetch") ||
+    message.includes("network") ||
+    message.includes("timeout") ||
+    message.includes("econnreset") ||
+    message.includes("socket")
+  );
+};
 const isQuotaError = (error: any) => {
   const message = String(error?.message || "").toLowerCase();
   return message.includes("429") || message.includes("quota");
 };
+const isEmptyResponseError = (error: any) =>
+  String(error?.message || "").includes(EMPTY_RESPONSE_ERROR);
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const hasContextValue = (value?: string) => Boolean(value && value.trim());
 const normalizeText = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -190,6 +218,12 @@ const getFullSystemInstruction = async (
     modeInstruction = "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO ATIVADO]\nIgnore detalhes de comando elétrico/CLP. Foque 100% no ciclo frigorífico, pressões, fluido, troca de calor e mecânica do compressor.";
   }
 
+  if (mode === 'ELEC') {
+    modeInstruction += "\n\n[SEQUENCIA ELETRICA DE CAMPO]\nPara IHM acesa e contatora que nao fecha, responda com ordem segura: 1) alarme/status na IHM, 2) DM/rele termico/falta de fase/pressostatos, 3) tensao A1/A2 da bobina, 4) saida do controlador/CLP. Se o compressor nao esta partindo, nao peca pressoes de manifold como confirmacao principal.";
+  } else if (mode === 'REF') {
+    modeInstruction += "\n\n[MATRIZ REFRIGERACAO DE CAMPO]\nSe o tecnico informar SH/SC, aplique: SH alto + SC baixo = falta de fluido/vazamento/flash gas; SH alto + SC normal/alto = restricao/VET/filtro; SH baixo = risco de retorno de liquido. Nao recomende abrir VET quando o SC esta baixo sem confirmar carga/vazamento.";
+  }
+
   let cadenceInstruction = "";
   if (toolType === "DIAGNOSTIC") {
     cadenceInstruction = `\n\n🚨 [INSTRUÇÃO OBRIGATÓRIA DE CADÊNCIA - UX DE CAMPO]
@@ -209,6 +243,7 @@ Olá. Vou te ajudar com um diagnóstico rápido e direto.
 **⚠️ Faça agora:** [1 ação segura, concreta e imediata]
 
 REGRA DE OURO:
+- Exatamente 2 perguntas numeradas. Nunca escreva uma terceira pergunta na primeira resposta.
 - Mantenha a resposta concisa e focada no formato acima.
 - Evite listar todas as causas possíveis ou despejar teoria na primeira interação.
 - **Mesmo sendo breve, demonstre seu conhecimento técnico e autoridade no assunto.**
@@ -239,7 +274,49 @@ SOMENTE após o técnico responder, você pode entregar:
 5. CAUSA RAIZ: Lembre-se que falhas elétricas muitas vezes são causadas por problemas mecânicos/frigoríficos.
 `;
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${SUPPORT_FIELD_BRAIN_PACK}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
+};
+
+const enforceFirstReplyContract = (text: string, isFirstReply: boolean) => {
+  const trimmedText = text.trim();
+  if (!isFirstReply || !trimmedText) return trimmedText;
+
+  const lines = trimmedText.split('\n');
+  let inConfirmBlock = false;
+  let questionCount = 0;
+  const cleanedLines: string[] = [];
+
+  for (const line of lines) {
+    const normalized = normalizeText(line);
+
+    if (normalized.includes('preciso confirmar') || normalized.includes('perguntas')) {
+      inConfirmBlock = true;
+      questionCount = 0;
+      cleanedLines.push(line);
+      continue;
+    }
+
+    if (
+      inConfirmBlock &&
+      (
+        normalized.includes('faca agora') ||
+        normalized.includes('acao segura') ||
+        normalized.includes('proxima acao') ||
+        normalized.includes('somente apos')
+      )
+    ) {
+      inConfirmBlock = false;
+    }
+
+    if (inConfirmBlock && /^\s*\d+[\).\s-]+/.test(line)) {
+      questionCount += 1;
+      if (questionCount > 2) continue;
+    }
+
+    cleanedLines.push(line);
+  }
+
+  return cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
 };
 
 export const generateTechResponse = async (
@@ -282,10 +359,7 @@ export const generateChatResponseStream = async (
 ): Promise<string> => {
   const userTurnCount = history.filter(item => item.role === 'user').length;
   const isFirstReply = userTurnCount <= 1;
-  const hasImageAttachment = history.some(item =>
-    item.parts.some(part => String(part?.inlineData?.mimeType || "").startsWith("image/"))
-  );
-  const primaryModel = hasImageAttachment ? SUPPORT_PRIMARY_MODEL : (isFirstReply ? DEFAULT_TEXT_MODEL : SUPPORT_PRIMARY_MODEL);
+  const primaryModel = SUPPORT_PRIMARY_MODEL;
   const fallbackModel = primaryModel === SUPPORT_PRIMARY_MODEL ? SUPPORT_FALLBACK_MODEL : SUPPORT_PRIMARY_MODEL;
 
   const runStream = async (modelName: string): Promise<string> => {
@@ -298,7 +372,7 @@ export const generateChatResponseStream = async (
       .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
       .join(' ');
 
-    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode, diagnosticContext, !isFirstReply || hasImageAttachment);
+    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode, diagnosticContext, true);
 
     const responseStream = await ai.models.generateContentStream({
       model: modelName,
@@ -323,8 +397,11 @@ export const generateChatResponseStream = async (
       if (onChunk) onChunk(fullText);
     }
 
-    if (onFinished) onFinished(fullText, sources.length > 0 ? sources : undefined);
-    return fullText;
+    const finalText = enforceFirstReplyContract(fullText, isFirstReply);
+    if (!finalText.trim()) throw new Error(EMPTY_RESPONSE_ERROR);
+
+    if (onFinished) onFinished(finalText, sources.length > 0 ? sources : undefined);
+    return finalText;
   };
 
   const runStreamWithRetry = async (modelName: string, retriesLeft: number): Promise<string> => {
@@ -343,7 +420,7 @@ export const generateChatResponseStream = async (
   try {
     return await runStreamWithRetry(primaryModel, retries);
   } catch (error: any) {
-    if (fallbackModel !== primaryModel && (isModelAvailabilityError(error) || isQuotaError(error))) {
+    if (fallbackModel !== primaryModel && (isModelAvailabilityError(error) || isQuotaError(error) || isEmptyResponseError(error))) {
       console.warn(`Modelo de suporte ${primaryModel} indisponivel ou sem cota. Recuando para ${fallbackModel}.`);
       try {
         return await runStreamWithRetry(fallbackModel, retries);
