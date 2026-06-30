@@ -10,7 +10,7 @@ import {
     SupportMode
 } from '../types';
 
-const WELCOME_TEXT = 'Ola! Descreva o sintoma, informe o alarme ou envie foto/audio para analise.';
+const WELCOME_TEXT = 'Olá! Descreva o sintoma, informe o alarme ou envie foto/áudio para análise.';
 
 const MODE_NAMES: Record<SupportMode, string> = {
     AUTO: 'Auto (IA)',
@@ -33,7 +33,7 @@ const VOLTAGE_OPTIONS = [
 
 const DIAGNOSTIC_FIELD_META = {
     model: { icon: 'fa-barcode', placeholder: 'Modelo do tanque' },
-    voltage: { icon: 'fa-bolt', placeholder: 'Tensao' },
+    voltage: { icon: 'fa-bolt', placeholder: 'Tensão' },
     refrigerant: { icon: 'fa-snowflake', placeholder: 'Fluido refrigerante' },
     temperature: { icon: 'fa-temperature-half', placeholder: 'Temp. atual do leite' }
 } as const;
@@ -60,7 +60,7 @@ const createSupportId = () =>
         : `support-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 const showSupportAlert = (message: string) => {
     if (typeof window === 'undefined' || typeof window.alert !== 'function') {
-        console.warn(`[Tool_1_Assistant] Aviso nao exibido: ${message}`);
+        console.warn(`[Tool_1_Assistant] Aviso não exibido: ${message}`);
         return;
     }
 
@@ -68,11 +68,11 @@ const showSupportAlert = (message: string) => {
 };
 const confirmSupportHistoryReset = () => {
     if (typeof window === 'undefined' || typeof window.confirm !== 'function') {
-        console.warn('[Tool_1_Assistant] Confirmacao indisponivel para apagar historico do atendimento.');
+        console.warn('[Tool_1_Assistant] Confirmação indisponível para apagar histórico do atendimento.');
         return false;
     }
 
-    return window.confirm('Deseja apagar o historico deste atendimento?');
+    return window.confirm('Deseja apagar o histórico deste atendimento?');
 };
 
 const createWelcomeMessage = (): ChatMessage => ({
@@ -85,13 +85,14 @@ const createWelcomeMessage = (): ChatMessage => ({
 const createModeMessage = (mode: Exclude<SupportMode, 'AUTO'>): ChatMessage => ({
     id: createSupportId(),
     role: 'model',
-    text: `Modo de diagnostico focado em **${MODE_NAMES[mode]}** ativado. Descreva o sintoma com o maximo de detalhe possivel.`,
+    text: `Modo de diagnóstico focado em **${MODE_NAMES[mode]}** ativado. Descreva o sintoma com o máximo de detalhe possível.`,
     createdAt: Date.now()
 });
 
 const isUiOnlySupportMessage = (message: ChatMessage) =>
     message.id === 'welcome' ||
     message.text === WELCOME_TEXT ||
+    message.text.startsWith('Modo de diagnóstico focado em **') ||
     message.text.startsWith('Modo de diagnostico focado em **');
 
 const buildAttachmentMeta = (files: SelectedSupportFile[]): SupportAttachmentMeta[] =>
@@ -111,17 +112,17 @@ const buildAttachmentAnalysisPrompt = (files: AttachmentPromptFile[], text?: str
     const userText = text?.trim();
     const visiblePlaceholder = userText?.startsWith('[');
     const technicianText = userText && !visiblePlaceholder
-        ? `Relato do tecnico: ${userText}`
-        : 'O tecnico enviou anexo(s) para analise tecnica.';
+        ? `Relato do técnico: ${userText}`
+        : 'O técnico enviou anexo(s) para análise técnica.';
 
     return [
         ATTACHMENT_ANALYSIS_MARKER,
         technicianText,
         `Anexos recebidos:\n${files.map(getAttachmentLabel).join('\n')}`,
         '',
-        'Analise os anexos como evidencia tecnica de campo da Ordemilk.',
-        'Se houver imagem, leia primeiro o que aparece nela: IHM/display, alarme, placa de identificacao, borneira, painel, controlador, CLP, contatora, disjuntor-motor, pressostato, sensor, condensador, compressor, evaporador, visor de liquido, gelo, sujeira, vazamento ou qualquer indicio visual.',
-        'Depois responda com hipotese inicial, duas confirmacoes objetivas e uma acao segura imediata. Se a imagem estiver ruim, diga exatamente qual foto nova o tecnico deve tirar.'
+        'Analise os anexos como evidência técnica de campo da Ordemilk.',
+        'Se houver imagem, leia primeiro o que aparece nela: IHM/display, alarme, placa de identificação, borneira, painel, controlador, CLP, contatora, disjuntor-motor, pressostato, sensor, condensador, compressor, evaporador, visor de líquido, gelo, sujeira, vazamento ou qualquer indício visual.',
+        'Depois responda com hipótese inicial, duas confirmações objetivas e uma ação segura imediata. Se a imagem estiver ruim, diga exatamente qual foto nova o técnico deve tirar.'
     ].join('\n');
 };
 
@@ -130,10 +131,10 @@ const buildAttachmentDisplayText = (files: AttachmentPromptFile[]) => {
     const audioCount = files.filter(file => file.type === 'audio').length;
     const parts = [
         imageCount > 0 ? `${imageCount} imagem(ns)` : '',
-        audioCount > 0 ? `${audioCount} audio(s)` : ''
+        audioCount > 0 ? `${audioCount} áudio(s)` : ''
     ].filter(Boolean);
 
-    return `[${parts.join(' + ')} enviado(s) para analise tecnica]`;
+    return `[${parts.join(' + ')} enviado(s) para análise técnica]`;
 };
 
 const IMAGE_MAX_EDGE = 1600;
@@ -335,7 +336,7 @@ const ChatBubble: React.FC<{
                                     {file.type === 'image' && (
                                         <img
                                             src={file.data}
-                                            alt={file.name || `Evidencia ${index + 1}`}
+                                            alt={file.name || `Evidência ${index + 1}`}
                                             className="w-full rounded-lg border border-white/10"
                                             onLoad={onImageLoad}
                                         />
@@ -344,7 +345,7 @@ const ChatBubble: React.FC<{
                                         <div className="w-full">
                                             <p className="text-[10px] font-bold uppercase mb-1 opacity-70">
                                                 <i className="fa-solid fa-volume-high mr-1"></i>
-                                                {file.name || `Audio ${index + 1}`}
+                                                {file.name || `Áudio ${index + 1}`}
                                             </p>
                                             <audio controls src={file.data} className="w-full h-8 rounded opacity-90" />
                                         </div>
@@ -549,7 +550,7 @@ export const Tool_Assistant: React.FC = () => {
         }
 
         if (nextFiles.length !== files.length) {
-            showSupportAlert('Apenas imagens e audios sao suportados neste atendimento.');
+            showSupportAlert('Apenas imagens e áudios são suportados neste atendimento.');
         }
 
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -563,7 +564,7 @@ export const Tool_Assistant: React.FC = () => {
     const applyLocalFallback = (modelMessageId: string, prompt: string, attachmentCount: number) => {
         const { text } = localSupportService.generateResponse(prompt, mode, diagnosticContext);
         const finalText = attachmentCount > 0
-            ? `${text}\n\nANEXOS: Os anexos visuais ficam pendentes ate a conexao voltar.`
+            ? `${text}\n\nANEXOS: os anexos visuais ficam pendentes até a conexão voltar.`
             : text;
 
         setMessages(prev =>
@@ -713,8 +714,8 @@ export const Tool_Assistant: React.FC = () => {
     const diagnosticSummary = getDiagnosticContextSummary(diagnosticContext);
     const modeOptions: Array<{ value: SupportMode; label: string; icon: string }> = [
         { value: 'AUTO', label: 'AUTO (IA)', icon: 'fa-robot' },
-        { value: 'REF', label: 'REFRIGERACAO', icon: 'fa-snowflake' },
-        { value: 'ELEC', label: 'ELETRICA', icon: 'fa-bolt' }
+        { value: 'REF', label: 'REFRIGERAÇÃO', icon: 'fa-snowflake' },
+        { value: 'ELEC', label: 'ELÉTRICA', icon: 'fa-bolt' }
     ];
 
     return (
@@ -786,7 +787,7 @@ export const Tool_Assistant: React.FC = () => {
                                     <span>{item.text}</span>
                                 </span>
                             )) : (
-                                <span className="text-[11px] text-white/80">Modelo, tensao, fluido e leite atual ativam o atalho inteligente.</span>
+                                <span className="text-[11px] text-white/80">Modelo, tensão, fluido e leite atual ativam o atalho inteligente.</span>
                             )}
                         </div>
                     ) : (
@@ -870,13 +871,13 @@ export const Tool_Assistant: React.FC = () => {
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-5 pr-1 flex flex-col pb-4 no-scrollbar">
                     {!isOnline && (
                         <div className="self-stretch rounded-[18px] border border-[#ff6600]/35 bg-[#ff6600]/10 px-4 py-3 text-[12px] text-[#ffe0cc]">
-                            Sem internet agora. O suporte troca para consulta local para nao te deixar sem orientacao.
+                            Sem internet agora. O suporte troca para consulta local para não te deixar sem orientação.
                         </div>
                     )}
 
                     {hasRestoredAttachmentMeta && (
                         <div className="self-stretch rounded-[18px] border border-[#00d9ff]/25 bg-[#00d9ff]/8 px-4 py-3 text-[12px] text-[#d7f5ff]">
-                            <p className="font-semibold mb-2">Anexos pendentes da sessao</p>
+                            <p className="font-semibold mb-2">Anexos pendentes da sessão</p>
                             <div className="flex flex-wrap gap-2">
                                 {pendingAttachmentMeta.map(file => (
                                     <span key={file.id} className="px-2.5 py-1 rounded-full bg-black/20 border border-white/10">
@@ -884,7 +885,7 @@ export const Tool_Assistant: React.FC = () => {
                                     </span>
                                 ))}
                             </div>
-                            <p className="mt-2 text-[#9edfff]">Reanexe os arquivos se quiser envia-los outra vez para analise.</p>
+                            <p className="mt-2 text-[#9edfff]">Reanexe os arquivos se quiser enviá-los outra vez para análise.</p>
                         </div>
                     )}
 
@@ -907,7 +908,7 @@ export const Tool_Assistant: React.FC = () => {
                                 ) : (
                                     <div className="w-full h-20 flex flex-col items-center justify-center text-[#00d9ff] gap-1">
                                         <i className="fa-solid fa-file-audio text-xl"></i>
-                                        <span className="text-[10px] text-white/70 px-2 text-center truncate w-full">{file.name || 'Audio'}</span>
+                                        <span className="text-[10px] text-white/70 px-2 text-center truncate w-full">{file.name || 'Áudio'}</span>
                                     </div>
                                 )}
                                 <button onClick={() => removeSelectedFile(file.id)} className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity" aria-label={`Remover ${file.name || 'anexo'}`}>

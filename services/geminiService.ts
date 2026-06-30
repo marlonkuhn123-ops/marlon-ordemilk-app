@@ -18,14 +18,22 @@ const SUPPORT_FIELD_BRAIN_PACK = `
 [PACOTE COMPACTO DE CAMPO - USAR DESDE A PRIMEIRA RESPOSTA]
 - Superaquecimento (SH) ideal em campo: 7K a 12K.
 - Sub-resfriamento (SC) ideal em campo: 4K a 8K.
-- SH alto + SC baixo: priorize falta de fluido, vazamento, carga incompleta ou flash gas. Nao mande abrir VET primeiro.
-- SH alto + SC normal/alto: priorize restricao, filtro secador, VET subalimentando, bulbo/igualador ou coluna liquida com restricao.
-- SH baixo: risco de retorno de liquido/golpe; nao force compressor.
-- Alta pressao/desarme por alta: verifique condensador, ventiladores, obstrucao de ar, excesso de fluido e ar no sistema antes de insistir em partida.
-- Compressor liga e desliga: pense primeiro em pressostato, alta condensacao, baixa succao, termico, corrente e ventilacao.
-- IHM acende mas contatora nao fecha: foque em cadeia de comando, DM/rele termico, falta de fase, pressostatos, A1/A2 da bobina e saida do controlador/CLP.
-- Tanques >= 4000L: arquitetura CLP Panasonic; nao sugerir Full Gauge/Ageon.
-- Primeira resposta deve ser curta, mas tecnicamente util para o tecnico no cliente.
+- SH alto + SC baixo: priorize falta de fluido, vazamento, carga incompleta ou flash gas. Não mande abrir VET primeiro.
+- SH alto + SC normal/alto: priorize restrição, filtro secador, VET subalimentando, bulbo/igualador ou coluna líquida com restrição.
+- SH baixo: risco de retorno de líquido/golpe; não force compressor.
+- Alta pressão/desarme por alta: verifique condensador, ventiladores, obstrução de ar, excesso de fluido e ar no sistema antes de insistir em partida.
+- Compressor liga e desliga: pense primeiro em pressostato, alta condensação, baixa sucção, térmico, corrente e ventilação.
+- IHM acende mas contatora não fecha: foque em cadeia de comando, DM/relé térmico, falta de fase, pressostatos, A1/A2 da bobina e saída do controlador/CLP.
+- Tanques >= 4000L: arquitetura CLP Panasonic; não sugerir Full Gauge/Ageon.
+- Primeira resposta deve ser curta, mas tecnicamente útil para o técnico no cliente.
+`;
+
+const PORTUGUESE_QUALITY_RULE = `
+
+[QUALIDADE DO PORTUGUÊS - REGRA OBRIGATÓRIA]
+- Escreva sempre em português brasileiro correto, com acentos, cedilha e pontuação natural.
+- Nunca responda sem acentos em palavras como pressão, tensão, técnico, diagnóstico, ação, conexão, elétrica, refrigeração, líquido, sucção e relé.
+- Não deixe marcação solta como _texto_ visível ao técnico; use texto limpo e headings em negrito quando necessário.
 `;
 
 const handleApiError = (error: any) => {
@@ -153,17 +161,17 @@ const getDiagnosticContextInstruction = (diagnosticContext: SupportDiagnosticCon
   }
 
   if (isBaseEquipmentContextComplete(diagnosticContext)) {
-    lines.push(`- ATALHO INTELIGENTE ATIVO: modelo, tensao, fluido refrigerante e temperatura atual do leite foram preenchidos manualmente pelo tecnico e sao fatos confirmados.`);
-    lines.push(`- REGRA DE CONDUTA: nao pergunte novamente modelo, tensao, fluido refrigerante ou temperatura atual do leite.`);
-    lines.push(`- PRIMEIRA RESPOSTA: use esses 4 dados para elevar a hipotese inicial e pergunte apenas o que ainda falta para fechar o diagnostico.`);
+    lines.push(`- ATALHO INTELIGENTE ATIVO: modelo, tensão, fluido refrigerante e temperatura atual do leite foram preenchidos manualmente pelo técnico e são fatos confirmados.`);
+    lines.push(`- REGRA DE CONDUTA: não pergunte novamente modelo, tensão, fluido refrigerante ou temperatura atual do leite.`);
+    lines.push(`- PRIMEIRA RESPOSTA: use esses 4 dados para elevar a hipótese inicial e pergunte apenas o que ainda falta para fechar o diagnóstico.`);
   }
 
   const tankCapacity = extractTankCapacityLiters(diagnosticContext.model);
   if (tankCapacity !== null && tankCapacity >= 4000) {
-    lines.push(`- REGRA OPERACIONAL: trate este equipamento como tanque >= 4000L com arquitetura CLP Panasonic. Nao pergunte sobre Full Gauge, Ageon ou controlador comercial.`);
+    lines.push(`- REGRA OPERACIONAL: trate este equipamento como tanque >= 4000L com arquitetura CLP Panasonic. Não pergunte sobre Full Gauge, Ageon ou controlador comercial.`);
     const normalizedPrompt = normalizeText(userPrompt);
     if (normalizedPrompt.includes('full gauge') || normalizedPrompt.includes('ageon')) {
-      lines.push(`- CORRECAO OBRIGATORIA NA PRIMEIRA LINHA: o tecnico mencionou Full Gauge ou Ageon, o que NAO existe neste tanque. Comece a resposta corrigindo isso: diga que este tanque usa CLP Panasonic, nao Full Gauge nem Ageon.`);
+      lines.push(`- CORREÇÃO OBRIGATÓRIA NA PRIMEIRA LINHA: o técnico mencionou Full Gauge ou Ageon, o que NÃO existe neste tanque. Comece a resposta corrigindo isso: diga que este tanque usa CLP Panasonic, não Full Gauge nem Ageon.`);
     }
   }
 
@@ -176,11 +184,11 @@ const getAttachmentContextInstruction = (userPrompt: string) => {
 
   return `
 
-[LEITURA TECNICA DE ANEXOS - REGRA OBRIGATORIA]
-O tecnico enviou anexo(s) como evidencia de campo. Nao trate isso como pergunta vaga.
-Antes de diagnosticar, extraia sinais concretos do anexo: display/IHM, alarme, placa, modelo, tensao, borneira, painel, CLP, controlador, contatora, disjuntor-motor, pressostato, sensor, compressor, condensador, evaporador, gelo, sujeira, vazamento, oxidacao ou ligacao irregular.
-Se a imagem nao permitir leitura confiavel, diga isso objetivamente e peca a foto exata que falta.
-Mesmo na primeira resposta, use a evidencia visual para formular uma hipotese inicial tecnica, mantendo a resposta curta.`;
+[LEITURA TÉCNICA DE ANEXOS - REGRA OBRIGATÓRIA]
+O técnico enviou anexo(s) como evidência de campo. Não trate isso como pergunta vaga.
+Antes de diagnosticar, extraia sinais concretos do anexo: display/IHM, alarme, placa, modelo, tensão, borneira, painel, CLP, controlador, contatora, disjuntor-motor, pressostato, sensor, compressor, condensador, evaporador, gelo, sujeira, vazamento, oxidação ou ligação irregular.
+Se a imagem não permitir leitura confiável, diga isso objetivamente e peça a foto exata que falta.
+Mesmo na primeira resposta, use a evidência visual para formular uma hipótese inicial técnica, mantendo a resposta curta.`;
 };
 
 const getSymptomSpecificInstruction = (userPrompt: string, mode: 'AUTO' | 'REF' | 'ELEC') => {
@@ -198,11 +206,11 @@ const getSymptomSpecificInstruction = (userPrompt: string, mode: 'AUTO' | 'REF' 
     );
 
   if (hasContactorSymptom) {
-    lines.push('[REGRA ESPECIFICA - CONTATORA NAO FECHA]');
-    lines.push('- O tecnico ja descreveu sintoma eletrico suficiente para iniciar sequencia de teste.');
-    lines.push('- Na primeira resposta, nao gaste pergunta pedindo capacidade/modelo/controlador se ele pediu sequencia de teste.');
-    lines.push('- As 2 perguntas devem confirmar: tensao A1/A2 da bobina quando pede partida; e se DM/rele termico/pressostato/rele falta de fase esta aberto.');
-    lines.push('- A acao imediata deve mandar verificar protecoes e medir A1/A2 com seguranca antes de forcar partida.');
+    lines.push('[REGRA ESPECÍFICA - CONTATORA NÃO FECHA]');
+    lines.push('- O técnico já descreveu sintoma elétrico suficiente para iniciar sequência de teste.');
+    lines.push('- Na primeira resposta, não gaste pergunta pedindo capacidade/modelo/controlador se ele pediu sequência de teste.');
+    lines.push('- As 2 perguntas devem confirmar: tensão A1/A2 da bobina quando pede partida; e se DM/relé térmico/pressostato/relé falta de fase está aberto.');
+    lines.push('- A ação imediata deve mandar verificar proteções e medir A1/A2 com segurança antes de forçar partida.');
   }
 
   if (
@@ -210,9 +218,9 @@ const getSymptomSpecificInstruction = (userPrompt: string, mode: 'AUTO' | 'REF' 
     (normalizedPrompt.includes('superaquecimento') || normalizedPrompt.includes(' sh ')) &&
     (normalizedPrompt.includes('subresfriamento') || normalizedPrompt.includes('sub-resfriamento') || normalizedPrompt.includes(' sc '))
   ) {
-    lines.push('[REGRA ESPECIFICA - SH/SC INFORMADOS]');
-    lines.push('- Se SH esta alto e SC esta baixo, a primeira hipotese e falta de fluido/vazamento/flash gas.');
-    lines.push('- Nao oriente abrir VET primeiro nesse padrao; confirme carga/vazamento/visor/pressoes.');
+    lines.push('[REGRA ESPECÍFICA - SH/SC INFORMADOS]');
+    lines.push('- Se SH está alto e SC está baixo, a primeira hipótese é falta de fluido/vazamento/flash gas.');
+    lines.push('- Não oriente abrir VET primeiro nesse padrão; confirme carga/vazamento/visor/pressões.');
   }
 
   return lines.length ? `\n\n${lines.join('\n')}` : "";
@@ -257,9 +265,9 @@ const getFullSystemInstruction = async (
   }
 
   if (mode === 'ELEC') {
-    modeInstruction += "\n\n[SEQUENCIA ELETRICA DE CAMPO]\nPara IHM acesa e contatora que nao fecha, responda com ordem segura: 1) alarme/status na IHM, 2) DM/rele termico/falta de fase/pressostatos, 3) tensao A1/A2 da bobina, 4) saida do controlador/CLP. Se o compressor nao esta partindo, nao peca pressoes de manifold como confirmacao principal.";
+    modeInstruction += "\n\n[SEQUÊNCIA ELÉTRICA DE CAMPO]\nPara IHM acesa e contatora que não fecha, responda com ordem segura: 1) alarme/status na IHM, 2) DM/relé térmico/falta de fase/pressostatos, 3) tensão A1/A2 da bobina, 4) saída do controlador/CLP. Se o compressor não está partindo, não peça pressões de manifold como confirmação principal.";
   } else if (mode === 'REF') {
-    modeInstruction += "\n\n[MATRIZ REFRIGERACAO DE CAMPO]\nSe o tecnico informar SH/SC, aplique: SH alto + SC baixo = falta de fluido/vazamento/flash gas; SH alto + SC normal/alto = restricao/VET/filtro; SH baixo = risco de retorno de liquido. Nao recomende abrir VET quando o SC esta baixo sem confirmar carga/vazamento.";
+    modeInstruction += "\n\n[MATRIZ REFRIGERAÇÃO DE CAMPO]\nSe o técnico informar SH/SC, aplique: SH alto + SC baixo = falta de fluido/vazamento/flash gas; SH alto + SC normal/alto = restrição/VET/filtro; SH baixo = risco de retorno de líquido. Não recomende abrir VET quando o SC está baixo sem confirmar carga/vazamento.";
   }
 
   let cadenceInstruction = "";
@@ -312,7 +320,7 @@ SOMENTE após o técnico responder, você pode entregar:
 5. CAUSA RAIZ: Lembre-se que falhas elétricas muitas vezes são causadas por problemas mecânicos/frigoríficos.
 `;
 
-  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${SUPPORT_FIELD_BRAIN_PACK}${localAnalysisContext}${symptomSpecificContext}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
+  return `${SYSTEM_PROMPT_BASE}\n\n${TECHNICAL_CONTEXT}${PORTUGUESE_QUALITY_RULE}${SUPPORT_FIELD_BRAIN_PACK}${localAnalysisContext}${symptomSpecificContext}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
 };
 
 const enforceFirstReplyContract = (text: string, isFirstReply: boolean) => {

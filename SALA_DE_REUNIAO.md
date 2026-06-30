@@ -1,11 +1,29 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-06-30T16:35:46-03:00
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-06-30T17:15:12-03:00
 
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-06-30T17:15:12-03:00
+- **Autorizacao direta do USER:** "CONFIRA E TESTE NOVAMENTE AS MUDANCAS E FACA O DEPLOY".
+- **Escopo autorizado:** revalidar a correcao de portugues do suporte e publicar no GitHub/Vercel se aprovado.
+- **Arquivos previstos para commit:** `components/Tool_1_Assistant.tsx`, `services/geminiService.ts`, `services/localSupportService.ts`, `services/supportDiagnosticEngine.ts`, `services/testSuite.ts`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** manter `output/` fora do commit; nao tocar em `public/sw.js`, auth/login, navegacao global, calculadora visual, troca de modelo ou layout estrutural.
+- **Validacao pre-deploy:** `npm.cmd run lint` OK; `npm.cmd run build` OK; `runSystemDiagnostics()` OK 14/14; teste direto do fallback local OK para alta pressao, REF SH/SC e ELEC contatora; smoke Playwright local OK em `http://127.0.0.1:3101` com login, suporte offline e resposta acentuada.
+- **Pode editar/commitar/deployar sem pedir?** SIM
+
+### RODADA ATIVA CODEX - 2026-06-30T17:07:54-03:00
+- **Autorizacao direta do USER:** "CARA. PRECISO QUE A IA PELO MENOS ESCREVA O PORTUGUES CORRETO. REVISE".
+- **Escopo autorizado:** revisar e corrigir portugues visivel do suporte, fallback local e instrucoes do Gemini relacionadas a suporte/anexos, sem mudar fluxo central.
+- **Arquivos alterados nesta rodada:** `components/Tool_1_Assistant.tsx`, `services/geminiService.ts`, `services/localSupportService.ts`, `services/supportDiagnosticEngine.ts`, `services/testSuite.ts`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** nao tocar em `public/sw.js`, auth/login, navegacao global, calculadora visual, layout global ou troca de modelo.
+- **Mudancas aplicadas:** fallback local agora responde com acentos e sem `_Modo consulta local_` cru; UI do suporte ajustada em saudacao, botoes REF/ELEC, offline, anexos e alertas; prompt do Gemini recebeu regra explicita de portugues brasileiro correto com acentos; testes passaram a cobrir fallback acentuado.
+- **Validacao executada ate aqui:** `npm.cmd run lint` OK; `npm.cmd run build` OK; `runSystemDiagnostics()` OK 14/14; smoke Playwright local em `http://127.0.0.1:3101` OK com login, suporte offline e pergunta `compressor desarma por alta pressao`, exibindo "pressao/conexao/voce/faca" corretamente acentuados na resposta.
+- **Risco residual:** chamada real online do Gemini depende da chave/modelo de producao; localmente foi validado prompt/build e fallback offline.
+- **Pode editar sem pedir?** SIM
+
 ### RODADA ATIVA CODEX - 2026-06-30T16:35:46-03:00
 - **Autorizacao direta do USER:** "TESTE E FACA O DEPLOY".
 - **Escopo autorizado:** testar a correcao do suporte e publicar no GitHub/Vercel se aprovado.

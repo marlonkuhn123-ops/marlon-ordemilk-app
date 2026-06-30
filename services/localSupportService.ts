@@ -97,35 +97,35 @@ const buildHypothesis = (route: OfflineRoute, prompt: string, context: SupportDi
 
     if (route === 'errors') {
         if (context.code) {
-            return `O primeiro alvo e interpretar o codigo ${context.code} no controlador antes de mexer no restante.`;
+            return `O primeiro alvo é interpretar o código ${context.code} no controlador antes de mexer no restante.`;
         }
-        return 'A falha parece ligada ao controlador ou a um alarme ainda nao confirmado.';
+        return 'A falha parece ligada ao controlador ou a um alarme ainda não confirmado.';
     }
 
     if (route === 'electrical') {
         if (normalizedPrompt.includes('contatora') || normalizedPrompt.includes('contator')) {
-            return 'A contatora nao fecha porque a cadeia de comando esta aberta ou a bobina nao esta recebendo comando seguro.';
+            return 'A contatora não fecha porque a cadeia de comando está aberta ou a bobina não está recebendo comando seguro.';
         }
         if (normalizedPrompt.includes('ihm') || context.ihmOn === 'nao') {
-            return 'A causa mais provavel esta na alimentacao de comando ou no circuito de 24V do painel.';
+            return 'A causa mais provável está na alimentação de comando ou no circuito de 24V do painel.';
         }
-        return 'A causa mais provavel esta na cadeia eletrica de comando ou protecao.';
+        return 'A causa mais provável está na cadeia elétrica de comando ou proteção.';
     }
 
     if (route === 'refrigeration') {
         if (hasHighShLowScClue(normalizedPrompt)) {
-            return 'SH alto com SC baixo aponta primeiro para falta de fluido, vazamento, carga incompleta ou flash gas; nao e caso de abrir VET como primeira acao.';
+            return 'SH alto com SC baixo aponta primeiro para falta de fluido, vazamento, carga incompleta ou flash gas; não é caso de abrir VET como primeira ação.';
         }
         if (normalizedPrompt.includes('alta pressao')) {
-            return 'O desarme por alta pressao aponta primeiro para falha de rejeicao de calor no condensador, ventilacao ruim, excesso de fluido ou ar no sistema.';
+            return 'O desarme por alta pressão aponta primeiro para falha de rejeição de calor no condensador, ventilação ruim, excesso de fluido ou ar no sistema.';
         }
         if (normalizedPrompt.includes('aquece') || normalizedPrompt.includes('desliga')) {
-            return 'A causa mais provavel esta em troca termica ruim ou compressor entrando em protecao.';
+            return 'A causa mais provável está em troca térmica ruim ou compressor entrando em proteção.';
         }
-        return 'A causa mais provavel esta no ciclo frigorifico ainda sem medidas suficientes para fechar.';
+        return 'A causa mais provável está no ciclo frigorífico ainda sem medidas suficientes para fechar.';
     }
 
-    return 'Ainda falta contexto minimo para fechar a causa com seguranca.';
+    return 'Ainda falta contexto mínimo para fechar a causa com segurança.';
 };
 
 const buildQuestions = (route: OfflineRoute, context: SupportDiagnosticContext, prompt: string, analysis: SupportCaseAnalysis) => {
@@ -144,38 +144,38 @@ const buildQuestions = (route: OfflineRoute, context: SupportDiagnosticContext, 
     };
 
     if (route === 'errors') {
-        pushIfMissing(hasValue(context.model), 'Qual e o modelo do tanque ou do painel?');
-        pushIfMissing(hasValue(context.code), 'Qual codigo ou mensagem aparece exatamente na IHM?');
-        pushIfMissing(Boolean(context.ihmOn), 'A IHM acende normal ou esta apagada?');
+        pushIfMissing(hasValue(context.model), 'Qual é o modelo do tanque ou do painel?');
+        pushIfMissing(hasValue(context.code), 'Qual código ou mensagem aparece exatamente na IHM?');
+        pushIfMissing(Boolean(context.ihmOn), 'A IHM acende normal ou está apagada?');
     } else if (route === 'electrical') {
         if (normalizedPrompt.includes('contatora') || normalizedPrompt.includes('contator')) {
-            questions.push('Ha tensao na bobina A1/A2 quando o controlador pede partida?');
-            questions.push('Algum DM, rele termico, pressostato ou rele de falta de fase esta aberto?');
+            questions.push('Há tensão na bobina A1/A2 quando o controlador pede partida?');
+            questions.push('Algum DM, relé térmico, pressostato ou relé de falta de fase está aberto?');
             return questions.slice(0, 2);
         }
-        pushIfMissing(hasValue(context.voltage), 'Qual tensao voce mediu nas fases ou na alimentacao?');
-        pushIfMissing(Boolean(context.ihmOn), 'A IHM acende normal ou o painel esta morto?');
-        pushIfMissing(Boolean(context.compressorStarts), 'A contatora fecha ou o compressor nao chega a partir?');
+        pushIfMissing(hasValue(context.voltage), 'Qual tensão você mediu nas fases ou na alimentação?');
+        pushIfMissing(Boolean(context.ihmOn), 'A IHM acende normal ou o painel está morto?');
+        pushIfMissing(Boolean(context.compressorStarts), 'A contatora fecha ou o compressor não chega a partir?');
     } else if (route === 'refrigeration') {
         if (hasShScClue(normalizedPrompt)) {
-            questions.push('Quais sao as pressoes de succao e descarga no manifold, em psi ou bar?');
-            questions.push('O visor de liquido tem bolhas ou ha sinal de vazamento/oleo nas conexoes?');
+            questions.push('Quais são as pressões de sucção e descarga no manifold, em psi ou bar?');
+            questions.push('O visor de líquido tem bolhas ou há sinal de vazamento/óleo nas conexões?');
             return questions.slice(0, 2);
         }
-        pushIfMissing(hasValue(context.pressure), 'Qual pressao voce mediu no sistema antes do desarme?');
-        pushIfMissing(hasValue(context.temperature), 'Qual temperatura do leite voce mediu?');
-        pushIfMissing(hasValue(context.refrigerant), 'Qual e o fluido refrigerante do sistema?');
-        pushIfMissing(hasValue(context.model), 'Qual e o modelo ou capacidade do tanque?');
+        pushIfMissing(hasValue(context.pressure), 'Qual pressão você mediu no sistema antes do desarme?');
+        pushIfMissing(hasValue(context.temperature), 'Qual temperatura do leite você mediu?');
+        pushIfMissing(hasValue(context.refrigerant), 'Qual é o fluido refrigerante do sistema?');
+        pushIfMissing(hasValue(context.model), 'Qual é o modelo ou capacidade do tanque?');
     } else {
-        pushIfMissing(hasValue(context.model), 'Qual e o modelo ou capacidade do tanque?');
-        pushIfMissing(hasValue(context.code), 'Existe codigo de erro, alarme ou mensagem na IHM?');
+        pushIfMissing(hasValue(context.model), 'Qual é o modelo ou capacidade do tanque?');
+        pushIfMissing(hasValue(context.code), 'Existe código de erro, alarme ou mensagem na IHM?');
         pushIfMissing(Boolean(context.compressorStarts), 'O compressor parte, tenta partir ou nem aciona?');
     }
 
     while (questions.length < 2) {
         questions.push(questions.length === 0
-            ? 'Qual e o sintoma principal visto no local?'
-            : 'Voce ja mediu tensao, pressao ou temperatura?');
+            ? 'Qual é o sintoma principal visto no local?'
+            : 'Você já mediu tensão, pressão ou temperatura?');
     }
 
     return questions.slice(0, 2);
@@ -192,24 +192,24 @@ const buildAction = (route: OfflineRoute, prompt: string, analysis: SupportCaseA
     }
 
     if (route === 'errors') {
-        return 'Fotografe a IHM, confirme se ela esta energizada e evite apagar o alarme antes de registrar o codigo.';
+        return 'Fotografe a IHM, confirme se ela está energizada e evite apagar o alarme antes de registrar o código.';
     }
     if (route === 'electrical') {
         if (normalizedPrompt.includes('contatora') || normalizedPrompt.includes('contator')) {
-            return 'Com seguranca, confira DM/rele/falta de fase/pressostatos e meca A1/A2 da bobina antes de forcar partida.';
+            return 'Com segurança, confira DM/relé/falta de fase/pressostatos e meça A1/A2 da bobina antes de forçar partida.';
         }
-        return 'Com seguranca, confirme tensao de entrada, rele de falta de fase e disjuntor-motor antes de insistir na partida.';
+        return 'Com segurança, confirme tensão de entrada, relé de falta de fase e disjuntor-motor antes de insistir na partida.';
     }
     if (route === 'refrigeration') {
         if (hasHighShLowScClue(normalizedPrompt)) {
-            return 'Nao abra a VET agora; confirme vazamento/carga pelo visor, pressoes e estabilidade antes de adicionar fluido com criterio.';
+            return 'Não abra a VET agora; confirme vazamento/carga pelo visor, pressões e estabilidade antes de adicionar fluido com critério.';
         }
         if (normalizedPrompt.includes('alta pressao')) {
             return 'Desligue e confira fluxo de ar do condensador, ventiladores e serpentina antes de religar.';
         }
-        return 'Nao force nova partida agora; confira condensador, ventilacao e temperatura do compressor antes de religar.';
+        return 'Não force nova partida agora; confira condensador, ventilação e temperatura do compressor antes de religar.';
     }
-    return 'Me envie o modelo e o sintoma principal antes de avancar para um teste mais pesado.';
+    return 'Me envie o modelo e o sintoma principal antes de avançar para um teste mais pesado.';
 };
 
 export const localSupportService = {
@@ -234,17 +234,17 @@ export const localSupportService = {
         const action = buildAction(route, prompt, analysis);
 
         const text = [
-            'Ola. Vou te ajudar com um diagnostico rapido e direto.',
+            'Olá. Vou te ajudar com um diagnóstico rápido e direto.',
             '',
-            `**Hipotese Inicial:** ${hypothesis}`,
+            `**Hipótese Inicial:** ${hypothesis}`,
             '',
             '**Preciso confirmar:**',
             `1. ${questions[0]}`,
             `2. ${questions[1]}`,
             '',
-            `**Faca agora:** ${action}`,
+            `**Faça agora:** ${action}`,
             '',
-            '_Modo consulta local ativo. Assim que a conexao voltar, eu aprofundo com a IA completa._'
+            '**Modo consulta local:** assim que a conexão voltar, eu aprofundo com a IA completa.'
         ].join('\n');
 
         return { route, text };
