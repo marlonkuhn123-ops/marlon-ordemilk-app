@@ -138,6 +138,7 @@ const buildAttachmentDisplayText = (files: AttachmentPromptFile[]) => {
 
 const IMAGE_MAX_EDGE = 1600;
 const IMAGE_JPEG_QUALITY = 0.86;
+const SUPPORT_STREAM_TIMEOUT_MS = 65000;
 
 const normalizeImageFile = (file: File): Promise<SelectedSupportFile | null> =>
     new Promise(resolve => {
@@ -617,6 +618,8 @@ export const Tool_Assistant: React.FC = () => {
             return;
         }
 
+        let allowAiUpdates = true;
+
         try {
             const historyForApi = [...messagesRef.current, userMsg]
                 .filter(message => !isUiOnlySupportMessage(message))
@@ -645,14 +648,16 @@ export const Tool_Assistant: React.FC = () => {
                 return { role: message.role, parts };
             });
 
-            await generateChatResponseStream(
+            const aiResponsePromise = generateChatResponseStream(
                 historyForApi,
                 (chunkText: string) => {
+                    if (!allowAiUpdates) return;
                     setMessages(prev =>
                         prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: chunkText } : msg))
                     );
                 },
                 (finalText, sources) => {
+                    if (!allowAiUpdates) return;
                     setMessages(prev =>
                     prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: finalText, sources, isStreaming: false } : msg))
                     );
@@ -660,12 +665,22 @@ export const Tool_Assistant: React.FC = () => {
                 mode,
                 diagnosticContext
             );
+
+            aiResponsePromise.catch(() => undefined);
+
+            await Promise.race([
+                aiResponsePromise,
+                new Promise((_, reject) => {
+                    window.setTimeout(() => reject(new Error('SUPPORT_STREAM_TIMEOUT')), SUPPORT_STREAM_TIMEOUT_MS);
+                })
+            ]);
         } catch (error: any) {
+            allowAiUpdates = false;
             console.error('Chat Error:', error?.message || 'Unknown error');
 
             const errorMessage = error?.message || 'FALHA DE CONEXAO. Tente novamente.';
             const browserOffline = typeof navigator !== 'undefined' && !navigator.onLine;
-            const shouldUseLocalFallback = browserOffline || /503|429|quota|limite|conex|fetch|network|timeout|socket|indispon|unavailable|empty_support_response/i.test(errorMessage.toLowerCase());
+            const shouldUseLocalFallback = browserOffline || /503|429|quota|limite|conex|fetch|network|timeout|support_stream_timeout|socket|indispon|unavailable|empty_support_response/i.test(errorMessage.toLowerCase());
 
             if (shouldUseLocalFallback) {
                 applyLocalFallback(modelMessageId, localPrompt, filesToSend.length);
