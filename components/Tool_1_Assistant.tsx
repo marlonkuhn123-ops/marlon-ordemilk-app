@@ -222,6 +222,9 @@ const hasDiagnosticContextValue = (context?: SupportDiagnosticContext) =>
 const isDiagnosticContextComplete = (context?: SupportDiagnosticContext) =>
     Boolean(context?.model?.trim() && context?.voltage?.trim() && context?.refrigerant?.trim() && context?.temperature?.trim());
 
+const hasStartedConversation = (messages: ChatMessage[]) =>
+    messages.some(message => message.role === 'user');
+
 const getDiagnosticContextSummary = (context: SupportDiagnosticContext) =>
     [
         context.model?.trim()
@@ -419,13 +422,14 @@ export const Tool_Assistant: React.FC = () => {
         Boolean(restoredSnapshot && (restoredMessages.length > 1 || restoredSnapshot.draft || restoredSnapshot.attachmentsMeta.length || hasDiagnosticContextValue(restoredSnapshot.diagnosticContext)))
     );
     const [isDiagnosticContextCollapsed, setIsDiagnosticContextCollapsed] = useState(() =>
-        isDiagnosticContextComplete(restoredSnapshot?.diagnosticContext)
+        isDiagnosticContextComplete(restoredSnapshot?.diagnosticContext) || hasStartedConversation(restoredMessages)
     );
 
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const messageElementRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
     const wasDiagnosticContextCompleteRef = useRef(isDiagnosticContextComplete(restoredSnapshot?.diagnosticContext));
+    const conversationStarted = hasStartedConversation(messages);
 
     useEffect(() => {
         messagesRef.current = messages;
@@ -512,11 +516,11 @@ export const Tool_Assistant: React.FC = () => {
         if (isComplete && !wasDiagnosticContextCompleteRef.current) {
             setIsDiagnosticContextCollapsed(true);
         }
-        if (!isComplete) {
+        if (!isComplete && !conversationStarted) {
             setIsDiagnosticContextCollapsed(false);
         }
         wasDiagnosticContextCompleteRef.current = isComplete;
-    }, [diagnosticContext]);
+    }, [conversationStarted, diagnosticContext]);
 
     const handleDiagnosticContextChange = (field: keyof SupportDiagnosticContext, value: string) => {
         setDiagnosticContext(prev => ({
@@ -604,6 +608,7 @@ export const Tool_Assistant: React.FC = () => {
         setInput('');
         setSelectedFiles([]);
         setPendingAttachmentMeta([]);
+        setIsDiagnosticContextCollapsed(true);
         setIsLoadingChat(true);
         setShowRestoreNotice(false);
 
@@ -703,6 +708,7 @@ export const Tool_Assistant: React.FC = () => {
         setDiagnosticContext({});
         setSelectedFiles([]);
         setPendingAttachmentMeta([]);
+        setIsDiagnosticContextCollapsed(false);
         setIsLoadingChat(false);
         setShowRestoreNotice(false);
         scrollToBottom();
@@ -712,6 +718,9 @@ export const Tool_Assistant: React.FC = () => {
 
     const hasRestoredAttachmentMeta = pendingAttachmentMeta.length > 0 && selectedFiles.length === 0;
     const diagnosticSummary = getDiagnosticContextSummary(diagnosticContext);
+    const diagnosticContextFilledCount = diagnosticSummary.length;
+    const diagnosticContextProgress = `${diagnosticContextFilledCount}/4`;
+    const isDiagnosticContextReady = diagnosticContextFilledCount === 4;
     const modeOptions: Array<{ value: SupportMode; label: string; icon: string }> = [
         { value: 'AUTO', label: 'AUTO (IA)', icon: 'fa-robot' },
         { value: 'REF', label: 'REFRIGERAÇÃO', icon: 'fa-snowflake' },
@@ -719,86 +728,85 @@ export const Tool_Assistant: React.FC = () => {
     ];
 
     return (
-        <div className="h-full max-w-2xl mx-auto flex flex-col px-3 pt-2 pb-2 animate-fadeIn">
-            <div className="shrink-0 rounded-2xl border border-[#28405b]/70 bg-[#53657a]/70 shadow-xl shadow-[#35475c]/30 overflow-hidden">
-                <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+        <div className="h-full max-w-2xl mx-auto flex flex-col px-2 pt-1 pb-2 animate-fadeIn">
+            <div className="shrink-0 rounded-[18px] border border-[#28405b]/70 bg-[#53657a]/82 shadow-lg shadow-[#35475c]/20 overflow-hidden">
+                <div className="flex items-center justify-between gap-3 px-3 py-2">
                     <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-[#06c8f6] text-white flex items-center justify-center shadow-lg shadow-[#19435a]/40 shrink-0">
-                            <i className="fa-solid fa-headset text-lg"></i>
+                        <div className="w-9 h-9 rounded-xl bg-[#06c8f6] text-white flex items-center justify-center shadow-md shadow-[#19435a]/35 shrink-0">
+                            <i className="fa-solid fa-headset text-base"></i>
                         </div>
                         <div className="min-w-0">
                             <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#ffd400]">Suporte direto</p>
-                            <h2 className="text-base font-black leading-tight truncate">Supervisor Ordemilk</h2>
+                            <h2 className="text-[15px] font-black leading-tight truncate">Supervisor Ordemilk</h2>
                         </div>
                     </div>
 
                     <button
                         onClick={resetMessages}
-                        className="w-9 h-9 rounded-xl bg-[#24354a] text-white border border-[#2f4a67] flex items-center justify-center shrink-0"
+                        className="w-8 h-8 rounded-xl bg-[#24354a] text-white border border-[#2f4a67] flex items-center justify-center shrink-0"
                         aria-label="Limpar conversa"
                     >
                         <i className="fa-solid fa-trash-can text-xs"></i>
                     </button>
                 </div>
 
-            {showRestoreNotice && (
-                <div className="mb-3 rounded-[20px] border border-[#00d9ff]/35 bg-[#00d9ff]/10 px-4 py-3 text-[12px] text-[#d9f6ff]">
-                    <div className="flex items-start justify-between gap-3">
-                        <p className="leading-relaxed font-medium">Sessao restaurada neste dispositivo. Historico, rascunho e dados base seguem salvos localmente.</p>
-                        <button onClick={() => setShowRestoreNotice(false)} className="w-6 h-6 rounded-full border border-white/10 text-white/70 hover:text-white shrink-0" aria-label="Fechar aviso">
-                            <i className="fa-solid fa-xmark text-[11px]"></i>
+                <div className="flex gap-1.5 px-2.5 pb-2 overflow-x-auto no-scrollbar">
+                    <button
+                        type="button"
+                        onClick={() => setIsDiagnosticContextCollapsed(prev => !prev)}
+                        className={`shrink-0 h-8 px-3 rounded-full border flex items-center justify-center gap-1.5 text-[9px] font-black uppercase tracking-wider ${isDiagnosticContextReady
+                            ? 'border-[#18e07a]/35 bg-[#143929]/65 text-[#c6ffd8]'
+                            : 'border-[#2f4a67] bg-[#24354a] text-white'
+                        }`}
+                        aria-label={isDiagnosticContextCollapsed ? 'Abrir dados base' : 'Fechar dados base'}
+                    >
+                        <i className="fa-solid fa-sliders text-[10px]"></i>
+                        <span>Dados</span>
+                        <span className="min-w-7 h-4 px-1.5 rounded-full bg-white/10 flex items-center justify-center text-[8.5px]">
+                            {diagnosticContextProgress}
+                        </span>
+                    </button>
+                    {modeOptions.map(option => (
+                        <button
+                            key={option.value}
+                            onClick={() => handleModeSelect(option.value)}
+                            disabled={isLoadingChat}
+                            className={`shrink-0 h-8 px-3 rounded-full text-[9px] font-black uppercase tracking-wider border transition-all flex items-center justify-center gap-1.5 ${mode === option.value
+                                ? 'bg-[#06c8f6] text-white border-[#29dcff] shadow-lg shadow-[#19435a]/40'
+                                : 'bg-[#24354a] text-white border-[#2f4a67]'
+                            } ${isLoadingChat ? 'opacity-70 cursor-not-allowed' : ''}`}
+                        >
+                            <i className={`fa-solid ${option.icon} text-[11px]`}></i>
+                            <span>{option.label}</span>
                         </button>
+                    ))}
+                    <div className="shrink-0 h-8 px-2.5 rounded-full bg-[#24354a]/70 border border-[#2f4a67] text-white flex items-center gap-1.5 text-[8.5px] font-black uppercase tracking-wider">
+                        <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[#18e07a] animate-pulse' : 'bg-red-300'}`}></span>
+                        {isOnline ? 'Online' : 'Offline'}
                     </div>
                 </div>
-            )}
 
-                <div className="mx-3 mb-3 rounded-2xl border border-[#28405b]/70 bg-[#617287]/65 p-3 shadow-inner shadow-[#2d3f55]/20">
-                    <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#ffd400]">Dados Base</p>
-                            {!isDiagnosticContextCollapsed && (
-                                <p className="mt-1 text-[11px] leading-snug text-white font-bold">
-                                    Preencha os 4 dados para ativar o atalho inteligente antes da primeira resposta.
-                                </p>
-                            )}
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                            <span className="h-7 px-3 rounded-full border border-white bg-[#24354a]/70 text-white text-[10px] font-black uppercase tracking-wider flex items-center">
-                                Auto
-                            </span>
+                {!isDiagnosticContextCollapsed && (
+                    <div className="mx-2.5 mb-2 rounded-[16px] border border-[#28405b]/70 bg-[#617287]/72 p-2.5 shadow-inner shadow-[#2d3f55]/20">
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#ffd400]">Dados Base</span>
                             <button
                                 type="button"
-                                onClick={() => setIsDiagnosticContextCollapsed(prev => !prev)}
-                                className="w-8 h-8 rounded-full bg-[#24354a] text-white border border-[#2f4a67] flex items-center justify-center"
-                                aria-label={isDiagnosticContextCollapsed ? 'Expandir dados base' : 'Minimizar dados base'}
+                                onClick={() => setIsDiagnosticContextCollapsed(true)}
+                                className="w-7 h-7 rounded-full bg-[#24354a] text-white border border-[#2f4a67] flex items-center justify-center"
+                                aria-label="Fechar dados base"
                             >
-                                <i className={`fa-solid ${isDiagnosticContextCollapsed ? 'fa-chevron-down' : 'fa-chevron-up'} text-xs`}></i>
+                                <i className="fa-solid fa-chevron-up text-[10px]"></i>
                             </button>
                         </div>
-                    </div>
-
-                    {isDiagnosticContextCollapsed ? (
-                        <div className="mt-2.5 flex flex-wrap gap-1.5">
-                            {diagnosticSummary.length > 0 ? diagnosticSummary.map(item => (
-                                <span key={item.key} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/10 bg-black/15 text-[10.5px] font-medium tracking-[0.01em] text-white/88">
-                                    <span className="w-4.5 h-4.5 rounded-full border border-[#00d9ff]/12 bg-[#00d9ff]/8 text-[#a7efff]/72 flex items-center justify-center shrink-0">
-                                        <i className={`fa-solid ${item.icon} text-[8px]`}></i>
-                                    </span>
-                                    <span>{item.text}</span>
-                                </span>
-                            )) : (
-                                <span className="text-[11px] text-white/80">Modelo, tensão, fluido e leite atual ativam o atalho inteligente.</span>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-4 gap-2 mt-3">
+                        <div className="grid grid-cols-4 gap-1.5">
                             <DiagnosticFieldShell icon={DIAGNOSTIC_FIELD_META.model.icon}>
                                 <input
                                     type="text"
                                     value={diagnosticContext.model ?? ''}
                                     onChange={(event) => handleDiagnosticContextChange('model', event.target.value)}
                                     disabled={isLoadingChat}
-                                    className={`${INPUT_BASE_CLASSNAME} pl-8 pr-2 text-xs`}
+                                    className={`${INPUT_BASE_CLASSNAME} h-8 rounded-xl pl-7 pr-1.5 text-[11px]`}
                                     placeholder="Mod"
                                 />
                             </DiagnosticFieldShell>
@@ -807,7 +815,7 @@ export const Tool_Assistant: React.FC = () => {
                                     value={diagnosticContext.voltage ?? ''}
                                     onChange={(event) => handleDiagnosticContextChange('voltage', event.target.value)}
                                     disabled={isLoadingChat}
-                                    className={`${INPUT_BASE_CLASSNAME} pl-8 pr-1 text-xs`}
+                                    className={`${INPUT_BASE_CLASSNAME} h-8 rounded-xl pl-7 pr-1 text-[11px]`}
                                 >
                                     {VOLTAGE_OPTIONS.map(option => (
                                         <option key={option.value || 'blank'} value={option.value} className="text-black">
@@ -821,7 +829,7 @@ export const Tool_Assistant: React.FC = () => {
                                     value={diagnosticContext.refrigerant ?? ''}
                                     onChange={(event) => handleDiagnosticContextChange('refrigerant', event.target.value)}
                                     disabled={isLoadingChat}
-                                    className={`${INPUT_BASE_CLASSNAME} pl-8 pr-1 text-xs`}
+                                    className={`${INPUT_BASE_CLASSNAME} h-8 rounded-xl pl-7 pr-1 text-[11px]`}
                                 >
                                     {FLUID_OPTIONS.map(option => (
                                         <option key={option.value || 'blank'} value={option.value} className="text-black">
@@ -837,38 +845,25 @@ export const Tool_Assistant: React.FC = () => {
                                     value={diagnosticContext.temperature ?? ''}
                                     onChange={(event) => handleDiagnosticContextChange('temperature', event.target.value)}
                                     disabled={isLoadingChat}
-                                    className={`${INPUT_BASE_CLASSNAME} pl-8 pr-2 text-xs`}
+                                    className={`${INPUT_BASE_CLASSNAME} h-8 rounded-xl pl-7 pr-1.5 text-[11px]`}
                                     placeholder="Tem"
                                 />
                             </DiagnosticFieldShell>
                         </div>
-                    )}
-                </div>
-
-                <div className="flex gap-2 px-3 pb-3 overflow-x-auto no-scrollbar">
-                    {modeOptions.map(option => (
-                        <button
-                            key={option.value}
-                            onClick={() => handleModeSelect(option.value)}
-                            disabled={isLoadingChat}
-                            className={`shrink-0 h-9 px-4 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all flex items-center justify-center gap-2 ${mode === option.value
-                                ? 'bg-[#06c8f6] text-white border-[#29dcff] shadow-lg shadow-[#19435a]/40'
-                                : 'bg-[#24354a] text-white border-[#2f4a67]'
-                            } ${isLoadingChat ? 'opacity-70 cursor-not-allowed' : ''}`}
-                        >
-                            <i className={`fa-solid ${option.icon} text-[11px]`}></i>
-                            <span>{option.label}</span>
-                        </button>
-                    ))}
-                    <div className="shrink-0 h-9 px-3 rounded-xl bg-[#24354a]/70 border border-[#2f4a67] text-white flex items-center gap-2 text-[9px] font-black uppercase tracking-wider">
-                        <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[#18e07a] animate-pulse' : 'bg-red-300'}`}></span>
-                        {isOnline ? 'Online' : 'Offline'}
                     </div>
-                </div>
+                )}
             </div>
 
-            <div className="flex-1 flex flex-col min-h-0 relative">
-                <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-5 pr-1 flex flex-col pb-4 no-scrollbar">
+            <div className="flex-1 flex flex-col min-h-0 relative pt-2">
+                <div ref={chatContainerRef} className="flex-1 overflow-y-auto space-y-3 px-1.5 flex flex-col pb-3 no-scrollbar">
+                    {showRestoreNotice && (
+                        <div className="self-center max-w-[92%] rounded-full border border-[#00d9ff]/28 bg-[#00d9ff]/10 px-3 py-1.5 text-center text-[10.5px] leading-snug text-[#d9f6ff]">
+                            <span>Sessão restaurada neste dispositivo.</span>
+                            <button onClick={() => setShowRestoreNotice(false)} className="ml-2 inline-flex w-5 h-5 items-center justify-center rounded-full border border-white/10 text-white/70 align-middle" aria-label="Fechar aviso">
+                                <i className="fa-solid fa-xmark text-[9px]"></i>
+                            </button>
+                        </div>
+                    )}
                     {!isOnline && (
                         <div className="self-stretch rounded-[18px] border border-[#ff6600]/35 bg-[#ff6600]/10 px-4 py-3 text-[12px] text-[#ffe0cc]">
                             Sem internet agora. O suporte troca para consulta local para não te deixar sem orientação.
@@ -919,8 +914,8 @@ export const Tool_Assistant: React.FC = () => {
                     </div>
                 )}
 
-                <div className="mt-auto pt-3 pb-1">
-                    <div className="p-2 rounded-[18px] bg-[#c8d1dc]/55 backdrop-blur-xl border border-[#18324f] shadow-[0_16px_32px_rgba(45,63,85,0.28)]">
+                <div className="mt-auto pt-2 pb-1">
+                    <div className="p-2 rounded-[18px] bg-[#c8d1dc]/65 backdrop-blur-xl border border-[#18324f] shadow-[0_12px_24px_rgba(45,63,85,0.24)]">
                         <div className="flex gap-2 items-center">
                             <button
                                 onClick={() => fileInputRef.current?.click()}

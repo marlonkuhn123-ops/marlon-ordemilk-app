@@ -1,11 +1,27 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-06-30T17:15:12-03:00
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-07-01T10:27:16-03:00
 
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-07-01T10:27:16-03:00
+- **Autorizacao direta do USER:** "publique por favor".
+- **Escopo autorizado:** revalidar e publicar a mudanca de layout compacto do suporte no GitHub/Vercel.
+- **Arquivos previstos para commit:** `components/Tool_1_Assistant.tsx`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** manter `output/` fora do commit; nao tocar em `public/sw.js`, auth/login, navegacao global, calculadora, prompt/modelos Gemini ou fallback tecnico.
+- **Pode editar/commitar/deployar sem pedir?** SIM
+
+### RODADA ATIVA CODEX - 2026-06-30T17:34:24-03:00
+- **Autorizacao direta do USER:** "quero que depois de respondi essas primeiras analises - dados base- ou depois de ter comecado a conversa, que essa barra suma dai" e depois "pegue de exemplo o WhatsApp" / "faca e teste".
+- **Escopo autorizado:** compactar a tela de suporte estilo conversa, reduzindo topo, Dados Base e aviso restaurado para a conversa ocupar a maior parte da tela.
+- **Arquivos previstos para alteracao:** `components/Tool_1_Assistant.tsx`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** nao tocar em `public/sw.js`, auth/login, navegacao global, calculadora, prompt/modelos Gemini, fallback tecnico ou deploy sem novo pedido direto.
+- **Mudancas aplicadas:** suporte reorganizado em topo compacto estilo conversa; Dados Base virou chip `Dados 0/4`/`4/4`; painel de dados fecha ao enviar a primeira mensagem ou ao completar os 4 campos; aviso de sessao restaurada foi movido para dentro da conversa como aviso discreto.
+- **Validacao executada:** `npm.cmd run lint` OK; `npm.cmd run build` OK; `runSystemDiagnostics()` OK 14/14; smoke Playwright local OK com login, envio offline, fechamento automatico dos Dados Base, reabertura manual do chip e fechamento ao preencher 4/4.
+- **Pode editar sem pedir?** SIM
+
 ### RODADA ATIVA CODEX - 2026-06-30T17:15:12-03:00
 - **Autorizacao direta do USER:** "CONFIRA E TESTE NOVAMENTE AS MUDANCAS E FACA O DEPLOY".
 - **Escopo autorizado:** revalidar a correcao de portugues do suporte e publicar no GitHub/Vercel se aprovado.
