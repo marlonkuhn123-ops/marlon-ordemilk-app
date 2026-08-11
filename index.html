@@ -149,9 +149,21 @@
   <script type="module" src="/index.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      const hadController = Boolean(navigator.serviceWorker.controller);
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!hadController || refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('✅ Service Worker do PWA registrado!', reg))
+          .then(reg => {
+            console.log('✅ Service Worker do PWA registrado!', reg);
+            reg.update().catch(err => console.warn('Falha ao checar atualização do PWA:', err));
+          })
           .catch(err => console.error('❌ Falha ao registrar Service Worker do PWA:', err));
       });
     }

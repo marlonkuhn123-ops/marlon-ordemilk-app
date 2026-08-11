@@ -6,6 +6,16 @@
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-08-11T15:07:12-03:00
+- **Autorizacao direta do USER:** apos teste de foto/audio sem texto, USER cobrou publicacao com "ESTA ESPERANDO O QUE? TEM ALGUMA DIFICULDADE OU DISCORDA DE ALGO?" e esclareceu que "O APP DAS FOTOS NAO ESTAVAM FUNCIONAMDO".
+- **Escopo autorizado:** validar o fluxo real de foto no suporte, corrigir risco de PWA/cache antigo manter o app instalado sem a correcao de anexos e publicar via push para `origin/main`.
+- **Arquivos alterados nesta rodada:** `public/sw.js`, `index.html`, `SALA_DE_REUNIAO.md`.
+- **Mudanca aplicada:** cache do service worker atualizado para `ordemilk-tech-v53-photo-attachments`, precache ficou restrito aos assets locais essenciais para nao falhar por CDN externo e o registro do PWA passou a checar atualizacao e recarregar uma vez quando novo service worker assumir.
+- **Validacao executada antes do patch:** smoke real no site publico `https://ordemilk.vercel.app/` OK para foto sem texto; Gemini respondeu diagnostico de alta pressao a partir da imagem, sem erro de console e com status 200.
+- **Validacao apos patch:** `npm.cmd run lint` OK; `npm.cmd run clean && npm.cmd run build` OK; smoke local com service worker habilitado OK, cache `ordemilk-tech-v53-photo-attachments` ativo, foto sem texto enviando `image/jpeg` com guia tecnico interno e sem expor a instrucao na tela do tecnico.
+- **Observacao tecnica:** `vercel` CLI e `gh` CLI nao estao instalados nesta maquina; publicacao segue o fluxo ja usado no projeto, via push em `origin/main` para deploy automatico da Vercel.
+- **Pode editar/commitar/deployar sem pedir?** SIM para esta correcao/publicacao.
+
 ### RODADA ATIVA CODEX - 2026-08-11T13:51:57-03:00
 - **Autorizacao direta do USER:** confirmar uso do repositorio correto `marlonkuhn123-ops/marlon-ordemilk-app` apos suspeita de app local errado.
 - **Escopo autorizado:** adicionar um modulo visual `Curso / Slides` para consulta do material `treinamento REFRI JUNHO 2026.pptx`, usando o repo limpo clonado de `origin/main`.
