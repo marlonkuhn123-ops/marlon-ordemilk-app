@@ -320,11 +320,6 @@ const ChatBubble: React.FC<{
             ref={(element) => onMount?.(msg.id, element)}
             className={`flex flex-col max-w-[92%] mb-4 animate-slide-up scroll-mt-4 ${isUser ? 'self-end items-end' : 'self-start items-start'}`}
         >
-            {!isUser && (
-                <span className="text-[9px] font-black uppercase mb-1.5 px-1 tracking-[0.18em] font-heading text-[#ffd400]">
-                    SUPERVISOR ORDEMILK
-                </span>
-            )}
             <div className="flex items-end gap-3">
                 <div
                     className={`max-w-[min(560px,82vw)] p-4 text-sm leading-relaxed shadow-lg font-sans border ${isUser
@@ -737,7 +732,6 @@ export const Tool_Assistant: React.FC = () => {
                         </div>
                         <div className="min-w-0">
                             <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#ffd400]">Suporte direto</p>
-                            <h2 className="text-[15px] font-black leading-tight truncate">Supervisor Ordemilk</h2>
                         </div>
                     </div>
 

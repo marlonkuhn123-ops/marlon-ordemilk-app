@@ -4,7 +4,8 @@ export enum ViewState {
     CALCULATOR = 'calc',
     SIZING = 'sizing',
     REPORT = 'report',
-    TECH_DATA = 'tech_data'
+    TECH_DATA = 'tech_data',
+    COURSE = 'course'
 }
 
 export interface FieldTip {

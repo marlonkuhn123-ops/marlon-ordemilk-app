@@ -121,6 +121,7 @@ export const BottomNav: React.FC<{ activeView: ViewState; setView: (view: ViewSt
                         <div className="flex gap-4 justify-around">
                             <NavItem id={ViewState.SIZING} icon="fa-solid fa-ruler-combined" label="Dimens." isActive={activeView === ViewState.SIZING} onClick={(v) => { setView(v); setIsMenuOpen(false); }} isDarkBg compact={compact} />
                             <NavItem id={ViewState.TECH_DATA} icon="fa-solid fa-boxes-stacked" label="Dados" isActive={activeView === ViewState.TECH_DATA} onClick={(v) => { setView(v); setIsMenuOpen(false); }} isDarkBg compact={compact} />
+                            <NavItem id={ViewState.REPORT} icon="fa-solid fa-file-signature" label="Serviços" isActive={activeView === ViewState.REPORT} onClick={(v) => { setView(v); setIsMenuOpen(false); }} isDarkBg compact={compact} />
                         </div>
                     </div>
                 </div>
@@ -130,7 +131,7 @@ export const BottomNav: React.FC<{ activeView: ViewState; setView: (view: ViewSt
                     <NavItem id={ViewState.DIAGNOSTIC} icon="fa-solid fa-headset" label="Suporte" isActive={activeView === ViewState.DIAGNOSTIC} onClick={(v) => { setView(v); setIsMenuOpen(false); }} compact={compact} />
                     <NavItem id={ViewState.ERRORS} icon="fa-solid fa-triangle-exclamation" label="Erros" isActive={activeView === ViewState.ERRORS} onClick={(v) => { setView(v); setIsMenuOpen(false); }} compact={compact} />
                     <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="Superaq" isActive={activeView === ViewState.CALCULATOR} onClick={(v) => { setView(v); setIsMenuOpen(false); }} compact={compact} />
-                    <NavItem id={ViewState.REPORT} icon="fa-solid fa-file-signature" label="Serviços" isActive={activeView === ViewState.REPORT} onClick={(v) => { setView(v); setIsMenuOpen(false); }} compact={compact} />
+                    <NavItem id={ViewState.COURSE} icon="fa-solid fa-chalkboard-user" label="Curso" isActive={activeView === ViewState.COURSE} onClick={(v) => { setView(v); setIsMenuOpen(false); }} compact={compact} />
 
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}

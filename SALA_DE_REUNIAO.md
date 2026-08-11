@@ -6,6 +6,29 @@
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-08-11T13:51:57-03:00
+- **Autorizacao direta do USER:** confirmar uso do repositorio correto `marlonkuhn123-ops/marlon-ordemilk-app` apos suspeita de app local errado.
+- **Escopo autorizado:** adicionar um modulo visual `Curso / Slides` para consulta do material `treinamento REFRI JUNHO 2026.pptx`, usando o repo limpo clonado de `origin/main`.
+- **Arquivos previstos para alteracao:** `types.ts`, `App.tsx`, `components/Estrutura.tsx`, novo `components/Tool_7_CourseSlides.tsx`, `esbuild.config.js`, `public/course-slides/`.
+- **Protecoes ativas:** nao tocar em `services/geminiService.ts`, `constants.ts`, `config/env.ts`, `public/sw.js`, auth/login, suporte, calculadora ou prompt/modelos Gemini.
+- **Plano de validacao:** `npm.cmd run lint`, `npm.cmd run build`, confirmar copia de assets em `dist/course-slides` e smoke test local mobile com Playwright.
+- **Mudancas aplicadas:** modulo `Curso / Slides` adicionado ao menu `Mais`; material `treinamento REFRI JUNHO 2026.pptx` convertido para PDF e 45 slides JPG responsivos em `public/course-slides`; build passou a copiar subpastas de `public`.
+- **Validacao executada:** `npm.cmd ci` OK; `npm.cmd run lint` OK; `npm.cmd run build` OK; `dist/course-slides` contem 45 JPGs e PDF; smoke Playwright mobile em `http://127.0.0.1:3102` OK com login, abertura do menu `Mais`, entrada em `Curso`, visualizacao do slide e avanco para o slide 2.
+- **Ajuste adicional 2026-08-11T14:00:46-03:00:** por ordem do USER, removida a opcao de abrir/copiar slides fora do app; PDF removido de `public/course-slides`; slides com midia/animacao detectados no PPT original foram retirados do material publicado (`slide-06`, `slide-11`, `slide-13`); modulo passou a bloquear copia, arraste e menu de contexto nas paginas.
+- **Revalidacao adicional:** `npm.cmd run lint` OK; `npm.cmd run clean && npm.cmd run build` OK; manifest e disco contem 42 JPGs e 0 PDFs; smoke Playwright mobile OK com login, `Mais > Curso`, contador `Slide 1 de 42`, sem links externos, sem `iframe`/`video`, imagem nao arrastavel e avanco para slide 2.
+- **Ajuste adicional 2026-08-11T14:05:32-03:00:** por ordem do USER, `Curso` foi promovido para o rodape principal no lugar de `Servicos`; `Servicos` foi movido para o menu `Mais`.
+- **Revalidacao de navegacao:** `npm.cmd run lint` OK; `npm.cmd run clean && npm.cmd run build` OK; smoke Playwright mobile OK com rodape `SUPORTE / ERROS / SUPERAQ / CURSO / MAIS`, abertura direta do curso pelo rodape e `Servicos` visivel dentro do menu `Mais`.
+- **Ajuste adicional 2026-08-11T14:19:15-03:00:** removido o rotulo visual `Suporte direto` do cabecalho compacto do suporte, mantendo o titulo `Supervisor Ordemilk`.
+- **Revalidacao do suporte:** `npm.cmd run lint` OK; `npm.cmd run clean && npm.cmd run build` OK; smoke Playwright mobile OK com `Supervisor Ordemilk` visivel e `Suporte direto` ausente.
+- **Correcao adicional 2026-08-11T14:22:44-03:00:** por esclarecimento do USER, restaurado `Suporte direto` no cabecalho compacto e removida a frase `Supervisor Ordemilk` da interface do suporte.
+- **Revalidacao da correcao:** `npm.cmd run lint` OK; `npm.cmd run clean && npm.cmd run build` OK; smoke Playwright mobile OK com `Suporte direto` visivel e `Supervisor Ordemilk` ausente.
+- **Observacao:** `npm.cmd ci` reportou vulnerabilidades ja existentes em dependencias; `audit fix` nao foi executado para nao alterar lock/deps fora do escopo.
+- **Deploy:** nao autorizado nesta rodada.
+- **Pode editar/commitar/deployar sem pedir?** NAO para commit/deploy; SIM apenas para patch local e testes do escopo acima.
+- **Autorizacao adicional 2026-08-11T14:44:35-03:00:** USER solicitou "TESTE MAIS UMA VEZ E FACA O DEPLOY".
+- **Escopo de deploy autorizado:** revalidar localmente as mudancas do modulo Curso/Slides, remocao de `Supervisor Ordemilk`, navegacao com `Curso` no rodape e `Servicos` no menu `Mais`, depois commitar/pushar para `origin/main` para deploy automatico.
+- **Validacao pre-deploy executada:** `npm.cmd run lint` OK; `npm.cmd run clean && npm.cmd run build` OK; manifest do curso com 42 slides, 0 PDFs e 0 videos; smoke Playwright mobile OK com login, `Suporte direto` visivel, `Supervisor Ordemilk` ausente, rodape `SUPORTE / ERROS / SUPERAQ / CURSO / MAIS`, curso abrindo pelo rodape, sem link externo/iframe/video, imagem nao arrastavel, botao `Proximo` funcionando e `Servicos` dentro de `Mais`.
+
 ### RODADA ATIVA CODEX - 2026-07-01T10:27:16-03:00
 - **Autorizacao direta do USER:** "publique por favor".
 - **Escopo autorizado:** revalidar e publicar a mudanca de layout compacto do suporte no GitHub/Vercel.

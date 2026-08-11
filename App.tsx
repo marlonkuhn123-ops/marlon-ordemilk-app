@@ -12,6 +12,7 @@ import { Tool_Calculator } from './components/Tool_3_Calculator';
 import { Tool_Sizing } from './components/Tool_4_Sizing';
 import { Tool_Report } from './components/Tool_5_Report';
 import { Tool_Catalog } from './components/Tool_6_Catalog';
+import { Tool_CourseSlides } from './components/Tool_7_CourseSlides';
 
 import { ViewState } from './types';
 import { GlobalProvider, readStoredTechData, useGlobal } from './contexts/GlobalContext';
@@ -185,6 +186,7 @@ const AppContent: React.FC = () => {
             case ViewState.SIZING: return isSizingUnlocked ? <Tool_Sizing /> : <PasswordPrompt type="sizing" label="Módulo de Dimensionamento" onUnlock={handleUnlock} />;
             case ViewState.REPORT: return <Tool_Report />;
             case ViewState.TECH_DATA: return isCatalogUnlocked ? <Tool_Catalog /> : <PasswordPrompt type="catalog" label="Módulo de Dados Técnicos" onUnlock={handleUnlock} />;
+            case ViewState.COURSE: return <Tool_CourseSlides />;
             default: return <Tool_Assistant />;
         }
     };

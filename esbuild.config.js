@@ -72,11 +72,7 @@ function copyPublicAssets() {
   const distDir = path.resolve(__dirname, 'dist');
   if (!fs.existsSync(publicDir)) return;
 
-  for (const file of fs.readdirSync(publicDir)) {
-    const src = path.join(publicDir, file);
-    const dst = path.join(distDir, file);
-    if (fs.statSync(src).isFile()) fs.copyFileSync(src, dst);
-  }
+  fs.cpSync(publicDir, distDir, { recursive: true });
 }
 
 esbuild
