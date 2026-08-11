@@ -423,12 +423,23 @@ export const Tool_Assistant: React.FC = () => {
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const messageElementRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const cameraInputRef = useRef<HTMLInputElement>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const mediaStreamRef = useRef<MediaStream | null>(null);
+    const audioChunksRef = useRef<Blob[]>([]);
+    const recordTimerRef = useRef<number | null>(null);
+    const shouldSaveRecordingRef = useRef(true);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordSeconds, setRecordSeconds] = useState(0);
     const wasDiagnosticContextCompleteRef = useRef(isDiagnosticContextComplete(restoredSnapshot?.diagnosticContext));
     const conversationStarted = hasStartedConversation(messages);
 
     useEffect(() => {
         messagesRef.current = messages;
     }, [messages]);
+
+    const formatRecordTime = (seconds: number) =>
+        `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
     const scrollToBottom = React.useCallback(() => {
         window.setTimeout(() => {
@@ -553,6 +564,164 @@ export const Tool_Assistant: React.FC = () => {
         }
 
         if (fileInputRef.current) fileInputRef.current.value = '';
+        if (cameraInputRef.current) cameraInputRef.current.value = '';
+    };
+
+    const encodeWav = (audioBuffer: AudioBuffer): Blob => {
+        const length = audioBuffer.length;
+        const channelCount = audioBuffer.numberOfChannels || 1;
+        const sampleRate = audioBuffer.sampleRate;
+        const mono = new Float32Array(length);
+
+        for (let channelIndex = 0; channelIndex < channelCount; channelIndex += 1) {
+            const channel = audioBuffer.getChannelData(channelIndex);
+            for (let index = 0; index < length; index += 1) {
+                mono[index] += channel[index] / channelCount;
+            }
+        }
+
+        const buffer = new ArrayBuffer(44 + length * 2);
+        const view = new DataView(buffer);
+        const writeString = (offset: number, value: string) => {
+            for (let index = 0; index < value.length; index += 1) {
+                view.setUint8(offset + index, value.charCodeAt(index));
+            }
+        };
+
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + length * 2, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, 'data');
+        view.setUint32(40, length * 2, true);
+
+        let offset = 44;
+        for (let index = 0; index < length; index += 1) {
+            const sample = Math.max(-1, Math.min(1, mono[index]));
+            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+            offset += 2;
+        }
+
+        return new Blob([view], { type: 'audio/wav' });
+    };
+
+    const cleanupRecording = React.useCallback(() => {
+        if (recordTimerRef.current !== null) {
+            window.clearInterval(recordTimerRef.current);
+            recordTimerRef.current = null;
+        }
+
+        mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+        mediaRecorderRef.current = null;
+    }, []);
+
+    useEffect(() => () => {
+        cleanupRecording();
+    }, [cleanupRecording]);
+
+    const stopRecording = (shouldSave: boolean) => {
+        shouldSaveRecordingRef.current = shouldSave;
+        setIsRecording(false);
+
+        if (recordTimerRef.current !== null) {
+            window.clearInterval(recordTimerRef.current);
+            recordTimerRef.current = null;
+        }
+
+        const recorder = mediaRecorderRef.current;
+        if (recorder && recorder.state !== 'inactive') {
+            recorder.stop();
+            return;
+        }
+
+        cleanupRecording();
+    };
+
+    const startRecording = async () => {
+        if (isRecording || isLoadingChat) return;
+
+        if (
+            typeof navigator === 'undefined' ||
+            !navigator.mediaDevices?.getUserMedia ||
+            typeof MediaRecorder === 'undefined'
+        ) {
+            showSupportAlert('Este navegador não permite gravar aqui. Use o clipe para anexar um áudio.');
+            return;
+        }
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const recorder = new MediaRecorder(stream);
+            mediaStreamRef.current = stream;
+            mediaRecorderRef.current = recorder;
+            audioChunksRef.current = [];
+            shouldSaveRecordingRef.current = true;
+
+            recorder.ondataavailable = (event) => {
+                if (event.data?.size) audioChunksRef.current.push(event.data);
+            };
+
+            recorder.onstop = async () => {
+                if (!shouldSaveRecordingRef.current) {
+                    cleanupRecording();
+                    return;
+                }
+
+                try {
+                    const rawAudio = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+                    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+                    const audioContext: AudioContext = new AudioContextClass();
+                    const audioBuffer = await audioContext.decodeAudioData(await rawAudio.arrayBuffer());
+                    await audioContext.close();
+                    const wavAudio = encodeWav(audioBuffer);
+                    const reader = new FileReader();
+
+                    reader.onloadend = () => {
+                        const audioFile: SelectedSupportFile = {
+                            id: createSupportId(),
+                            name: `audio-campo-${new Date().toISOString().replace(/[:.]/g, '-')}.wav`,
+                            data: reader.result as string,
+                            mime: 'audio/wav',
+                            type: 'audio'
+                        };
+                        setSelectedFiles(prev => [...prev, audioFile]);
+                        setPendingAttachmentMeta(prev => [...prev, ...buildAttachmentMeta([audioFile])]);
+                    };
+                    reader.onerror = () => showSupportAlert('Não consegui anexar o áudio gravado. Tente novamente.');
+                    reader.readAsDataURL(wavAudio);
+                } catch (error) {
+                    console.warn('[Tool_1_Assistant] Falha ao processar áudio gravado:', error);
+                    showSupportAlert('Não consegui processar o áudio gravado. Tente novamente.');
+                } finally {
+                    cleanupRecording();
+                }
+            };
+
+            recorder.start();
+            setRecordSeconds(0);
+            setIsRecording(true);
+            recordTimerRef.current = window.setInterval(() => {
+                setRecordSeconds(seconds => {
+                    if (seconds >= 119) {
+                        stopRecording(true);
+                        return 120;
+                    }
+                    return seconds + 1;
+                });
+            }, 1000);
+        } catch (error) {
+            console.warn('[Tool_1_Assistant] Falha ao iniciar gravação:', error);
+            cleanupRecording();
+            showSupportAlert('Permita o acesso ao microfone para gravar áudio no atendimento.');
+        }
     };
 
     const removeSelectedFile = (fileId: string) => {
@@ -910,41 +1079,85 @@ export const Tool_Assistant: React.FC = () => {
 
                 <div className="mt-auto pt-2 pb-1">
                     <div className="p-2 rounded-[18px] bg-[#c8d1dc]/65 backdrop-blur-xl border border-[#18324f] shadow-[0_12px_24px_rgba(45,63,85,0.24)]">
-                        <div className="flex gap-2 items-center">
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={isLoadingChat}
-                                className={`w-11 h-11 rounded-xl bg-[#24354a] border border-[#2f4a67] transition-all flex items-center justify-center shrink-0 ${selectedFiles.length > 0
-                                    ? 'text-[#06c8f6] border-[#06c8f6]/70'
-                                    : 'text-white hover:bg-[#2f4a67]'
-                                } ${isLoadingChat ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                aria-label="Anexar arquivo"
-                            >
-                                <i className="fa-solid fa-paperclip text-[15px]"></i>
-                                <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
-                            </button>
-
-                            <div className="flex-1 relative">
-                                <input
-                                    type="text"
-                                    value={input}
-                                    onChange={(event) => setInput(event.target.value)}
-                                    onKeyDown={(event) => {
-                                        if (event.key === 'Enter') {
-                                            event.preventDefault();
-                                            void sendMessage();
-                                        }
-                                    }}
-                                    disabled={isLoadingChat}
-                                    className="w-full h-11 rounded-xl px-4 text-[15px] bg-[#c8d1dc]/70 border border-[#18324f] text-[#203249] font-medium focus:border-[#06c8f6] outline-none transition-all placeholder:text-[#7d8da0] placeholder:font-normal disabled:opacity-70"
-                                    placeholder={isOnline ? 'Digite sua mensagem...' : 'Sem internet: descreva o sintoma para consulta local...'}
-                                />
+                        {isRecording ? (
+                            <div className="flex gap-2 items-center">
+                                <div className="flex-1 min-w-0 h-11 rounded-xl px-3 bg-red-500/10 border border-red-500/40 text-red-100 flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0"></span>
+                                    <span className="text-[12px] font-black uppercase tracking-[0.12em] truncate">
+                                        Gravando {formatRecordTime(recordSeconds)}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => stopRecording(false)}
+                                    className="w-11 h-11 rounded-xl bg-[#24354a] border border-[#2f4a67] text-white flex items-center justify-center shrink-0 active:scale-95"
+                                    aria-label="Cancelar gravação"
+                                >
+                                    <i className="fa-solid fa-xmark text-[15px]"></i>
+                                </button>
+                                <button
+                                    onClick={() => stopRecording(true)}
+                                    className="w-11 h-11 rounded-xl bg-[#06c8f6] border border-[#29dcff] text-white flex items-center justify-center shrink-0 active:scale-95"
+                                    aria-label="Anexar áudio gravado"
+                                >
+                                    <i className="fa-solid fa-check text-[15px]"></i>
+                                </button>
                             </div>
+                        ) : (
+                            <div className="flex gap-1.5 items-center">
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isLoadingChat}
+                                    className={`w-10 h-11 rounded-xl bg-[#24354a] border border-[#2f4a67] transition-all flex items-center justify-center shrink-0 ${selectedFiles.length > 0
+                                        ? 'text-[#06c8f6] border-[#06c8f6]/70'
+                                        : 'text-white hover:bg-[#2f4a67]'
+                                    } ${isLoadingChat ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                    aria-label="Anexar arquivo"
+                                >
+                                    <i className="fa-solid fa-paperclip text-[14px]"></i>
+                                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*,audio/*" onChange={handleFileUpload} multiple />
+                                </button>
 
-                            <button onClick={() => void sendMessage()} disabled={isLoadingChat} className="w-11 h-11 rounded-xl bg-[#ff6b16] text-white flex items-center justify-center shadow-lg shadow-[#9c4b20]/30 active:scale-95 transition-all hover:bg-[#ff7f2e] shrink-0 disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Enviar mensagem">
-                                <i className="fa-solid fa-paper-plane text-[15px] translate-x-[1px]"></i>
-                            </button>
-                        </div>
+                                <button
+                                    onClick={() => cameraInputRef.current?.click()}
+                                    disabled={isLoadingChat}
+                                    className="w-10 h-11 rounded-xl bg-[#24354a] border border-[#2f4a67] text-white hover:bg-[#2f4a67] transition-all flex items-center justify-center shrink-0 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    aria-label="Tirar foto"
+                                >
+                                    <i className="fa-solid fa-camera text-[14px]"></i>
+                                    <input type="file" ref={cameraInputRef} className="hidden" accept="image/*" capture="environment" onChange={handleFileUpload} />
+                                </button>
+
+                                <button
+                                    onClick={() => void startRecording()}
+                                    disabled={isLoadingChat}
+                                    className="w-10 h-11 rounded-xl bg-[#24354a] border border-[#2f4a67] text-white hover:bg-[#2f4a67] transition-all flex items-center justify-center shrink-0 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    aria-label="Gravar áudio"
+                                >
+                                    <i className="fa-solid fa-microphone text-[14px]"></i>
+                                </button>
+
+                                <div className="flex-1 relative min-w-0">
+                                    <input
+                                        type="text"
+                                        value={input}
+                                        onChange={(event) => setInput(event.target.value)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter') {
+                                                event.preventDefault();
+                                                void sendMessage();
+                                            }
+                                        }}
+                                        disabled={isLoadingChat}
+                                        className="w-full h-11 rounded-xl px-3 text-[15px] bg-[#c8d1dc]/70 border border-[#18324f] text-[#203249] font-medium focus:border-[#06c8f6] outline-none transition-all placeholder:text-[#7d8da0] placeholder:font-normal disabled:opacity-70"
+                                        placeholder={isOnline ? 'Mensagem...' : 'Sem internet...'}
+                                    />
+                                </div>
+
+                                <button onClick={() => void sendMessage()} disabled={isLoadingChat} className="w-10 h-11 rounded-xl bg-[#ff6b16] text-white flex items-center justify-center shadow-lg shadow-[#9c4b20]/30 active:scale-95 transition-all hover:bg-[#ff7f2e] shrink-0 disabled:opacity-40 disabled:cursor-not-allowed" aria-label="Enviar mensagem">
+                                    <i className="fa-solid fa-paper-plane text-[14px] translate-x-[1px]"></i>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

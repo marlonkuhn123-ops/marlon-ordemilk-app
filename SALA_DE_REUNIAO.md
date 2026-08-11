@@ -6,6 +6,15 @@
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-08-11T15:33:02-03:00
+- **Autorizacao direta do USER:** "CONFIRA, TESTE TUDO, E SE FUNCIONAR FACA O FEPLOY" apos informar que a Claude fez mais modificacoes.
+- **Diagnostico de origem:** as mudancas da Claude foram encontradas em `C:\Users\Ordemilk\Desktop\app parti`, que continua sendo uma base sem commits e com codigo `src/` antigo; o repo correto de producao continua `C:\Users\Ordemilk\Desktop\marlon-ordemilk-app-clean`.
+- **Escopo autorizado:** portar para o suporte real apenas a melhoria util de UX: atalho de camera e gravacao de audio direto no app; preservar o prompt/modelos Gemini e a logica tecnica de anexos ja validada no repo correto.
+- **Arquivos alterados nesta rodada:** `components/Tool_1_Assistant.tsx`, `public/sw.js`, `SALA_DE_REUNIAO.md`.
+- **Mudancas aplicadas:** adicionado input dedicado de camera com `capture="environment"`, botao de microfone com gravacao no navegador, conversao local para `audio/wav`, anexacao do audio gravado ao atendimento e cache PWA atualizado para `ordemilk-tech-v54-camera-audio`.
+- **Validacao executada:** `npm.cmd run lint` OK; `runSystemDiagnostics()` OK 14/14; `npm.cmd run clean && npm.cmd run build` OK; smoke local mobile com Playwright OK para login, suporte, botoes `Tirar foto` e `Gravar audio`, foto pela entrada de camera sem texto com `image/jpeg`, audio gravado convertido para `audio/wav`, curso `Slide 1 de 42`/`Slide 2 de 42`, rodape `SUPORTE / ERROS / SUPERAQ / CURSO / MAIS`, `Servicos` dentro de `Mais`, restricoes do curso e cache PWA `ordemilk-tech-v54-camera-audio`.
+- **Pode editar/commitar/deployar sem pedir?** SIM para esta rodada.
+
 ### RODADA ATIVA CODEX - 2026-08-11T15:07:12-03:00
 - **Autorizacao direta do USER:** apos teste de foto/audio sem texto, USER cobrou publicacao com "ESTA ESPERANDO O QUE? TEM ALGUMA DIFICULDADE OU DISCORDA DE ALGO?" e esclareceu que "O APP DAS FOTOS NAO ESTAVAM FUNCIONAMDO".
 - **Escopo autorizado:** validar o fluxo real de foto no suporte, corrigir risco de PWA/cache antigo manter o app instalado sem a correcao de anexos e publicar via push para `origin/main`.
