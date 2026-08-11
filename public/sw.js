@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ordemilk-tech-v54-camera-audio';
+const CACHE_NAME = 'ordemilk-tech-v55-camera-audio-update';
 const ASSETS = [
     '/',
     '/index.html',
