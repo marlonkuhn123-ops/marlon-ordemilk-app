@@ -122,7 +122,7 @@ const buildAttachmentAnalysisPrompt = (files: AttachmentPromptFile[], text?: str
         '',
         'Analise os anexos como evidência técnica de campo da Ordemilk.',
         'Se houver imagem, leia primeiro o que aparece nela: IHM/display, alarme, placa de identificação, borneira, painel, controlador, CLP, contatora, disjuntor-motor, pressostato, sensor, condensador, compressor, evaporador, visor de líquido, gelo, sujeira, vazamento ou qualquer indício visual.',
-        'Depois responda com hipótese inicial, duas confirmações objetivas e uma ação segura imediata. Se a imagem estiver ruim, diga exatamente qual foto nova o técnico deve tirar.'
+        'Se for o primeiro contato do caso, responda com hipótese inicial, duas confirmações objetivas e uma ação segura imediata. Se for continuidade, conecte o anexo ao diagnóstico em andamento e avance sem reiniciar o atendimento. Se a imagem estiver ruim, diga exatamente qual foto nova o técnico deve tirar.'
     ].join('\n');
 };
 
@@ -137,9 +137,58 @@ const buildAttachmentDisplayText = (files: AttachmentPromptFile[]) => {
     return `[${parts.join(' + ')} enviado(s) para análise técnica]`;
 };
 
+const isApiContextMessage = (message: ChatMessage) =>
+    !message.isError &&
+    !message.isStreaming &&
+    !isUiOnlySupportMessage(message) &&
+    Boolean(message.text.trim() || message.files?.length);
+
+const mapSupportMessageToApi = (message: ChatMessage, includeFileData: boolean) => {
+    const parts: any[] = [];
+    const files = includeFileData ? message.files ?? [] : [];
+    const effectiveText = message.text.trim();
+    const apiText = files.length > 0
+        ? buildAttachmentAnalysisPrompt(files, effectiveText)
+        : effectiveText;
+
+    if (apiText) {
+        parts.push({ text: apiText });
+    }
+
+    if (includeFileData) {
+        files.forEach(file => {
+            parts.push({
+                inlineData: {
+                    mimeType: file.mime,
+                    data: file.data.split(',')[1]
+                }
+            });
+        });
+    }
+
+    if (parts.length === 0) return null;
+    return { role: message.role, parts };
+};
+
+const buildSupportApiHistory = (previousMessages: ChatMessage[], currentUserMessage: ChatMessage) => {
+    const previousContext = previousMessages
+        .filter(isApiContextMessage)
+        .slice(-AI_CONTEXT_MESSAGE_LIMIT)
+        .map(message => mapSupportMessageToApi(message, false))
+        .filter(Boolean) as { role: string; parts: any[] }[];
+    const currentTurn = mapSupportMessageToApi(currentUserMessage, true);
+
+    return currentTurn ? [...previousContext, currentTurn] : previousContext;
+};
+
+const countSupportUserTurns = (previousMessages: ChatMessage[], currentUserMessage: ChatMessage) =>
+    previousMessages.filter(message => message.role === 'user' && isApiContextMessage(message)).length +
+    (currentUserMessage.role === 'user' ? 1 : 0);
+
 const IMAGE_MAX_EDGE = 1600;
 const IMAGE_JPEG_QUALITY = 0.86;
 const SUPPORT_STREAM_TIMEOUT_MS = 65000;
+const AI_CONTEXT_MESSAGE_LIMIT = 10;
 
 const normalizeImageFile = (file: File): Promise<SelectedSupportFile | null> =>
     new Promise(resolve => {
@@ -791,33 +840,11 @@ export const Tool_Assistant: React.FC = () => {
         let allowAiUpdates = true;
 
         try {
-            const currentTurnForApi = [userMsg].map(message => {
-                const parts: any[] = [];
-                const effectiveText = message.text;
-                const files = message.files ?? [];
-                const apiText = files.length > 0
-                    ? buildAttachmentAnalysisPrompt(files, effectiveText)
-                    : effectiveText;
-
-                if (apiText) {
-                    parts.push({ text: apiText });
-                }
-
-                files.forEach(file => {
-                    parts.push({
-                        inlineData: {
-                            mimeType: file.mime,
-                            data: file.data.split(',')[1]
-                        }
-                    });
-                });
-
-                if (parts.length === 0) parts.push({ text: effectiveText || 'Analise de arquivo.' });
-                return { role: message.role, parts };
-            });
+            const conversationForApi = buildSupportApiHistory(messagesRef.current, userMsg);
+            const conversationUserTurnCount = countSupportUserTurns(messagesRef.current, userMsg);
 
             const aiResponsePromise = generateChatResponseStream(
-                currentTurnForApi,
+                conversationForApi,
                 (chunkText: string) => {
                     if (!allowAiUpdates) return;
                     setMessages(prev =>
@@ -831,7 +858,8 @@ export const Tool_Assistant: React.FC = () => {
                     );
                 },
                 mode,
-                diagnosticContext
+                diagnosticContext,
+                conversationUserTurnCount
             );
 
             aiResponsePromise.catch(() => undefined);

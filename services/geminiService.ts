@@ -241,12 +241,48 @@ const getSupportConfig = (systemInstruction: string, modelName: string, isFirstR
   return baseConfig;
 };
 
+const getSupportCadenceInstruction = (isFirstReply: boolean) => {
+  if (isFirstReply) {
+    return `\n\n🚨 [INSTRUÇÃO OBRIGATÓRIA DE CADÊNCIA - UX DE CAMPO]
+O técnico está no cliente e precisa de objetividade. Na PRIMEIRA resposta, é proibido entregar texto longo ou diagnóstico completo.
+Mantenha o mesmo contexto técnico, a mesma inteligência e o mesmo tom educado e professoral de hoje. Você não deve soar frio, seco ou mal educado. Seja cordial, claro e profissional.
+
+PRIMEIRA RESPOSTA — USE EXATAMENTE ESTE FORMATO:
+
+Olá. Vou te ajudar com um diagnóstico rápido e direto.
+
+**🎯 Hipótese Inicial:** [1 frase curta com a hipótese mais forte no momento]
+
+**❓ Preciso confirmar:**
+1. [pergunta objetiva 1]
+2. [pergunta objetiva 2]
+
+**⚠️ Faça agora:** [1 ação segura, concreta e imediata]
+
+REGRA DE OURO:
+- Exatamente 2 perguntas numeradas. Nunca escreva uma terceira pergunta na primeira resposta.
+- Mantenha a resposta concisa e focada no formato acima.
+- Evite listar todas as causas possíveis ou despejar teoria na primeira interação.
+- **Mesmo sendo breve, demonstre seu conhecimento técnico e autoridade no assunto.**
+- Aprofunde o diagnóstico e forneça detalhes adicionais SOMENTE depois que o técnico responder com dados reais ou pedir mais informações.`;
+  }
+
+  return `\n\n[CADÊNCIA DE CONTINUIDADE - LIGAÇÃO REAL COM O TÉCNICO]
+O técnico já está em atendimento e a conversa recente foi enviada junto. Não reinicie como se fosse o primeiro contato.
+Conecte sua resposta diretamente ao que ele acabou de medir, fotografar, ouvir ou responder.
+Avance o diagnóstico: diga o que a nova informação indica, qual hipótese ganha força, qual hipótese cai e qual é o próximo teste seguro.
+Pode aprofundar causa provável, sequência de verificação e conclusão técnica quando já houver dados suficientes.
+Faça no máximo 1 ou 2 perguntas novas, somente se forem necessárias para fechar o diagnóstico.
+Não repita saudação inicial nem o bloco rígido de primeira resposta. Responda como supervisor técnico acompanhando o técnico em campo.`;
+};
+
 const getFullSystemInstruction = async (
   toolType: string,
   userPrompt: string = "",
   mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO',
   diagnosticContext: SupportDiagnosticContext = {},
-  includeExtendedKnowledge = true
+  includeExtendedKnowledge = true,
+  isFirstReply = true
 ) => {
   const fieldKnowledge = knowledgeService.getKnowledgeContext();
   const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
@@ -270,38 +306,9 @@ const getFullSystemInstruction = async (
     modeInstruction += "\n\n[MATRIZ REFRIGERAÇÃO DE CAMPO]\nSe o técnico informar SH/SC, aplique: SH alto + SC baixo = falta de fluido/vazamento/flash gas; SH alto + SC normal/alto = restrição/VET/filtro; SH baixo = risco de retorno de líquido. Não recomende abrir VET quando o SC está baixo sem confirmar carga/vazamento.";
   }
 
-  let cadenceInstruction = "";
-  if (toolType === "DIAGNOSTIC") {
-    cadenceInstruction = `\n\n🚨 [INSTRUÇÃO OBRIGATÓRIA DE CADÊNCIA - UX DE CAMPO]
-O técnico está no cliente e precisa de objetividade. Na PRIMEIRA resposta, é proibido entregar texto longo ou diagnóstico completo.
-Mantenha o mesmo contexto técnico, a mesma inteligência e o mesmo tom educado e professoral de hoje. Você não deve soar frio, seco ou mal educado. Seja cordial, claro e profissional.
-
-PRIMEIRA RESPOSTA — USE EXATAMENTE ESTE FORMATO:
-
-Olá. Vou te ajudar com um diagnóstico rápido e direto.
-
-**🎯 Hipótese Inicial:** [1 frase curta com a hipótese mais forte no momento]
-
-**❓ Preciso confirmar:**
-1. [pergunta objetiva 1]
-2. [pergunta objetiva 2]
-
-**⚠️ Faça agora:** [1 ação segura, concreta e imediata]
-
-REGRA DE OURO:
-- Exatamente 2 perguntas numeradas. Nunca escreva uma terceira pergunta na primeira resposta.
-- Mantenha a resposta concisa e focada no formato acima.
-- Evite listar todas as causas possíveis ou despejar teoria na primeira interação.
-- **Mesmo sendo breve, demonstre seu conhecimento técnico e autoridade no assunto.**
-- Aprofunde o diagnóstico e forneça detalhes adicionais SOMENTE depois que o técnico responder com dados reais ou pedir mais informações.
-
-SOMENTE após o técnico responder, você pode entregar:
-- causa provável fechada
-- causas possíveis
-- ordem de verificação
-- alertas de segurança
-- conclusão técnica completa`;
-  }
+  const cadenceInstruction = toolType === "DIAGNOSTIC"
+    ? getSupportCadenceInstruction(isFirstReply)
+    : "";
 
   const faqContext = includeExtendedKnowledge
     ? `\n\n[PACOTE DE CONHECIMENTO DE REFERÊNCIA]\nO conteúdo abaixo são casos frequentes e diagnósticos recomendados pela Ordemilk. Use-os como base de conhecimento e inspiração para suas análises, mas sinta-se livre para adaptar o diagnóstico conforme a situação específica relatada pelo técnico. Não trate como regras rígidas, mas como um guia de experiência acumulada.\n${FAQ_DATABASE}`
@@ -401,9 +408,10 @@ export const generateChatResponseStream = async (
   onFinished?: (text: string, sources?: { title: string, uri: string }[]) => void,
   mode: 'AUTO' | 'REF' | 'ELEC' = 'AUTO',
   diagnosticContext: SupportDiagnosticContext = {},
+  conversationUserTurnCount?: number,
   retries = 2
 ): Promise<string> => {
-  const userTurnCount = history.filter(item => item.role === 'user').length;
+  const userTurnCount = conversationUserTurnCount ?? history.filter(item => item.role === 'user').length;
   const isFirstReply = userTurnCount <= 1;
   const primaryModel = SUPPORT_PRIMARY_MODEL;
   const fallbackModel = primaryModel === SUPPORT_PRIMARY_MODEL ? SUPPORT_FALLBACK_MODEL : SUPPORT_PRIMARY_MODEL;
@@ -418,7 +426,7 @@ export const generateChatResponseStream = async (
       .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
       .join(' ');
 
-    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode, diagnosticContext, true);
+    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode, diagnosticContext, true, isFirstReply);
 
     const responseStream = await ai.models.generateContentStream({
       model: modelName,

@@ -1,11 +1,24 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-02T08:04:58-03:00
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-02T13:45:25-03:00
 
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-09-02T08:26:54-03:00
+- **Autorizacao direta do USER:** "preciso que veja como esta o cerebro da ia... ela nao esta mais respodedo como antes... quero que se preciso volte como ela estava antes respondendo de forma correta e com ligacao real com o tecnico."
+- **Diagnostico:** o suporte estava enviando ao Gemini apenas o turno atual, enquanto `geminiService.ts` decidia se era primeira resposta contando os turnos recebidos no payload. Na pratica, follow-ups podiam ser tratados como primeira resposta, deixando a IA curta, repetitiva e sem continuidade real com o tecnico.
+- **Escopo autorizado:** ajustar o cerebro/continuidade do suporte, sem alterar modelos Gemini, senha, navegacao, curso, calculadora ou layout global.
+- **Arquivos alterados nesta rodada:** `components/Tool_1_Assistant.tsx`, `services/geminiService.ts`, `public/sw.js`, `SALA_DE_REUNIAO.md`.
+- **Mudanca aplicada:** o suporte voltou a enviar um contexto recente, limpo e limitado da conversa real para a IA; anexos atuais continuam sendo enviados com dados inline; `geminiService.ts` passou a receber a contagem real de turnos e usar cadencia diferente para continuidade, evitando reiniciar o atendimento a cada mensagem.
+- **Validacao executada:** `npm.cmd run lint` OK; `runSystemDiagnostics()` OK 14/14; `npm.cmd run clean && npm.cmd run build` OK; smoke Playwright local com interceptacao Gemini OK, confirmando 2 chamadas, primeira com cadencia de primeira resposta e segunda com historico `user/model/user`, relato anterior, resposta anterior, follow-up atual e `CADENCIA DE CONTINUIDADE` sem molde rigido de primeira resposta.
+- **Validacao adicional com Gemini real:** smoke local com chave apenas em build temporario e modelo `gemini-2.5-flash` fez perguntas de refrigeracao e eletrica: SH alto/SC baixo, follow-up com bolhas/oleo, contatora K2 sem comando, follow-up com saida YC acesa e A1/A2 zerado, alta pressao e falta de fase/contatora metralhando. As respostas vieram tecnicas e conectadas; um caso de alta pressao no lote caiu em `SUPPORT_STREAM_TIMEOUT`, mas reteste isolado respondeu pela IA real corretamente. Build final foi refeito sem chave local e o bundle foi conferido sem segredo.
+- **Autorizacao adicional para deploy:** USER solicitou "faca o deploy".
+- **Ajuste de publicacao:** cache PWA atualizado para `ordemilk-tech-v57-support-continuity` para forcar atualizacao do app instalado.
+- **Validacao pre-deploy:** `npm.cmd run lint` OK; `runSystemDiagnostics()` OK 14/14; `npm.cmd run clean && npm.cmd run build` OK; smoke Playwright local OK com login `627566`, suporte visivel, botoes `Tirar foto`/`Gravar audio` presentes e cache PWA `ordemilk-tech-v57-support-continuity`.
+- **Pode editar/commitar/deployar sem pedir?** SIM para esta correcao/publicacao.
+
 ### RODADA ATIVA CODEX - 2026-09-02T08:04:58-03:00
 - **Autorizacao direta do USER:** "GOSTARIA DE MUDAR A SENHA DO APLICATIVO PARA: 627566 PODE FAZER AS MUDANCAS E FAZER O DEPLOY".
 - **Escopo autorizado:** trocar a senha principal de login do aplicativo para `627566`, testar localmente e publicar via fluxo GitHub/Vercel se aprovado.
