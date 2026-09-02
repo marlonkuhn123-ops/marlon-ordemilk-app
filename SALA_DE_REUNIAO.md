@@ -1,11 +1,19 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-07-01T10:27:16-03:00
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-02T08:04:58-03:00
 
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+### RODADA ATIVA CODEX - 2026-09-02T08:04:58-03:00
+- **Autorizacao direta do USER:** "GOSTARIA DE MUDAR A SENHA DO APLICATIVO PARA: 627566 PODE FAZER AS MUDANCAS E FAZER O DEPLOY".
+- **Escopo autorizado:** trocar a senha principal de login do aplicativo para `627566`, testar localmente e publicar via fluxo GitHub/Vercel se aprovado.
+- **Arquivos previstos para alteracao:** `components/LoginScreen.tsx`, `public/sw.js`, `SALA_DE_REUNIAO.md`.
+- **Protecoes ativas:** nao tocar em prompt, modelo Gemini, suporte, navegacao, calculadora, curso ou senhas internas de modulos restritos fora do login principal.
+- **Validacao executada:** `npm.cmd run lint` OK; `runSystemDiagnostics()` OK 14/14; `npm.cmd run clean && npm.cmd run build` OK; smoke Playwright local OK com senha antiga `om2026` rejeitada sem gravar auth, senha nova `627566` aceita com auth, suporte visivel, botoes `Tirar foto` e `Gravar audio` presentes, curso abrindo em `Slide 1 de 42`, 0 videos/iframes no curso e cache PWA `ordemilk-tech-v56-login-password` ativo.
+- **Pode editar/commitar/deployar sem pedir?** SIM para esta rodada.
+
 ### RODADA ATIVA CODEX - 2026-08-11T15:33:02-03:00
 - **Autorizacao direta do USER:** "CONFIRA, TESTE TUDO, E SE FUNCIONAR FACA O FEPLOY" apos informar que a Claude fez mais modificacoes.
 - **Diagnostico de origem:** as mudancas da Claude foram encontradas em `C:\Users\Ordemilk\Desktop\app parti`, que continua sendo uma base sem commits e com codigo `src/` antigo; o repo correto de producao continua `C:\Users\Ordemilk\Desktop\marlon-ordemilk-app-clean`.

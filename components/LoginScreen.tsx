@@ -9,6 +9,8 @@ interface LoginScreenProps {
     isInstalled?: boolean;
 }
 
+const APP_ACCESS_PASSWORD = '627566';
+
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt, isIOS, isAndroid, isInstalled }) => {
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
@@ -46,7 +48,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
             return;
         }
 
-        if (inputPass === 'om2026') {
+        if (inputPass === APP_ACCESS_PASSWORD) {
             onLogin({ name: inputName, company: 'Ordemilk' });
             return;
         }
