@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({ isOnline, onStartTutorial, compa
                             aria-label="Status do sistema"
                         >
                             {compact && <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[#18e07a]' : 'bg-red-200'}`}></span>}
-                            <span className="text-[9px] font-black leading-none">{compact ? 'V51.2' : (isOnline ? 'ON' : 'OFF')}</span>
+                            <span className="text-[9px] font-black leading-none">{compact ? 'V58.0' : (isOnline ? 'ON' : 'OFF')}</span>
                             {!compact && <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#263243] ${isOnline ? 'bg-[#00ff88]' : 'bg-red-200'}`}></span>}
                         </button>
                     </div>

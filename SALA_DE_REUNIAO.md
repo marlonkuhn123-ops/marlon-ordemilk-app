@@ -1,7 +1,7 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-04T13:34:40-03:00
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-04T13:47:00-03:00
 
 ---
 
@@ -12,6 +12,7 @@
 - **Ajustes aplicados:** `geminiService.ts` agora monta um prompt exclusivo de refrigeracao no modo `REF`, sem esquema eletrico/CLP/bornes/contatoras/reles/A1-A2/IHM/painel; FAQ e base estruturada sao filtradas para conteudo de ciclo frigorifico; contexto de tanque grande em `REF` virou VET, condensador, evaporador Roll-Bond, carga termica e SH/SC. `supportDiagnosticEngine.ts` bloqueia arvore eletrica no modo `REF` e corrigiu o parser para nao confundir "tanque 10 mil" com leitura de SH/SC. `data/knowledge_base.ts` foi padronizado para `SH/SC`, `SH 7 a 12K` e `SC 4 a 8K`. `localSupportService.ts` removeu pergunta de tensao no fallback `REF`. `public/sw.js` atualizou cache para `ordemilk-tech-v58-ref-brain`.
 - **Validacao executada:** `npm.cmd run lint` OK; `runSystemDiagnostics()` OK 18/18; matriz especifica de refrigeracao em `REF` OK 5/5 cobrindo SH alto + SC baixo, alta pressao/condensador, retorno de liquido, restricao/filtro/VET e frase ambigua "compressor nao liga" sem puxar eletrica; `npm.cmd run clean && npm.cmd run build` OK; smoke HTTP local OK em `http://127.0.0.1:3102` com HTML 200, JS 200 e service worker `v58`; bundle conferido sem `AIza`, `TEST_KEY_FOR` ou `GEMINI_API_KEY`.
 - **Pode editar/commitar/deployar sem pedir?** SIM para esta correcao/publicacao.
+- **Ajuste pos-print:** apos o USER mostrar `ordemilk.vercel.app` ainda exibindo `V51.2`, foi confirmado que o bundle publico ja continha o prompt novo, mas a versao visual estava hardcoded como `V51.2`; `components/Estrutura.tsx` foi atualizado para `V58.0` e `public/sw.js` para cache `ordemilk-tech-v59-ref-brain-version`.
 
 ### RODADA ATIVA CODEX - 2026-09-03T08:24:34-03:00
 - **Autorizacao direta do USER:** "preciso que faca pergunta sobre os esquemas eletricos, exemplo. tanque 10 mil nao liga o agitador. quero que ela responda puxando sempre o esquema eletrico,,, auxiliando parte por parte ... NAO PODE HAVER ERROS".
