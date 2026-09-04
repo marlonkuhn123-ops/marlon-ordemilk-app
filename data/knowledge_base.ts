@@ -166,16 +166,16 @@ Este bloco traduz a teoria do ciclo frigorífico para a prática bruta de campo,
 - O ciclo real deve garantir a "compressão seca" (apenas vapor chegando ao compressor).
 - Retorno de líquido destrói os flappers (palhetas) e a biela do compressor. Danos mecânicos irreversíveis.
 
-3. MATEMÁTICA DO SH E SR (CRÍTICOS PARA DIAGNÓSTICO):
-- Superaquecimento (SH - Superheat) cravado em 5 a 10 K:
+3. MATEMÁTICA DO SH E SC (CRÍTICOS PARA DIAGNÓSTICO):
+- Superaquecimento (SH - Superheat) em campo: 7 a 12 K:
   * Função: Protege o compressor. SH muito baixo significa: "Compressor vai quebrar por golpe de líquido".
   * Cálculo Prático: Temp. da Linha de Sucção (medida no tubo) MINUS Temp. de Saturação (lida no manifold de baixa).
-- Sub-resfriamento (SR - Subcooling) cravado em 3 a 5 K:
+- Sub-resfriamento (SC - Subcooling) em campo: 4 a 8 K:
   * Função: Para proteger a expansão e evitar que a VET jogue uma rajada inútil de vapor (o "Flash Gas") dentro do tanque.
   * Cálculo Prático: Temp. de Saturação (lida no manifold de alta) MINUS Temp. da Linha de Líquido (medida no tubo).
 
 4. ARMADILHAS DE DIAGNÓSTICO (SEGREDOS DE CAMPO):
 - Isolamento da Sucção: Atenção ao isolamento de espuma térmica na sucção. Sem ele, o superaquecimento útil se perde e o gás aquece excessivamente no trajeto.
-- Visor de Líquido Mentiroso: O visor de líquido engana se você não comparar com a balança ou com o cálculo de SH/SR. Bolhas podem ser flash gas por restrição, não apenas falta de gás.
+- Visor de Líquido Mentiroso: O visor de líquido engana se você não comparar com a balança ou com o cálculo de SH/SC. Bolhas podem ser flash gas por restrição, não apenas falta de gás.
 - O Assassino Invisível: Serpentina suja atuando como assassina invisível de compressores. Reduz a troca térmica, eleva a pressão de alta, frita o óleo e quebra o compressor por fadiga térmica.
 `;

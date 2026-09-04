@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ordemilk-tech-v57-support-continuity';
+const CACHE_NAME = 'ordemilk-tech-v58-ref-brain';
 const ASSETS = [
     '/',
     '/index.html',

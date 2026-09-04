@@ -89,9 +89,9 @@ const readMeasurement = (text: string, patterns: RegExp[]) => {
 
 const readShKelvin = (text: string) =>
     readMeasurement(text, [
-        /\bsh\b[^\n]*?=\s*.*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
-        /\bsuper\s*aquecimento\b[^\n]*?=\s*.*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
-        /\bsuperaquecimento\b[^\n]*?=\s*.*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
+        /\bsh\b(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
+        /\bsuper\s*aquecimento\b(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
+        /\bsuperaquecimento\b(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
         /\bsh\s*(?:=|:|-)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
         /\bsuper\s*aquecimento\s*(?:=|:|-|de|em|com|esta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
         /\bsuperaquecimento\s*(?:=|:|-|de|em|com|esta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i
@@ -99,9 +99,9 @@ const readShKelvin = (text: string) =>
 
 const readScKelvin = (text: string) =>
     readMeasurement(text, [
-        /\bsc\b[^\n]*?=\s*.*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
-        /\bsub\s*-?\s*resfriamento\b[^\n]*?=\s*.*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
-        /\bsubresfriamento\b[^\n]*?=\s*.*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
+        /\bsc\b(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
+        /\bsub\s*-?\s*resfriamento\b(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
+        /\bsubresfriamento\b(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
         /\bsc\s*(?:=|:|-)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
         /\bsub\s*-?\s*resfriamento\s*(?:=|:|-|de|em|com|esta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
         /\bsubresfriamento\s*(?:=|:|-|de|em|com|esta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i
@@ -234,6 +234,16 @@ const getClpOutputPath = (compressorNumber?: number) => {
     return 'saídas YB/YC/YD e relés RL15/RL16/RL17/RL31 -> contatoras dos compressores';
 };
 
+const getAgitatorOutputPath = (family: { family: string; isLargeTank: boolean }) => {
+    if (family.isLargeTank) {
+        return 'CLP Panasonic saída YE -> relé RL6 (ou RL18 nos quadros novos) -> borne/interligação com painel geral -> contatora do agitador -> DM do agitador -> motor do agitador';
+    }
+    if (family.family.includes('Full Gauge')) {
+        return 'Full Gauge bornes RA/NA -> comando/força do agitador -> contatora/DM -> motor do agitador';
+    }
+    return 'Ageon borne A -> circuito de comando do agitador -> contatora/DM -> motor do agitador';
+};
+
 const detectElectricalFamily = (prompt: string, context: SupportDiagnosticContext) => {
     const combined = normalize([context.model, context.voltage, prompt].filter(Boolean).join(' '));
     const capacity = extractTankCapacityLiters(`${context.model || ''} ${prompt}`);
@@ -284,7 +294,8 @@ const detectElectricalFamily = (prompt: string, context: SupportDiagnosticContex
 };
 
 const isElectricalSignal = (text: string, mode: SupportMode) =>
-    mode === 'ELEC' ||
+    mode !== 'REF' &&
+    (mode === 'ELEC' ||
     includesAny(text, [
         'eletrica',
         'eletrico',
@@ -308,7 +319,11 @@ const isElectricalSignal = (text: string, mode: SupportMode) =>
         'nao aciona',
         'metralhando',
         'choque'
-    ]);
+    ]));
+
+const hasContactorNoCloseSignal = (text: string) =>
+    includesAny(text, ['contatora nao fecha', 'contator nao fecha', 'contatora nao aciona', 'contator nao aciona', 'nao fecha contatora']) ||
+    ((text.includes('contatora') || text.includes('contator')) && includesAny(text, ['nao fecha', 'nao aciona', 'nao arma', 'nao atraca']));
 
 const buildElectricalDecision = (prompt: string, mode: SupportMode, context: SupportDiagnosticContext): ElectricalDecision | undefined => {
     const text = normalize(prompt);
@@ -319,6 +334,7 @@ const buildElectricalDecision = (prompt: string, mode: SupportMode, context: Sup
     const compressorLabel = compressorNumber ? `compressor ${String(compressorNumber).padStart(2, '0')}` : 'compressor';
     const dmLabel = compressorNumber ? `DM${compressorNumber}` : 'DM do compressor';
     const kLabel = compressorNumber ? `K${compressorNumber}` : 'contatora do compressor';
+    const agitatorPath = getAgitatorOutputPath(family);
 
     let symptom = 'falha elétrica/comando';
     let hypothesis = 'A falha mais provável está na cadeia elétrica de comando, permissivos ou proteção.';
@@ -334,7 +350,7 @@ const buildElectricalDecision = (prompt: string, mode: SupportMode, context: Sup
         'Não misturar esquema 220V com 380V nem família de 4 compressores com 5 compressores.'
     ];
 
-    if (includesAny(text, ['contatora nao fecha', 'contator nao fecha', 'contatora nao aciona', 'contator nao aciona', 'nao fecha contatora'])) {
+    if (hasContactorNoCloseSignal(text)) {
         symptom = 'contatora não fecha';
         hypothesis = 'A contatora não fecha por bobina sem comando, permissivo aberto ou proteção em série aberta; se A1/A2 tiver tensão nominal e não fechar, a própria contatora/bobina vira suspeita.';
         questions = [
@@ -439,19 +455,6 @@ const buildElectricalDecision = (prompt: string, mode: SupportMode, context: Sup
             'Verificar RL1/sensor de nível, DM da bomba, contatora, saída CLP e borne de interligação.',
             'Se comando chega e carga não roda, ir para potência/motor.'
         ]);
-    } else if (text.includes('agitador')) {
-        symptom = 'agitador não aciona';
-        hypothesis = 'Agitador é diagnóstico de comando/elétrica: parâmetros d1/d2, saída do controlador/CLP, contatora, DM e motor elétrico.';
-        questions = [
-            'O comando está em manual, automático ou vindo do CIP/CLP?',
-            'A saída do controlador/CLP aciona a contatora do agitador e o DM está armado?'
-        ];
-        action = 'Confira parâmetros/saída de comando e contatora; não trate primeiro como problema mecânico.';
-        decisionTree = decisionTree.concat([
-            'Não começar girando pás manualmente como diagnóstico principal.',
-            'Verificar d1/d2 quando aplicável, saída Ageon A ou CLP YE/RL6/RL18, contatora e DM.',
-            'Depois medir tensão/corrente do motor.'
-        ]);
     } else if (includesAny(text, ['choque', 'lataria', 'carcaca energizada'])) {
         symptom = 'choque na lataria/carcaca';
         hypothesis = 'Choque na lataria indica fuga para massa e aterramento ausente/ineficiente; é falha de segurança, não simples ajuste de operação.';
@@ -465,6 +468,36 @@ const buildElectricalDecision = (prompt: string, mode: SupportMode, context: Sup
             'Verificar aterramento, isolamento dos motores, cabos, resistência de aquecedor e umidade no painel.',
             'Não liberar equipamento com carcaça energizada.'
         ]);
+    } else if (text.includes('agitador')) {
+        symptom = 'agitador não aciona';
+        if (family.isLargeTank) {
+            hypothesis = 'Em tanque grande, o agitador deve ser diagnosticado pelo esquema elétrico: CLP Panasonic libera a saída YE, aciona RL6/RL18, passa pela interligação com o painel geral e só depois chega em contatora, DM e motor do agitador.';
+            questions = [
+                'Na IHM/CLP existe comando de agitador e o LED da saída YE acende quando solicita agitação?',
+                'No painel geral, o DM do agitador está armado e chega tensão em A1/A2 da contatora do agitador?'
+            ];
+            action = `Siga o esquema parte por parte: ${agitatorPath}.`;
+            decisionTree = decisionTree.concat([
+                'Para tanque >=4000L, use somente a rota CLP Panasonic do esquema elétrico.',
+                'Confirmar alimentação de comando/IHM e se há solicitação de agitação no CLP.',
+                'Verificar saída YE do CLP; se YE não acende, procurar bloqueio por modo, alarme, emergência ou lógica/CIP.',
+                'Se YE acende, verificar relé de interface RL6 ou RL18 e o borne de interligação até o painel geral.',
+                'No painel geral, medir A1/A2 da contatora do agitador durante o comando.',
+                'Se A1/A2 tem tensão e a contatora não fecha: bobina/contatora. Se fecha e o motor não gira: DM, força, fases/cabos e motor.'
+            ]);
+        } else {
+            hypothesis = 'Agitador é diagnóstico de comando/elétrica: saída do controlador, contatora, DM e motor elétrico.';
+            questions = [
+                'O comando está em manual, automático ou vindo do controlador?',
+                'A saída do controlador aciona a contatora do agitador e o DM está armado?'
+            ];
+            action = `Siga o esquema parte por parte: ${agitatorPath}.`;
+            decisionTree = decisionTree.concat([
+                'Não começar girando pás manualmente como diagnóstico principal.',
+                `Verificar a rota do esquema: ${agitatorPath}.`,
+                'Depois medir tensão/corrente do motor.'
+            ]);
+        }
     }
 
     return {

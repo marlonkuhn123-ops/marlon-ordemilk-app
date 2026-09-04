@@ -3,6 +3,7 @@ import { logicService } from './logicService';
 import { analyzeSupportCase } from './supportDiagnosticEngine';
 import { localSupportService } from './localSupportService';
 import { Refrigerant } from '../types';
+import { KNOWLEDGE_BASE } from '../data/knowledge_base';
 
 /**
  * UTILS DE TESTE
@@ -149,6 +150,38 @@ export const runSystemDiagnostics = () => {
         assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrao deveria ser SH alto + SC baixo. Recebido: ${analysis.shSc?.pattern}`);
     });
 
+    test("Suporte: SH/SC não deve confundir capacidade do tanque com medida", () => {
+        const analysis = analyzeSupportCase(
+            "R404A no tanque 10 mil, SH=18K, SC=1K, visor com bolhas",
+            "REF",
+            { model: "10000L", refrigerant: "R-404A" }
+        );
+
+        assert(analysis.shSc?.shKelvin === 18, `SH deveria ser 18K, não capacidade do tanque. Recebido: ${analysis.shSc?.shKelvin}`);
+        assert(analysis.shSc?.scKelvin === 1, `SC deveria ser 1K. Recebido: ${analysis.shSc?.scKelvin}`);
+        assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrao deveria ser falta de fluido/vazamento. Recebido: ${analysis.shSc?.pattern}`);
+    });
+
+    test("Suporte REF: Não deve puxar árvore elétrica por frase ambígua", () => {
+        const prompt = "Modo refrigeração: compressor nao liga direito, leite nao baixa e pressao de succao baixa";
+        const analysis = analyzeSupportCase(prompt, "REF", { refrigerant: "R-404A" });
+        const fallback = localSupportService.generateResponse(prompt, "REF", { refrigerant: "R-404A" });
+
+        assert(!analysis.electrical, `Modo REF não deve montar árvore elétrica. Recebido: ${JSON.stringify(analysis.electrical)}`);
+        assert(fallback.route === "refrigeration", `Fallback REF deveria ficar em refrigeração. Recebido: ${fallback.route}`);
+        assert(!/(CLP|A1\/A2|contatora|borne|rel[eé]|painel)/i.test(fallback.text), `Fallback REF não deve citar esquema elétrico. Recebido: ${fallback.text}`);
+    });
+
+    test("Base técnica: Refrigeração deve usar SH 7-12K e SC 4-8K", () => {
+        assert(KNOWLEDGE_BASE.includes("MATEMÁTICA DO SH E SC"), "Base deve padronizar SH/SC.");
+        assert(KNOWLEDGE_BASE.includes("7 a 12 K"), "Base deve usar SH 7 a 12K.");
+        assert(KNOWLEDGE_BASE.includes("4 a 8 K"), "Base deve usar SC 4 a 8K.");
+        assert(!KNOWLEDGE_BASE.includes("SH E SR"), "Base não deve manter sigla SR no título.");
+        assert(!KNOWLEDGE_BASE.includes("5 a 10 K"), "Base não deve manter faixa antiga de SH 5 a 10K.");
+        assert(!KNOWLEDGE_BASE.includes("3 a 5 K"), "Base não deve manter faixa antiga de SC/SR 3 a 5K.");
+        assert(!KNOWLEDGE_BASE.includes("SH/SR"), "Base não deve misturar SH/SR.");
+    });
+
     test("Suporte: Deve montar árvore elétrica para contatora em tanque grande CLP", () => {
         const analysis = analyzeSupportCase(
             "Tanque 20000L 380V, IHM acende, contatora nao fecha no compressor 02",
@@ -160,6 +193,24 @@ export const runSystemDiagnostics = () => {
         assert(Boolean(analysis.electrical?.family.includes("CLP Panasonic")), `Família deveria indicar CLP Panasonic. Recebido: ${analysis.electrical?.family}`);
         assert(Boolean(analysis.electrical?.reference.includes("TRIFÁSICO 380V")), `Referência PDF 380V esperada. Recebido: ${analysis.electrical?.reference}`);
         assert(Boolean(analysis.electrical?.action.includes("A1/A2")), `Ação deveria pedir A1/A2. Recebido: ${analysis.electrical?.action}`);
+    });
+
+    test("Suporte: Agitador em tanque 10 mil deve puxar esquema CLP Panasonic", () => {
+        const prompt = "Tanque 10 mil 380V nao liga o agitador";
+        const analysis = analyzeSupportCase(
+            prompt,
+            "ELEC",
+            { model: "10000L", voltage: "380V" }
+        );
+        const fallback = localSupportService.generateResponse(prompt, "ELEC", { model: "10000L", voltage: "380V" });
+        const combined = `${analysis.electrical?.hypothesis}\n${analysis.electrical?.action}\n${analysis.electrical?.decisionTree.join('\n')}\n${fallback.text}`;
+
+        assert(analysis.electrical?.symptom === "agitador não aciona", `Sintoma deveria ser agitador. Recebido: ${analysis.electrical?.symptom}`);
+        assert(Boolean(combined.includes("CLP Panasonic")), `Deveria citar CLP Panasonic. Recebido: ${combined}`);
+        assert(Boolean(combined.includes("saída YE")), `Deveria citar saída YE. Recebido: ${combined}`);
+        assert(Boolean(combined.includes("RL6") && combined.includes("RL18")), `Deveria citar RL6/RL18. Recebido: ${combined}`);
+        assert(Boolean(combined.includes("painel geral")), `Deveria guiar pela interligação/painel geral. Recebido: ${combined}`);
+        assert(!combined.includes("Ageon") && !combined.includes("Full Gauge"), `Tanque 10 mil não deve usar Ageon/Full Gauge. Recebido: ${combined}`);
     });
 
     test("Suporte: Fallback local deve responder com português acentuado", () => {

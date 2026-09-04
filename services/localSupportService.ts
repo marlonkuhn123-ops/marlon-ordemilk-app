@@ -173,6 +173,13 @@ const buildQuestions = (route: OfflineRoute, context: SupportDiagnosticContext, 
     }
 
     while (questions.length < 2) {
+        if (route === 'refrigeration') {
+            questions.push(questions.length === 0
+                ? 'Qual é o sintoma frigorífico principal visto no local?'
+                : 'Você já mediu pressão, SH/SC ou temperatura?');
+            continue;
+        }
+
         questions.push(questions.length === 0
             ? 'Qual é o sintoma principal visto no local?'
             : 'Você já mediu tensão, pressão ou temperatura?');
