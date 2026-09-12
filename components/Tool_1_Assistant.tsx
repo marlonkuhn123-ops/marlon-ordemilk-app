@@ -355,14 +355,99 @@ const formatText = (text: string, isUser: boolean) => {
     });
 };
 
+// ---- Respostas rapidas (chips) ----
+// A IA pode anexar ao fim de uma resposta uma linha "[[OPÇÕES]] a | b | c".
+// So mostramos botoes quando o formato for valido (>= 2 opcoes); a linha e removida do
+// texto exibido. Se o formato nao for valido, o texto fica intacto e nao ha chips.
+const QUICK_REPLIES_RE = /\[\[\s*OP(?:[ÇC][ÕO]ES|TIONS)\s*\]\]\s*(.+?)\s*$/im;
+const parseQuickReplies = (text: string): { options: string[]; cleanText: string } => {
+    const match = text.match(QUICK_REPLIES_RE);
+    if (!match) return { options: [], cleanText: text };
+    const options = match[1]
+        .split('|')
+        .map(part => part.replace(/^[-•\s]+/, '').trim())
+        .filter(Boolean)
+        .slice(0, 4);
+    if (options.length < 2) return { options: [], cleanText: text };
+    const cleanText = text.replace(match[0], '').replace(/\n{3,}/g, '\n\n').trim();
+    return { options, cleanText };
+};
+
+// ---- Leitura em voz (TTS) ----
+const cleanTextForSpeech = (text: string) =>
+    parseQuickReplies(text).cleanText
+        .replace(/\*\*/g, '')
+        .replace(/[#>*_`]/g, '')
+        .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}]/gu, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+
+// Detecta voz pt-BR; se o navegador do celular nao oferecer, o botao de ouvir some.
+const useSupportTts = () => {
+    const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null);
+    const [supported, setSupported] = useState(false);
+    const [speakingId, setSpeakingId] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+        const pick = () => {
+            const voices = window.speechSynthesis.getVoices?.() ?? [];
+            const pt = voices.find(v => /pt[-_]?br/i.test(v.lang)) || voices.find(v => /^pt/i.test(v.lang)) || null;
+            setVoice(pt);
+            setSupported(Boolean(pt));
+        };
+        pick();
+        window.speechSynthesis.addEventListener?.('voiceschanged', pick);
+        return () => {
+            window.speechSynthesis.removeEventListener?.('voiceschanged', pick);
+            try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+        };
+    }, []);
+
+    const speak = React.useCallback((id: string, text: string) => {
+        if (!supported) return;
+        const speech = cleanTextForSpeech(text);
+        if (!speech) return;
+        try {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(speech);
+            if (voice) utterance.voice = voice;
+            utterance.lang = voice?.lang || 'pt-BR';
+            utterance.rate = 1;
+            utterance.onend = () => setSpeakingId(current => (current === id ? null : current));
+            utterance.onerror = () => setSpeakingId(current => (current === id ? null : current));
+            setSpeakingId(id);
+            window.speechSynthesis.speak(utterance);
+        } catch {
+            setSpeakingId(null);
+        }
+    }, [supported, voice]);
+
+    const stop = React.useCallback(() => {
+        try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+        setSpeakingId(null);
+    }, []);
+
+    return { supported, speakingId, speak, stop };
+};
+
 const ChatBubble: React.FC<{
     msg: ChatMessage;
     onImageLoad?: () => void;
     onMount?: (messageId: string, element: HTMLDivElement | null) => void;
-}> = React.memo(({ msg, onImageLoad, onMount }) => {
+    onRetry?: (messageId: string) => void;
+    onQuickReply?: (text: string) => void;
+    onSpeak?: (messageId: string, text: string) => void;
+    onStopSpeak?: () => void;
+    ttsSupported?: boolean;
+    isSpeaking?: boolean;
+}> = React.memo(({ msg, onImageLoad, onMount, onRetry, onQuickReply, onSpeak, onStopSpeak, ttsSupported, isSpeaking }) => {
     const isUser = msg.role === 'user';
+    const isModel = !isUser;
     const isError = msg.isError;
-    const hasText = Boolean(msg.text.trim());
+    const parsed = isModel && !msg.isStreaming ? parseQuickReplies(msg.text) : { options: [] as string[], cleanText: msg.text };
+    const displayText = parsed.cleanText;
+    const hasText = Boolean(displayText.trim());
 
     return (
         <div
@@ -404,7 +489,7 @@ const ChatBubble: React.FC<{
 
                     {hasText ? (
                         <div className={`text-[15px] leading-[1.62] ${isUser ? 'font-medium' : 'font-semibold'}`}>
-                            {formatText(msg.text, isUser)}
+                            {formatText(displayText, isUser)}
                         </div>
                     ) : (
                         <div className="flex items-center gap-1.5 text-[#00d9ff]">
@@ -420,6 +505,45 @@ const ChatBubble: React.FC<{
                             <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse [animation-delay:120ms]"></span>
                             <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse [animation-delay:240ms]"></span>
                         </div>
+                    )}
+
+                    {isModel && hasText && !msg.isStreaming && ttsSupported && onSpeak && (
+                        <button
+                            type="button"
+                            onClick={() => (isSpeaking ? onStopSpeak?.() : onSpeak(msg.id, msg.text))}
+                            className="mt-3 inline-flex items-center gap-2 text-[12px] font-bold px-3 py-1.5 rounded-full border border-[#24425f]/45 text-[#0b3350] bg-white/40 hover:bg-white/70 active:scale-95 transition-all"
+                            aria-label={isSpeaking ? 'Parar leitura' : 'Ouvir resposta'}
+                        >
+                            <i className={`fa-solid ${isSpeaking ? 'fa-stop' : 'fa-volume-high'}`}></i>
+                            {isSpeaking ? 'Parar' : 'Ouvir'}
+                        </button>
+                    )}
+
+                    {isModel && !msg.isStreaming && parsed.options.length > 0 && onQuickReply && (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            {parsed.options.map((option, index) => (
+                                <button
+                                    key={`${option}-${index}`}
+                                    type="button"
+                                    onClick={() => onQuickReply(option)}
+                                    className="text-[13px] font-bold px-3.5 py-2 rounded-full border border-[#06c8f6]/60 text-[#073b57] bg-[#06c8f6]/15 hover:bg-[#06c8f6]/30 active:scale-95 transition-all"
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {isError && onRetry && (
+                        <button
+                            type="button"
+                            onClick={() => onRetry(msg.id)}
+                            className="mt-3 inline-flex items-center gap-2 text-[13px] font-bold px-3.5 py-2 rounded-full border border-red-300/60 text-red-50 bg-red-500/25 hover:bg-red-500/40 active:scale-95 transition-all"
+                            aria-label="Repetir"
+                        >
+                            <i className="fa-solid fa-rotate-right"></i>
+                            Repetir
+                        </button>
                     )}
 
                     {msg.sources && msg.sources.length > 0 && (
@@ -482,6 +606,14 @@ export const Tool_Assistant: React.FC = () => {
     const [recordSeconds, setRecordSeconds] = useState(0);
     const wasDiagnosticContextCompleteRef = useRef(isDiagnosticContextComplete(restoredSnapshot?.diagnosticContext));
     const conversationStarted = hasStartedConversation(messages);
+
+    // Leitura em voz (some se o celular nao tiver voz pt-BR) e callbacks estaveis para os
+    // botoes das bolhas (Repetir / respostas rapidas), sem quebrar o React.memo do ChatBubble.
+    const tts = useSupportTts();
+    const retryMessageRef = useRef<(messageId: string) => void>(() => {});
+    const sendQuickReplyRef = useRef<(text: string) => void>(() => {});
+    const handleRetry = React.useCallback((messageId: string) => retryMessageRef.current(messageId), []);
+    const handleQuickReply = React.useCallback((text: string) => sendQuickReplyRef.current(text), []);
 
     useEffect(() => {
         messagesRef.current = messages;
@@ -791,11 +923,111 @@ export const Tool_Assistant: React.FC = () => {
         );
     };
 
-    const sendMessage = async () => {
+    // Executa a chamada da IA para uma mensagem do usuario ja existente, atualizando a
+    // bolha do modelo (modelMessageId). Compartilhado por sendMessage e retryMessage.
+    const runSupportAi = async (
+        userMsg: ChatMessage,
+        modelMessageId: string,
+        localPrompt: string,
+        attachmentCount: number,
+        previousMessages: ChatMessage[]
+    ) => {
+        if (!isOnline) {
+            applyLocalFallback(modelMessageId, localPrompt, attachmentCount);
+            setIsLoadingChat(false);
+            return;
+        }
+
+        let allowAiUpdates = true;
+
+        try {
+            const conversationForApi = buildSupportApiHistory(previousMessages, userMsg);
+            const conversationUserTurnCount = countSupportUserTurns(previousMessages, userMsg);
+
+            const aiResponsePromise = generateChatResponseStream(
+                conversationForApi,
+                (chunkText: string) => {
+                    if (!allowAiUpdates) return;
+                    setMessages(prev =>
+                        prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: chunkText } : msg))
+                    );
+                },
+                (finalText, sources) => {
+                    if (!allowAiUpdates) return;
+                    setMessages(prev =>
+                        prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: finalText, sources, isStreaming: false } : msg))
+                    );
+                },
+                mode,
+                diagnosticContext,
+                conversationUserTurnCount
+            );
+
+            aiResponsePromise.catch(() => undefined);
+
+            await Promise.race([
+                aiResponsePromise,
+                new Promise((_, reject) => {
+                    window.setTimeout(() => reject(new Error('SUPPORT_STREAM_TIMEOUT')), SUPPORT_STREAM_TIMEOUT_MS);
+                })
+            ]);
+        } catch (error: any) {
+            allowAiUpdates = false;
+            console.error('Chat Error:', error?.message || 'Unknown error');
+
+            const errorMessage = error?.message || 'FALHA DE CONEXAO. Tente novamente.';
+            const browserOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+            const shouldUseLocalFallback = browserOffline || /503|429|quota|limite|conex|fetch|network|timeout|support_stream_timeout|socket|indispon|unavailable|empty_support_response/i.test(errorMessage.toLowerCase());
+
+            if (shouldUseLocalFallback) {
+                applyLocalFallback(modelMessageId, localPrompt, attachmentCount);
+            } else {
+                setMessages(prev =>
+                    prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: errorMessage, isError: true, isStreaming: false } : msg))
+                );
+            }
+        } finally {
+            setIsLoadingChat(false);
+        }
+    };
+
+    // Reenvia a ultima pergunta do tecnico quando a resposta anterior falhou (botao Repetir),
+    // sem criar uma bolha de usuario duplicada.
+    const retryMessage = (modelMessageId: string) => {
+        if (isLoadingChat) return;
+        const msgs = messagesRef.current;
+        const modelIndex = msgs.findIndex(m => m.id === modelMessageId);
+        if (modelIndex < 0) return;
+
+        let userMsg: ChatMessage | undefined;
+        for (let i = modelIndex - 1; i >= 0; i -= 1) {
+            if (msgs[i].role === 'user') { userMsg = msgs[i]; break; }
+        }
+        if (!userMsg) return;
+        const userIndex = msgs.indexOf(userMsg);
+        const previousMessages = msgs.slice(0, userIndex);
+        const attachmentCount = userMsg.files?.length ?? 0;
+        const localPrompt = userMsg.text.startsWith('[')
+            ? buildAttachmentAnalysisPrompt(userMsg.files ?? [], userMsg.text)
+            : userMsg.text;
+
+        setMessages(prev =>
+            prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: '', isError: false, isStreaming: true } : msg))
+        );
+        scrollMessageToReadingStart(modelMessageId);
+        setIsLoadingChat(true);
+        void runSupportAi(userMsg, modelMessageId, localPrompt, attachmentCount, previousMessages);
+    };
+
+    // Mantem os callbacks estaveis apontando para as funcoes atuais desta renderizacao.
+    retryMessageRef.current = retryMessage;
+    sendQuickReplyRef.current = (text: string) => { void sendMessage(text); };
+
+    const sendMessage = async (overrideText?: string) => {
         if (isLoadingChat) return;
 
-        let textToSend = input.trim();
-        const filesToSend = [...selectedFiles];
+        let textToSend = (overrideText ?? input).trim();
+        const filesToSend = overrideText ? [] : [...selectedFiles];
 
         if (!textToSend && filesToSend.length > 0) {
             textToSend = buildAttachmentDisplayText(filesToSend);
@@ -831,63 +1063,7 @@ export const Tool_Assistant: React.FC = () => {
             ? buildAttachmentAnalysisPrompt(filesToSend, textToSend)
             : textToSend;
 
-        if (!isOnline) {
-            applyLocalFallback(modelMessageId, localPrompt, filesToSend.length);
-            setIsLoadingChat(false);
-            return;
-        }
-
-        let allowAiUpdates = true;
-
-        try {
-            const conversationForApi = buildSupportApiHistory(messagesRef.current, userMsg);
-            const conversationUserTurnCount = countSupportUserTurns(messagesRef.current, userMsg);
-
-            const aiResponsePromise = generateChatResponseStream(
-                conversationForApi,
-                (chunkText: string) => {
-                    if (!allowAiUpdates) return;
-                    setMessages(prev =>
-                        prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: chunkText } : msg))
-                    );
-                },
-                (finalText, sources) => {
-                    if (!allowAiUpdates) return;
-                    setMessages(prev =>
-                    prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: finalText, sources, isStreaming: false } : msg))
-                    );
-                },
-                mode,
-                diagnosticContext,
-                conversationUserTurnCount
-            );
-
-            aiResponsePromise.catch(() => undefined);
-
-            await Promise.race([
-                aiResponsePromise,
-                new Promise((_, reject) => {
-                    window.setTimeout(() => reject(new Error('SUPPORT_STREAM_TIMEOUT')), SUPPORT_STREAM_TIMEOUT_MS);
-                })
-            ]);
-        } catch (error: any) {
-            allowAiUpdates = false;
-            console.error('Chat Error:', error?.message || 'Unknown error');
-
-            const errorMessage = error?.message || 'FALHA DE CONEXAO. Tente novamente.';
-            const browserOffline = typeof navigator !== 'undefined' && !navigator.onLine;
-            const shouldUseLocalFallback = browserOffline || /503|429|quota|limite|conex|fetch|network|timeout|support_stream_timeout|socket|indispon|unavailable|empty_support_response/i.test(errorMessage.toLowerCase());
-
-            if (shouldUseLocalFallback) {
-                applyLocalFallback(modelMessageId, localPrompt, filesToSend.length);
-            } else {
-                setMessages(prev =>
-                    prev.map(msg => (msg.id === modelMessageId ? { ...msg, text: errorMessage, isError: true, isStreaming: false } : msg))
-                );
-            }
-        } finally {
-            setIsLoadingChat(false);
-        }
+        await runSupportAi(userMsg, modelMessageId, localPrompt, filesToSend.length, messagesRef.current);
     };
 
     const resetMessages = () => {
@@ -1081,6 +1257,12 @@ export const Tool_Assistant: React.FC = () => {
                             msg={message}
                             onImageLoad={scrollToBottom}
                             onMount={registerMessageElement}
+                            onRetry={handleRetry}
+                            onQuickReply={handleQuickReply}
+                            onSpeak={tts.speak}
+                            onStopSpeak={tts.stop}
+                            ttsSupported={tts.supported}
+                            isSpeaking={tts.speakingId === message.id}
                         />
                     ))}
                 </div>

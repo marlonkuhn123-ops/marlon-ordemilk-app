@@ -293,33 +293,38 @@ const detectElectricalFamily = (prompt: string, context: SupportDiagnosticContex
     };
 };
 
+// Termos eletricos inequivocos: cruzam para o lado eletrico em QUALQUER modo, inclusive
+// REF, porque indicam claramente causa/efeito de comando (nao isolar as disciplinas).
+const STRONG_ELECTRICAL_TERMS = [
+    'eletrica',
+    'eletrico',
+    'contatora',
+    'contator',
+    'a1',
+    'a2',
+    'disjuntor',
+    'dm',
+    'rele',
+    'rff',
+    'falta de fase',
+    'borne',
+    'painel',
+    'clp',
+    'ihm',
+    '24v',
+    'fonte',
+    'metralhando',
+    'choque'
+];
+
+// Termos ambiguos: em REF, "nao liga/parte/aciona" significa "nao resfria", entao so
+// disparam analise eletrica fora do modo REF.
+const WEAK_ELECTRICAL_TERMS = ['nao liga', 'nao parte', 'nao aciona'];
+
 const isElectricalSignal = (text: string, mode: SupportMode) =>
-    mode !== 'REF' &&
-    (mode === 'ELEC' ||
-    includesAny(text, [
-        'eletrica',
-        'eletrico',
-        'contatora',
-        'contator',
-        'a1',
-        'a2',
-        'disjuntor',
-        'dm',
-        'rele',
-        'rff',
-        'falta de fase',
-        'borne',
-        'painel',
-        'clp',
-        'ihm',
-        '24v',
-        'fonte',
-        'nao liga',
-        'nao parte',
-        'nao aciona',
-        'metralhando',
-        'choque'
-    ]));
+    mode === 'ELEC' ||
+    includesAny(text, STRONG_ELECTRICAL_TERMS) ||
+    (mode !== 'REF' && includesAny(text, WEAK_ELECTRICAL_TERMS));
 
 const hasContactorNoCloseSignal = (text: string) =>
     includesAny(text, ['contatora nao fecha', 'contator nao fecha', 'contatora nao aciona', 'contator nao aciona', 'nao fecha contatora']) ||

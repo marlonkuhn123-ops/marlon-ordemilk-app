@@ -45,10 +45,10 @@ Diagnosticar falhas do ciclo frigorífico de tanques de leite com ligação real
 - FASE 1 (primeira resposta): identifique o sintoma frigorífico, levante a hipótese mais provável e faça no máximo 2 perguntas técnicas.
 - FASE 2 (continuação): só aprofunde depois de receber medidas de campo.
 
-[ESCOPO EXCLUSIVO DO MODO REF]
+[ESCOPO PRIORITARIO DO MODO REF]
 - Foque em compressor, condensador, VET/TXV, evaporador Roll-Bond, fluido refrigerante, pressões, SH, SC, visor, vazamento, carga térmica, agitação, retorno de líquido, óleo e troca de calor.
-- Não use esquema elétrico, CLP, borne, contatora, relé, A1/A2, IHM ou painel como rota de diagnóstico neste modo.
-- Se a frase do técnico tiver "não liga" dentro do modo REF, interprete como "não entra em ciclo frigorífico / não resfria" e peça dados frigoríficos: pressão de sucção/descarga, SH/SC, fluido, visor, condensador e temperatura do leite.
+- A rota principal de diagnóstico é frigorífica. Porém, quando o sintoma indicar causa/efeito elétrico (desarme, contatora, relé, A1/A2, CLP, borne, IHM, falta de fase), traga a verificação elétrica pertinente como apoio, sem perder o foco frigorífico. Nunca isole as disciplinas.
+- Se a frase do técnico tiver "não liga" dentro do modo REF, interprete primeiro como "não entra em ciclo frigorífico / não resfria" e peça dados frigoríficos: pressão de sucção/descarga, SH/SC, fluido, visor, condensador e temperatura do leite; se houver sinal claro de comando/partida, confirme também o lado elétrico.
 - Não misture com ar-condicionado, chiller ou câmara fria genérica.
 
 [REGRAS DE REFRIGERAÇÃO CRÍTICAS]
@@ -75,12 +75,31 @@ const PORTUGUESE_QUALITY_RULE = `
 const handleApiError = (error: any) => {
   // Log seguro: apenas a mensagem, evitando expor o objeto de erro completo que pode conter a chave de API no config
   console.error("Gemini API Error:", error?.message || "Unknown error");
-  const msg = error?.message || "";
+  const msg = String(error?.message || "");
+  const lower = msg.toLowerCase();
+  const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
 
-  if (msg.includes("429") || msg.toLowerCase().includes("quota")) {
-    return "⚠️ LIMITE DE USO EXCEDIDO: O sistema atingiu o limite de consultas. Aguarde 60 segundos.";
+  // Sem internet no aparelho ou falha de rede/fetch
+  if (isOffline || lower.includes('failed to fetch') || lower.includes('networkerror') || lower.includes('network error') || lower.includes('econnreset') || lower.includes('socket')) {
+    return "📴 SEM INTERNET: verifique o sinal ou o Wi-Fi e toque em Repetir. Enquanto isso, uso o modo de consulta local.";
   }
-  return `⚠️ ERRO DE CONEXÃO: ${error?.message || "Verifique internet e chave de API."}`;
+
+  // Creditos da API esgotados (faturamento) — diferente de limite de uso momentaneo
+  if (lower.includes('prepayment credits are depleted') || lower.includes('billing') || lower.includes('credits')) {
+    return "💳 IA TEMPORARIAMENTE INDISPONÍVEL: créditos da API esgotados. Avise a engenharia Ordemilk. Posso responder pelo modo de consulta local enquanto isso.";
+  }
+
+  // Limite de uso momentaneo / cota
+  if (msg.includes("429") || lower.includes("quota") || lower.includes("resource_exhausted") || lower.includes("rate limit")) {
+    return "⏳ SISTEMA OCUPADO: muitas consultas agora. Aguarde cerca de 1 minuto e toque em Repetir.";
+  }
+
+  // Falha temporaria de servidor
+  if (msg.includes("503") || msg.includes("500") || lower.includes("unavailable") || lower.includes("internal")) {
+    return "⚠️ FALHA TEMPORÁRIA no servidor da IA. Toque em Repetir em alguns segundos.";
+  }
+
+  return "⚠️ NÃO CONSEGUI RESPONDER agora. Toque em Repetir. Se continuar, verifique a internet.";
 };
 
 const getDynamicBrandContext = (userPrompt: string) => {
@@ -156,45 +175,23 @@ const isEmptyResponseError = (error: any) =>
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const hasContextValue = (value?: string) => Boolean(value && value.trim());
 const normalizeText = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-const getSupportFieldBrainPack = (mode: 'AUTO' | 'REF' | 'ELEC') =>
-  mode === 'REF'
-    ? SUPPORT_FIELD_BRAIN_PACK
-    : `${SUPPORT_FIELD_BRAIN_PACK}${SUPPORT_ELECTRICAL_FIELD_BRAIN_PACK}`;
-
-const extractStaticSection = (source: string, startMarker: string, endMarker?: string) => {
-  const start = source.indexOf(startMarker);
-  if (start === -1) return source;
-
-  const end = endMarker ? source.indexOf(endMarker, start + startMarker.length) : -1;
-  return source.slice(start, end === -1 ? undefined : end).trim();
-};
+// Prioriza refrigeracao no modo REF, mas mantem o pacote eletrico disponivel como
+// apoio secundario (o cerebro deve cruzar disciplinas quando houver indicio tecnico).
+const getSupportFieldBrainPack = (_mode: 'AUTO' | 'REF' | 'ELEC') =>
+  `${SUPPORT_FIELD_BRAIN_PACK}${SUPPORT_ELECTRICAL_FIELD_BRAIN_PACK}`;
 
 const getSupportSystemPromptBase = (mode: 'AUTO' | 'REF' | 'ELEC') =>
   mode === 'REF' ? SUPPORT_REFRIGERATION_SYSTEM_PROMPT_BASE : SYSTEM_PROMPT_BASE;
 
-const getSupportTechnicalContext = (mode: 'AUTO' | 'REF' | 'ELEC') =>
-  mode === 'REF' ? "" : TECHNICAL_CONTEXT;
+// Mantem o protocolo integrado (TECHNICAL_CONTEXT: "Nunca isole as disciplinas") em
+// todos os modos. A prioridade da area escolhida vem do modeInstruction, nao de cortar contexto.
+const getSupportTechnicalContext = (_mode: 'AUTO' | 'REF' | 'ELEC') => TECHNICAL_CONTEXT;
 
-const getFaqDatabaseForMode = (mode: 'AUTO' | 'REF' | 'ELEC') => {
-  if (mode !== 'REF') return FAQ_DATABASE;
+// Conhecimento completo em todos os modos para permitir cruzamento entre refrigeracao e
+// eletrica quando o sintoma indicar. A enfase por area fica no modeInstruction/diretrizes.
+const getFaqDatabaseForMode = (_mode: 'AUTO' | 'REF' | 'ELEC') => FAQ_DATABASE;
 
-  const refrigerationModules = extractStaticSection(
-    FAQ_DATABASE,
-    "MÓDULO 3: CICLO, FLUIDO E EXPANSÃO",
-    "[SUPORTE TÉCNICO: PERGUNTAS E RESPOSTAS ELÉTRICAS]"
-  );
-
-  return `[PACOTE DE CONHECIMENTO TÉCNICO: REFERÊNCIA ORDEMILK - REFRIGERAÇÃO]\n${refrigerationModules}`;
-};
-
-const getStructuredKnowledgeForMode = (mode: 'AUTO' | 'REF' | 'ELEC') => {
-  if (mode !== 'REF') return KNOWLEDGE_BASE;
-
-  return extractStaticSection(
-    KNOWLEDGE_BASE,
-    "[CAMADA 6: FUNDAMENTOS DO CICLO DE REFRIGERAÇÃO E PRÁTICA DE CAMPO (A CAMADA DE REALIDADE)]"
-  );
-};
+const getStructuredKnowledgeForMode = (_mode: 'AUTO' | 'REF' | 'ELEC') => KNOWLEDGE_BASE;
 
 const getDiagnosticGuidance = (mode: 'AUTO' | 'REF' | 'ELEC') => {
   if (mode === 'REF') {
@@ -203,7 +200,7 @@ const getDiagnosticGuidance = (mode: 'AUTO' | 'REF' | 'ELEC') => {
 1. NÃO CONCLUA SEM MEDIDA: Se o sintoma for genérico, peça pressão de sucção/descarga, SH, SC, fluido, visor e temperatura do leite.
 2. ESTRUTURA DE DIAGNÓSTICO: Sempre que possível, responda com Sintoma, Causa Provável, Causas Possíveis, Ordem de Verificação e Segurança frigorífica.
 3. PRIORIDADE: trate primeiro ciclo frigorífico, troca térmica, VET, condensador, evaporador, carga de fluido, retorno de líquido e mecânica do compressor.
-4. BLOQUEIO: não puxe esquema elétrico, CLP, bornes, relés, contatoras, A1/A2 ou painel no modo REF.
+4. CRUZAMENTO QUANDO HOUVER INDÍCIO: o foco é refrigeração, mas se o sintoma apontar causa/efeito elétrico (desarme, contatora, CLP, bornes, A1/A2, falta de fase), traga a verificação elétrica pertinente de forma objetiva. Nunca isole as disciplinas.
 5. CAMPO: quando o técnico disser que "não gela", traduza para resfriamento lento do leite e confira carga térmica, agitação, condensação e SH/SC.
 `;
   }
@@ -251,7 +248,7 @@ const getDiagnosticContextInstruction = (
   if (hasContextValue(diagnosticContext.model)) {
     lines.push(`- Modelo/capacidade do tanque informado previamente: ${diagnosticContext.model}`);
   }
-  if (mode !== 'REF' && hasContextValue(diagnosticContext.voltage)) {
+  if (hasContextValue(diagnosticContext.voltage)) {
     lines.push(`- Tensão informada previamente: ${diagnosticContext.voltage}`);
   }
   if (hasContextValue(diagnosticContext.refrigerant)) {
@@ -321,7 +318,10 @@ const getSymptomSpecificInstruction = (
   const normalizedPrompt = normalizeText(userPrompt);
   const lines: string[] = [];
   const tankCapacity = extractTankCapacityLiters(`${diagnosticContext.model || ''} ${userPrompt}`);
-  const canUseElectricalRules = mode !== 'REF';
+  // Regras eletricas por sintoma podem entrar em qualquer modo: sao disparadas por
+  // palavras-chave do proprio texto do tecnico (contatora, agitador, etc.), o que
+  // permite cruzar para eletrica quando o sintoma indicar, mesmo no modo REF.
+  const canUseElectricalRules = true;
 
   const hasContactorSymptom =
     canUseElectricalRules &&
@@ -415,7 +415,12 @@ REGRA DE OURO:
 - Mantenha a resposta concisa e focada no formato acima.
 - Evite listar todas as causas possíveis ou despejar teoria na primeira interação.
 - **Mesmo sendo breve, demonstre seu conhecimento técnico e autoridade no assunto.**
-- Aprofunde o diagnóstico e forneça detalhes adicionais SOMENTE depois que o técnico responder com dados reais ou pedir mais informações.`;
+- Aprofunde o diagnóstico e forneça detalhes adicionais SOMENTE depois que o técnico responder com dados reais ou pedir mais informações.
+
+[RESPOSTAS RÁPIDAS - OPCIONAL]
+Se as suas perguntas tiverem respostas curtas prováveis (sim/não, uma medição, um estado), acrescente NA ÚLTIMA LINHA, e só nela, exatamente neste formato:
+[[OPÇÕES]] opção 1 | opção 2 | opção 3
+Regras: 2 a 4 opções, cada uma com no máximo 3 palavras, que o técnico possa tocar para responder rápido no celular. Se não houver respostas curtas úteis, NÃO escreva essa linha. Nunca use esse formato no meio do texto.`;
   }
 
   return `\n\n[CADÊNCIA DE CONTINUIDADE - LIGAÇÃO REAL COM O TÉCNICO]
@@ -425,7 +430,10 @@ Avance o diagnóstico: diga o que a nova informação indica, qual hipótese gan
 Pode aprofundar causa provável, sequência de verificação e conclusão técnica quando já houver dados suficientes.
 Faça no máximo 1 ou 2 perguntas novas, somente se forem necessárias para fechar o diagnóstico.
 Regra dura de UX: em continuação, nunca escreva uma terceira pergunta numerada; se houver mais dúvidas, escolha só as 2 mais decisivas.
-Não repita saudação inicial nem o bloco rígido de primeira resposta. Responda como supervisor técnico acompanhando o técnico em campo.`;
+Não repita saudação inicial nem o bloco rígido de primeira resposta. Responda como supervisor técnico acompanhando o técnico em campo.
+
+[RESPOSTAS RÁPIDAS - OPCIONAL]
+Se você perguntar algo com respostas curtas prováveis, acrescente NA ÚLTIMA LINHA, e só nela, exatamente: [[OPÇÕES]] opção 1 | opção 2 | opção 3 (2 a 4 opções, até 3 palavras cada). Se não houver respostas curtas úteis, não escreva essa linha.`;
 };
 
 const getFullSystemInstruction = async (
@@ -441,10 +449,12 @@ const getFullSystemInstruction = async (
   const supportFieldBrainPack = getSupportFieldBrainPack(mode);
   const faqDatabase = getFaqDatabaseForMode(mode);
   const structuredKnowledgeDatabase = getStructuredKnowledgeForMode(mode);
-  const fieldKnowledge = mode === 'REF' ? "" : knowledgeService.getKnowledgeContext();
+  const fieldKnowledge = knowledgeService.getKnowledgeContext();
   const toolPrompt = toolType && toolType in TOOL_PROMPTS ? TOOL_PROMPTS[toolType as keyof typeof TOOL_PROMPTS] : "";
   const brandManual = getDynamicBrandContext(userPrompt);
-  const electricalContext = mode === 'REF' ? "" : await getElectricalContext(userPrompt);
+  // getElectricalContext ja e disparado por palavras-chave; carregar em qualquer modo
+  // permite cruzar para eletrica quando o sintoma indicar, mesmo no modo REF.
+  const electricalContext = await getElectricalContext(userPrompt);
   const equipmentContext = getDiagnosticContextInstruction(diagnosticContext, userPrompt, mode);
   const attachmentContext = getAttachmentContextInstruction(userPrompt, mode);
   const symptomSpecificContext = getSymptomSpecificInstruction(userPrompt, mode, diagnosticContext);
@@ -452,9 +462,9 @@ const getFullSystemInstruction = async (
 
   let modeInstruction = "";
   if (mode === 'ELEC') {
-    modeInstruction = "\n\n🚨 [MODO FOCO EM ELÉTRICA ATIVADO]\nIgnore detalhes do ciclo de refrigeração. Foque 100% em esquemas elétricos, bornes, CLP e componentes de comando. Use a base de dados de esquemas, a seção de [SUPORTE TÉCNICO: PERGUNTAS E RESPOSTAS ELÉTRICAS] e a seção de [DIAGNÓSTICO RÁPIDO: O QUE PODE SER?] imediatamente para responder dúvidas sobre componentes, funções do painel e falhas de funcionamento.";
+    modeInstruction = "\n\n🚨 [MODO FOCO EM ELÉTRICA]\nPriorize esquemas elétricos, bornes, CLP e componentes de comando. Use a base de dados de esquemas, a seção de [SUPORTE TÉCNICO: PERGUNTAS E RESPOSTAS ELÉTRICAS] e a seção de [DIAGNÓSTICO RÁPIDO: O QUE PODE SER?] para responder sobre componentes, funções do painel e falhas de funcionamento. Traga o lado frigorífico só quando houver indício técnico claro de que a causa é de refrigeração/mecânica (ex.: desarme por alta pressão, corrente elevada por condensador sujo). Nunca isole as disciplinas.";
   } else if (mode === 'REF') {
-    modeInstruction = "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO ATIVADO]\nIgnore detalhes de comando elétrico/CLP. Não carregue esquema elétrico, CLP, bornes, contatoras ou relés salvo se o técnico mudar para ELÉTRICA. Foque 100% no ciclo frigorífico, pressões, fluido, troca de calor, VET, condensador, evaporador e mecânica do compressor.";
+    modeInstruction = "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO]\nPriorize o ciclo frigorífico: pressões, fluido, SH/SC, troca de calor, VET, condensador, evaporador e mecânica do compressor. Traga a verificação elétrica (esquema, CLP, bornes, contatoras, relés, A1/A2) só quando o sintoma apontar causa/efeito elétrico. Nunca isole as disciplinas: uma falha elétrica costuma ser consequência de um problema frigorífico/mecânico.";
   }
 
   if (mode === 'ELEC') {
@@ -480,47 +490,11 @@ const getFullSystemInstruction = async (
   return `${supportSystemPromptBase}\n\n${technicalContext}${PORTUGUESE_QUALITY_RULE}${supportFieldBrainPack}${localAnalysisContext}${symptomSpecificContext}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
 };
 
-const enforceFirstReplyContract = (text: string, isFirstReply: boolean) => {
-  const trimmedText = text.trim();
-  if (!isFirstReply || !trimmedText) return trimmedText;
-
-  const lines = trimmedText.split('\n');
-  let inConfirmBlock = false;
-  let questionCount = 0;
-  const cleanedLines: string[] = [];
-
-  for (const line of lines) {
-    const normalized = normalizeText(line);
-
-    if (normalized.includes('preciso confirmar') || normalized.includes('perguntas')) {
-      inConfirmBlock = true;
-      questionCount = 0;
-      cleanedLines.push(line);
-      continue;
-    }
-
-    if (
-      inConfirmBlock &&
-      (
-        normalized.includes('faca agora') ||
-        normalized.includes('acao segura') ||
-        normalized.includes('proxima acao') ||
-        normalized.includes('somente apos')
-      )
-    ) {
-      inConfirmBlock = false;
-    }
-
-    if (inConfirmBlock && /^\s*\d+[\).\s-]+/.test(line)) {
-      questionCount += 1;
-      if (questionCount > 2) continue;
-    }
-
-    cleanedLines.push(line);
-  }
-
-  return cleanedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
-};
+// NAO DESTRUTIVO: a cadencia de "2 perguntas" na 1a resposta e orientada pelo prompt
+// (getSupportCadenceInstruction). Aqui apenas normalizamos espacos em branco e NUNCA
+// apagamos linhas, para nao remover um passo tecnico legitimo que a IA tenha incluido.
+const enforceFirstReplyContract = (text: string, _isFirstReply: boolean) =>
+  text.replace(/\n{3,}/g, '\n\n').trim();
 
 const extractRouteFromAction = (action: string) => {
   const directRoute = action.match(/Siga o esquema parte por parte:\s*(.+?)\.?$/i)?.[1];
@@ -542,8 +516,10 @@ const ensureElectricalSchematicRoute = (
   diagnosticContext: SupportDiagnosticContext
 ) => {
   if (!text.trim()) return text;
-  if (mode === 'REF') return text;
 
+  // A rota do esquema so e anexada quando ha decisao eletrica (sinal eletrico forte no
+  // texto). Em REF puro isso nao dispara, mas se o tecnico citar comando/contatora/CLP,
+  // o cruzamento acontece tambem no modo REF.
   const analysis = analyzeSupportCase(userPrompt, mode, diagnosticContext).electrical;
   if (!analysis) return text;
 
