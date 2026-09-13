@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ordemilk-tech-v61-comms-ux';
+const CACHE_NAME = 'ordemilk-tech-v62-flash-first';
 const ASSETS = [
     '/',
     '/index.html',

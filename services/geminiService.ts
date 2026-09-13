@@ -574,8 +574,10 @@ export const generateChatResponseStream = async (
 ): Promise<string> => {
   const userTurnCount = conversationUserTurnCount ?? history.filter(item => item.role === 'user').length;
   const isFirstReply = userTurnCount <= 1;
-  const primaryModel = SUPPORT_PRIMARY_MODEL;
-  const fallbackModel = primaryModel === SUPPORT_PRIMARY_MODEL ? SUPPORT_FALLBACK_MODEL : SUPPORT_PRIMARY_MODEL;
+  // 1a resposta no modelo rapido (3 Flash) para dar retorno imediato ao tecnico em campo;
+  // continuacao no modelo profundo (3.1 Pro). Fallback usa sempre o outro dos dois.
+  const primaryModel = isFirstReply ? DEFAULT_TEXT_MODEL : SUPPORT_PRIMARY_MODEL;
+  const fallbackModel = isFirstReply ? SUPPORT_PRIMARY_MODEL : SUPPORT_FALLBACK_MODEL;
 
   const runStream = async (modelName: string): Promise<string> => {
     const apiKey = ENV.GEMINI_API_KEY;
