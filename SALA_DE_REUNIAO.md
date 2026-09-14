@@ -60,12 +60,12 @@ abaixo e o CORRETO e VERIFICADO. Agora esta funcionando e e assim que deve perma
 - **v62 (commit 1da6d77):** 1a resposta no **gemini-3-flash-preview** (rapida, ~2.5s no campo) e continuacao no
   **gemini-3.1-pro-preview** (mais profunda). Fallback = o outro dos dois. Em generateChatResponseStream:
   `primaryModel = isFirstReply ? DEFAULT_TEXT_MODEL : SUPPORT_PRIMARY_MODEL`.
-- REGRA: ao publicar qualquer mudanca, subir o `CACHE_NAME` em public/sw.js (hoje `ordemilk-tech-v64`),
+- REGRA: ao publicar qualquer mudanca, subir o `CACHE_NAME` em public/sw.js (hoje `ordemilk-tech-v65`),
   senao o PWA ja instalado nos celulares nao atualiza.
 - **Selo visual x cache (ALINHADO em 2026-09-14):** o selo `V##.0` no cabecalho e um texto FIXO em
   components/Estrutura.tsx e NAO tem relacao automatica com o `CACHE_NAME` do service worker. Estavam
   divergentes (selo V58.0 x cache v62) so por esquecimento de atualizar o texto - NAO era deploy errado.
-  Agora os dois estao no MESMO numero: **selo `V64.0` = cache `ordemilk-tech-v64`**. REGRA daqui pra frente:
+  Agora os dois estao no MESMO numero: **selo `V65.0` = cache `ordemilk-tech-v65`**. REGRA daqui pra frente:
   ao publicar, subir os DOIS juntos para o mesmo numero. (O service worker e network-first: com internet o app
   ja pega o bundle novo mesmo sem trocar o cache; o bump do cache garante tambem o caso offline.)
 - **Conversa limpa a cada abertura (v64, 2026-09-14):** o historico do suporte agora vive em `sessionStorage`
@@ -74,6 +74,14 @@ abaixo e o CORRETO e VERIFICADO. Agora esta funcionando e e assim que deve perma
   Continuam salvos entre aberturas (localStorage, de proposito): login (om_auth_time), perfil do tecnico
   (GlobalContext) e a memoria de campo (knowledgeService). Sessoes antigas salvas em localStorage sao purgadas
   automaticamente. Bonus: reduz custo, pois nao reenvia historico velho ao Gemini.
+- **OTIMIZACAO DE CUSTO (v65, 2026-09-14):** a 1a resposta do suporte NAO envia mais a base extensa
+  (FAQ ~7.8k + base 4 camadas ~3.2k tokens) - so a persona, o contexto tecnico integrado, os brain packs e a
+  analise local. A base completa entra na CONTINUACAO (2a mensagem em diante), onde e usada. Em geminiService.ts:
+  `includeExtendedKnowledge = !isFirstReply`. Economia ~11k tokens de ENTRADA por primeira mensagem, sem perda de
+  qualidade (validado local: SH/SC, agitador com esquema CLP, cruzamento e alta pressao seguem corretos).
+  Pendente (nao feito): cache de contexto do Gemini para o bloco estatico repetido - e mais delicado num app
+  100% client-side (ciclo de vida do cache, chave exposta); recomendado fazer junto com a migracao para um
+  proxy serverless (que tambem esconde a chave). Ver pendencia de seguranca no item 5.
 
 **4) VERIFICACOES FEITAS (esta tudo OK)**
 - Calculadora Superaq (SH/SC) - components/Tool_3_Calculator.tsx + services/logicService.ts + data/pt_tables.ts:

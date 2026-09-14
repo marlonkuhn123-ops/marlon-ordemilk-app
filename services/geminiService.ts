@@ -589,7 +589,11 @@ export const generateChatResponseStream = async (
       .map(h => h.parts.map(p => p.text).filter(Boolean).join(' '))
       .join(' ');
 
-    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode, diagnosticContext, true, isFirstReply);
+    // Economia de tokens: na 1a resposta (curta: hipotese + 2 perguntas + acao) NAO enviamos a base
+    // extensa (FAQ ~7.8k + base 4 camadas ~3.2k). A persona, o contexto tecnico integrado, os brain packs
+    // e a analise local deterministica continuam indo. A base completa entra na continuacao, onde e usada.
+    const includeExtendedKnowledge = !isFirstReply;
+    const systemInstruction = await getFullSystemInstruction("DIAGNOSTIC", fullConversationText, mode, diagnosticContext, includeExtendedKnowledge, isFirstReply);
 
     const responseStream = await ai.models.generateContentStream({
       model: modelName,
