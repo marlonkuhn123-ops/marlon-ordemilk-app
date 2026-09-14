@@ -11,7 +11,20 @@ const STORAGE_KEY = 'om_support_session_v1';
 const SNAPSHOT_VERSION = 1;
 const MAX_MESSAGES = 24;
 
-const hasStorage = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+// A conversa do suporte agora vive apenas na sessao atual do app (sessionStorage):
+// trocar de aba ou recarregar mantem, mas fechar e abrir o app de novo comeca limpo.
+const hasStorage = () => typeof window !== 'undefined' && typeof window.sessionStorage !== 'undefined';
+// Remove qualquer sessao antiga que versoes anteriores salvaram em localStorage
+// (localStorage persistia entre aberturas; agora nao usamos mais para a conversa).
+const purgeLegacyLocalStorage = () => {
+    try {
+        if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+            localStorage.removeItem(STORAGE_KEY);
+        }
+    } catch (error) {
+        // silencioso
+    }
+};
 const isSupportMode = (value: unknown): value is SupportMode => value === 'AUTO' || value === 'REF' || value === 'ELEC';
 const isChatRole = (value: unknown): value is 'user' | 'model' => value === 'user' || value === 'model';
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
@@ -20,10 +33,11 @@ const isStaleQuotaError = (message: { role: 'user' | 'model'; text: string; isEr
     message.isError === true &&
     /limite de uso excedido|quota|429/i.test(message.text);
 const clearStoredSnapshot = () => {
+    purgeLegacyLocalStorage();
     if (!hasStorage()) return;
 
     try {
-        localStorage.removeItem(STORAGE_KEY);
+        sessionStorage.removeItem(STORAGE_KEY);
     } catch (error) {
         console.warn('Falha ao limpar sessao do suporte:', error);
     }
@@ -114,7 +128,8 @@ export const supportSessionService = {
         if (!hasStorage()) return null;
 
         try {
-            const raw = localStorage.getItem(STORAGE_KEY);
+            purgeLegacyLocalStorage();
+            const raw = sessionStorage.getItem(STORAGE_KEY);
             if (!raw) return null;
 
             const parsed = JSON.parse(raw) as Partial<SupportSessionSnapshot>;
@@ -165,7 +180,7 @@ export const supportSessionService = {
         };
 
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
         } catch (error) {
             console.warn('Falha ao salvar sessao do suporte:', error);
         }
