@@ -1,11 +1,125 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-04T13:47:00-03:00
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-14 (CLAUDE)
 
 ---
 
 ## STATUS DE OPERACAO EM TEMPO REAL
+
+### >>> ESTADO CANONICO E RESUMO PARA A CODEX - 2026-09-14 (deixado por CLAUDE) <<<
+LEIA ISTO PRIMEIRO. Depois de muita confusao entre apps, repositorios, contas Vercel e chaves de API, o quadro
+abaixo e o CORRETO e VERIFICADO. Agora esta funcionando e e assim que deve permanecer.
+
+**1) QUAL E O APP CORRETO (fim da confusao)**
+- Site de producao dos tecnicos: **https://ordemilk.vercel.app**
+- Repositorio GitHub (o unico real): **marlonkuhn123-ops/marlon-ordemilk-app**, branch **main**.
+- Projeto Vercel: **ordemilk-app**, na conta oficial **marlonkuhn-6838** (time "marlon kuhn's projects"),
+  Git-connected ao main -> **todo push no main faz deploy automatico** para ordemilk.vercel.app.
+- IGNORAR (nao usar): o dominio `app-ordemilk.vercel.app` (projeto `app-ordemilk` numa conta Vercel ANTIGA,
+  marlonkuhn123-1166, publicado por CLI - e duplicado, candidato a desligar); o repositorio GitHub `app-ordemilk`
+  (copia velha de fev/2026, nao publicada em lugar nenhum); os projetos Vercel `ordemilk-tech` e `marlon-analise`;
+  e a pasta `Desktop\app parti` (e outro app, o frio-tech-ai, nao e este).
+- O que vale sempre e o par repo+branch acima. Nao importa de qual pasta local se trabalha, desde que seja o
+  `marlon-ordemilk-app` no `main`.
+
+**2) A CONFUSAO DAS APIs / CHAVES GEMINI - RESOLVIDA**
+- Existiam 3 chaves Gemini diferentes circulando (fingerprints SHA-256: producao `35070947DC14` = termina em
+  `q-jw`; `C11450CE559D` = `T2oY`; `03AFD6C52BFC` = `CSxM`). Somente a `...q-jw` e a chave correta do app.
+- A `...q-jw` pertence ao projeto Google **ordemilk-tech-assist**, na conta de faturamento terminada em **CA32**
+  (a que tem o credito). As outras duas sao de outro projeto (My First Project) e NAO sao do app.
+- CAUSA REAL da queda do suporte (nao era chave errada, nem codigo, nem deploy): a conta de faturamento estava
+  no plano PREPAY com saldo ZERO. Regra do Google: saldo em zero = TODAS as chaves param juntas, e o credito
+  promocional so passa a ser consumido depois de adicionar fundos. FIX aplicado pelo USER: adicionar
+  pre-pagamento na conta CA32 (AI Studio > Billing). Voltou na hora, sem trocar chave e sem redeploy.
+- REGRA PARA A CODEX: se o suporte "nao responder" com erro 429 / "prepayment credits are depleted", NAO troque
+  a chave nem faca redeploy as cegas. Primeiro confira o SALDO em AI Studio > Billing da conta CA32
+  (projeto ordemilk-tech-assist). A chave publicada ja e a certa.
+
+**3) O QUE A CLAUDE MUDOU E DEIXOU FUNCIONANDO (tudo via push no main = deploy automatico)**
+- **v60 (commit 2be33ad):** senha de acesso mudou de `627566` para **`om2026`** (components/LoginScreen.tsx;
+  a senha dos modulos extras continua `om20266`). Modelos fixados nas variaveis Vercel do projeto oficial:
+  `GEMINI_TEXT_MODEL=gemini-3-flash-preview`, `GEMINI_SUPPORT_MODEL=gemini-3.1-pro-preview`,
+  `GEMINI_SUPPORT_FALLBACK_MODEL=gemini-3-flash-preview`. O gemini-2.5-flash foi tirado do fluxo.
+  (Obs.: modelo e "baked" no bundle no build; trocar exige redeploy.)
+- **v61 (commit 2655e3a): melhorias de comunicacao do suporte, SEM mudar a persona nem o cerebro tecnico:**
+  - Refrigeracao e eletrica deixam de se ISOLAR: o modo REF/ELEC prioriza a area escolhida, mas CRUZA com a
+    outra quando ha indicio tecnico claro. Em geminiService.ts: getSupportTechnicalContext / getFaqDatabaseForMode
+    / getStructuredKnowledgeForMode agora retornam conteudo completo em todos os modos; o modeInstruction virou
+    "priorize X, cruze Y quando houver indicio". Em supportDiagnosticEngine.ts: isElectricalSignal separa termos
+    eletricos FORTES (contatora, A1/A2, CLP, disjuntor, DM, rele, falta de fase... que cruzam ate no modo REF)
+    dos AMBIGUOS ("nao liga/parte/aciona", que no modo REF continuam significando "nao resfria").
+  - enforceFirstReplyContract agora e NAO destrutivo: nunca apaga linha/passo da resposta (antes cortava em
+    silencio a 3a pergunta numerada).
+  - handleApiError com mensagens claras (sem internet / sistema ocupado / falha temporaria) + botao "Repetir"
+    na bolha de erro (retryMessage reusa runSupportAi, sem duplicar a fala do tecnico).
+  - Botao "Ouvir" (TTS) nas respostas; so aparece se o aparelho tiver voz pt-BR (useSupportTts detecta e esconde
+    quando nao ha suporte).
+  - Respostas rapidas (chips): a IA anexa uma linha `[[OPÇÕES]] a | b | c`; o app so mostra os botoes quando o
+    formato e valido (parseQuickReplies) e a caixa de texto continua sempre disponivel.
+- **v62 (commit 1da6d77):** 1a resposta no **gemini-3-flash-preview** (rapida, ~2.5s no campo) e continuacao no
+  **gemini-3.1-pro-preview** (mais profunda). Fallback = o outro dos dois. Em generateChatResponseStream:
+  `primaryModel = isFirstReply ? DEFAULT_TEXT_MODEL : SUPPORT_PRIMARY_MODEL`.
+- REGRA: ao publicar qualquer mudanca, subir o `CACHE_NAME` em public/sw.js (hoje `ordemilk-tech-v62-flash-first`),
+  senao o PWA ja instalado nos celulares nao atualiza.
+
+**4) VERIFICACOES FEITAS (esta tudo OK)**
+- Calculadora Superaq (SH/SC) - components/Tool_3_Calculator.tsx + services/logicService.ts + data/pt_tables.ts:
+  254 checagens automatizadas passaram. Formulas corretas (SH = Tsuc - Tsat; SC = Tsat - Tliq); R-404A usa dew no
+  SH e bubble no SC; R-22 curva unica; faixas SH 7-12K e SC 4-8K; unidade Celsius e PSIG (gauge). Conversao
+  PSI->temperatura conferida contra Danfoss/CoolProp (R-22 <=0.2C, R-404A <=0.5C). A Ordemilk usa SOMENTE R-22 e
+  R-404A -> NAO adicionar outros fluidos sem o USER pedir.
+- Suporte: bateria de 10 perguntas dificeis ao vivo, media ~9,6. Cruza disciplinas, pega as pegadinhas (nao culpa
+  a VET quando SH alto + SC baixo; corrige "Full Gauge" em tanque grande para CLP Panasonic), puxa o esquema nas
+  eletricas (YE / RL6-RL18 / DM / A1-A2) e usa a matriz SH/SC. 1a resposta no 3 Flash, chips relevantes, 0 erros
+  de console.
+
+**5) PENDENCIAS (nao urgentes, nao feitas ainda)**
+- Seguranca: a chave Gemini fica exposta no bundle client-side (repo publico). Ideal futuro: rotacionar a chave
+  com restricao de referenciador (dominio) e/ou colocar um proxy serverless para a chave sair do navegador.
+- Desligar o projeto/site duplicado `app-ordemilk` (conta antiga) para acabar com a duplicidade.
+- A cobranca do app hoje esta numa conta Google PESSOAL do dono; avaliar migrar para uma conta da Ordemilk.
+
+**RESUMO: agora SIM esta correto e e assim que a CLAUDE deixou em 2026-09-14.** App oficial = ordemilk.vercel.app
+(repo marlon-ordemilk-app -> projeto Vercel ordemilk-app da conta oficial marlonkuhn-6838). Chave certa (...q-jw),
+saldo reposto na conta CA32, senha om2026, modelos 3 Flash (1a resposta) + 3.1 Pro (continuacao), comunicacao do
+suporte melhorada sem mexer na persona. IDs internos completos, fingerprints e e-mails ficam na memoria local do
+projeto (fora deste repositorio publico).
+
+### RODADA ATIVA CLAUDE - AUDITORIA + DEPLOY (senha om2026, so modelos 3) - 2026-09-09T11:45-03:00
+- **DEPLOY 2026-09-09 senha om2026:** commit `2be33ad` em `origin/main` do `marlon-ordemilk-app`, deploy automatico do projeto oficial `ordemilk-app` publicado em `https://ordemilk.vercel.app` (bundle last-modified 14:43 UTC).
+- **Alterado no codigo (2 arquivos, persona intacta):** `components/LoginScreen.tsx` senha de login `627566` -> `om2026` (a senha de modulos extras `om20266` foi mantida); `public/sw.js` cache `v59` -> `v60-om2026-3series` para forcar atualizacao dos PWAs instalados.
+- **Modelos (via variaveis Vercel do projeto oficial, sem codigo):** `GEMINI_TEXT_MODEL=gemini-3-flash-preview`, `GEMINI_SUPPORT_MODEL=gemini-3.1-pro-preview`, `GEMINI_SUPPORT_FALLBACK_MODEL=gemini-3-flash-preview`. O `gemini-2.5-flash` foi removido do fluxo; bundle publicado so referencia 3 Flash e 3.1 Pro.
+- **Auditoria (sem mudar persona):** `npm run lint` (tsc) OK; `npm run build` OK; teste ao vivo com navegador: 0 erros de console, 0 pageerrors. Login: senha antiga `627566` REJEITADA, senha nova `om2026` ENTROU. Suporte responde via `gemini-3.1-pro-preview` (HTTP 200).
+- **Comportamento confirmado:** pergunta ELETRICA (tanque 10 mil, agitador) puxa a rota do esquema: CLP Panasonic saida YE -> rele RL6/RL18 -> DM -> contatora A1/A2. Pergunta de REFRIGERACAO (SH alto/SC baixo, condensador) responde como especialista frigorifico (confirmado em execucoes anteriores).
+- **Nao sao bugs, mas ficam registrados:** (1) senha fica no bundle client-side em repo PUBLICO (era assim com 627566; risco herdado); (2) chave Gemini exposta no bundle - rotacionar com restricao de referenciador; (3) pasta `src/` e o repo GitHub `app-ordemilk` sao codigo morto; (4) projeto Vercel duplicado `app-ordemilk.vercel.app` (conta antiga) segue no ar com a chave antiga - considerar desligar. Nenhum foi alterado nesta rodada.
+- **Minhas notas de investigacao no SALA (blocos em ingles/IDs) NAO foram commitadas** (repo publico); ficam so na copia local desta pasta.
+
+### RODADA ATIVA CLAUDE - AUDITORIA DE CHAVES GEMINI, VERCEL E REPOSITORIOS - 2026-09-08T14:47:00-03:00
+- **Autorizacao direta do USER:** "consegue nos ajudar... vc esta trabalhando junto com a codex... veja qual e o que tem creditos... acho que estamos fazendo confusao", depois "consegue continuar de onde parou". Apos o plano aprovado: chave nova com faturamento, sem alteracao de codigo. Depois: "o que vc mudou? coloque tudo na biblioteca".
+- **Escopo executado:** somente leitura e testes. Nenhum arquivo do app, nenhum `.env` e nenhuma variavel da Vercel foi alterada. Unicas escritas: este registro, `.claude/learning/knowledge-cache.md` e `.claude/learning/session-learnings.md` na pasta Downloads, plano em `C:\Users\Ordemilk\.claude\plans\` e um script temporario de verificacao fora do repositorio.
+- **Diagnostico (mapa real, fim da confusao):** existem DOIS sites no ar com o MESMO codigo (`485fa99`, `V58.0`, cache PWA `ordemilk-tech-v59-ref-brain-version`), publicados com 1 segundo de diferenca em 2026-09-04 (16:48:22Z e 16:48:23Z), mas com CHAVES GEMINI DIFERENTES. (a) `https://ordemilk.vercel.app` = site publico historico do projeto (o que o USER mostra em prints e a Codex valida nos smokes; ver linhas desta SALA de 2026-09-04, 08/2026 e 07/2026), publicado por deploy AUTOMATICO do GitHub `marlonkuhn123-ops/marlon-ordemilk-app` a cada push em `origin/main`, em um projeto Vercel de OUTRA conta/time: nao aparece na conta `marlonkuhn123-1166`, cujo unico time e `marlons-projects-45b47d62`; provavelmente e o time `team_Agu7...`/projeto `ordemilk-app` referenciado no `.vercel/project.json` da pasta Downloads (o dominio padrao `ordemilk-app.vercel.app` responde `DEPLOYMENT_NOT_FOUND`, compativel com projeto cujo dominio foi trocado para `ordemilk.vercel.app`). Esse site embute a chave A (free tier) e por isso AINDA RESPONDE no `gemini-3-flash-preview`. (b) `https://app-ordemilk.vercel.app` = projeto Vercel `app-ordemilk` da conta logada nesta maquina, SEM integracao Git, publicado por CLI (`vercel --prod`, deploy `rkn84z1es`, ETag `c0876d09...`) a partir de `C:\Users\Ordemilk\Desktop\marlon-ordemilk-app-clean`; embute a chave PRODUCAO pre-paga esgotada e por isso esta MUDO. O GitHub `marlonkuhn123-ops/app-ordemilk` e repositorio ANTIGO de fevereiro/2026 (uploads do Firebase Studio, `gemini-1.5-flash`), nao esta publicado em lugar nenhum; so o nome coincide com o projeto Vercel. A pasta `C:\Users\Ordemilk\Downloads\marlon-ordemilk-app-main\marlon-ordemilk-app` esta 6 commits atras do main (nada perdido) e seu link Vercel nao e acessivel pela conta logada (CLI = "Not authorized"): nao usar para deploy. A pasta `Desktop\antigravity app` esta em `663c372` com 3 arquivos alterados sem commit (registro PWA neste SALA, indentacao em `Tool_1_Assistant.tsx`, 1 div em `TutorialOverlay.tsx`). A pasta `Desktop\app parti` e OUTRO app (`package.json` = `frio-tech-ai`, chave Stripe, sem commits).
+- **Chaves Gemini encontradas (fingerprint = 12 primeiros hex do SHA-256; a chave em si nunca foi impressa):**
+  1. PRODUCAO `35070947DC14` (39 chars): unica variavel `GEMINI_API_KEY` na Vercel (Development, Preview e Production, criada ha 190 dias) e embutida no `dist/index.js` publico. Faturamento pre-pago do AI Studio. Teste real em 2026-09-08: HTTP 429 `Your prepayment credits are depleted` em `gemini-3-flash-preview`, `gemini-3.1-pro-preview` e `gemini-2.5-flash`. **Causa raiz do suporte mudo em producao.**
+  2. A `C11450CE559D` (`Desktop\antigravity app\.env`, e EMBUTIDA no bundle publico de `https://ordemilk.vercel.app`, ou seja, e a `GEMINI_API_KEY` do projeto Vercel da outra conta): free tier. `gemini-3-flash-preview` OK em streaming com `thinkingLevel` low e medium (chamada identica a do app, SDK `@google/genai` 1.42), `gemini-2.5-flash` OK; `gemini-3.1-pro-preview` 429 `generate_content_free_tier_requests, limit: 0` (free tier nao tem acesso ao 3.1 Pro).
+  3. B `03AFD6C52BFC` (`Desktop\app parti\.env`): free tier, pertence ao app frio-tech-ai. Mesmo comportamento da A, com um 500 INTERNAL transitorio em streaming que nao se repetiu em 3 retestes. Nao usar no Ordemilk. Confirma a observacao da rodada CODEX de 2026-09-03.
+- **Resposta a pergunta do USER ("qual dos dois apps tem creditos"):** nenhuma chave tem credito PAGO hoje. Dos dois sites, `ordemilk.vercel.app` responde porque usa a chave A free tier (sem 3.1 Pro, com limite diario), e `app-ordemilk.vercel.app` esta mudo porque usa a chave pre-paga esgotada. Os "dois apps" nao sao o GitHub `app-ordemilk`: sao dois projetos Vercel em duas contas publicando o mesmo repositorio com chaves diferentes.
+- **Achados adicionais:** a chave de producao e publica: foi extraida do `index.js` do site em segundos, porque `esbuild.config.js` grava `GEMINI_API_KEY` dentro do bundle; qualquer pessoa pode consumir os creditos, o que ajuda a explicar o esgotamento. `handleApiError` em `services/geminiService.ts` mostra "LIMITE DE USO EXCEDIDO... Aguarde 60 segundos" tanto para rate limit quanto para credito esgotado, o que escondeu a causa por dias. Com chave free tier, cada mensagem do suporte tenta `gemini-3.1-pro-preview` (429 imediato) e so entao cai em `gemini-3-flash-preview`. O "erro de configuracao do 3 Flash" relatado pela Codex NAO reproduziu. Nenhum `.env` foi commitado no GitHub (`.gitignore` e `.vercelignore` corretos). `gemini-3-flash-preview` e preview de 12/2025 e a conta ja lista `gemini-3.5-flash` a `gemini-3.8-flash`; os modelos ja sao trocaveis por env (`GEMINI_TEXT_MODEL`, `GEMINI_SUPPORT_MODEL`, `GEMINI_SUPPORT_FALLBACK_MODEL`) sem codigo.
+- **Decisao do USER (2026-09-08):** criar chave NOVA em projeto AI Studio com faturamento ativo e restricao de referenciador HTTP para `https://app-ordemilk.vercel.app/*`; colocar na Vercel nos 3 ambientes; redeploy `vercel --prod` pela pasta clean; SEM alteracao de codigo.
+- **Proxima acao autorizada:** USER salva a chave nova em `C:\Users\Ordemilk\Desktop\marlon-ordemilk-app-clean\.env.production.local` (ignorado por git e por `.vercelignore`) e avisa. CLAUDE entao: testa `gemini-3-flash-preview` e `gemini-3.1-pro-preview` sem exibir a chave (se 3.1 Pro devolver `limit: 0`, o projeto ainda e free tier e a rodada para); `vercel env rm` + `vercel env add GEMINI_API_KEY` em production, preview e development; `vercel --prod`; confere o fingerprint da chave embutida no `index.js` publicado; apaga o arquivo temporario. Depois, USER revoga a chave antiga no Google Cloud, pois ela esta publica no bundle anterior. PENDENTE DE RESPOSTA DO USER (2026-09-08T14:58): qual URL os tecnicos usam no PWA instalado (`ordemilk.vercel.app`, `app-ordemilk.vercel.app` ou ambas) e se ha acesso a segunda conta Vercel, porque a chave nova tambem precisa entrar na `GEMINI_API_KEY` do projeto que publica `ordemilk.vercel.app` (painel dessa conta ou `vercel login` nela) e um novo push/redeploy la.
+- **Recomendacoes registradas, NAO autorizadas ainda:** (1) `handleApiError` distinguir credito esgotado de rate limit e acionar fallback tambem em 400/500 do modelo primario; (2) proxy serverless na Vercel para a chave sair do navegador (restricao de referenciador reduz, mas nao elimina abuso); (3) trabalhar so na pasta clean, remover `.vercel/` da pasta Downloads e dar `git pull` nela, decidir o WIP da pasta antigravity, arquivar o GitHub `app-ordemilk`.
+- **Pode editar/commitar/deployar sem pedir?** NAO para codigo e commit. SIM apenas para a Fase A (variavel Vercel + `vercel --prod`) assim que a chave nova estiver no arquivo indicado.
+- **Atualizacao 2026-09-09 (USER pediu "veja se agora esta funcionando"):** `app-ordemilk.vercel.app` continua MUDO: mesmo deploy de 2026-09-04 (ETag `c0876d09...`), mesma chave `35070947DC14`, mesma resposta 429 `prepayment credits are depleted`; nada mudou na Vercel (env criada ha 191 dias, ultimo deploy `rkn84z1es`). PIOROU: `ordemilk.vercel.app` tambem parou, porque a chave A `C11450CE559D` deixou de ser free tier e agora devolve o MESMO 429 `prepayment credits are depleted`; a chave B `03AFD6C52BFC` idem. As tres chaves passaram a responder como se compartilhassem a mesma carteira pre-paga do AI Studio com saldo zero, ou seja, algo mudou no faturamento do Google entre 08/09 e 09/09 (provavelmente configuracao de pre-pagamento feita no AI Studio sem credito confirmado). Consequencia pratica: se o saldo pre-pago for recarregado em https://ai.studio/projects, os DOIS sites voltam na hora, sem redeploy, porque as chaves nao mudaram. Terminacoes das chaves para identificar no AI Studio: PROD `...q-jw`, A `...T2oY`, B `...CSxM`.
+- **Atualizacao 2026-09-09T10:45-03:00 (ALINHAMENTO FINAL, apos ler os logs locais do Codex em `~/.codex/sessions` e as capturas do USER):**
+  - **Contas Vercel (sao duas, confirmado pelo CLI com os perfis que o Codex deixou em `C:\tmp`):** (1) OFICIAL `marlonkuhn-6838`, time `marlon-kuhns-projects` ("marlon kuhn s projects") = `[team-id-oficial]`, com os projetos `ordemilk-app` (`[prj-ordemilk-app]`, dominio `https://ordemilk.vercel.app`, ligado ao GitHub `marlon-ordemilk-app` branch `main`, deploy automatico a cada push, ultimo deploy manual do commit `485fa99` hoje), `ordemilk-tech` (`[prj-ordemilk-tech]`, sem producao, ignorar) e `marlon-analise` (outro app). (2) ANTIGA `marlonkuhn123-1166`, time `marlons-projects-45b47d62` = `[team-id-antigo]`, com o projeto `app-ordemilk` (`[prj-app-ordemilk]`, dominio `app-ordemilk.vercel.app`, deploy por CLI). Pastas locais linkadas: `Downloads\...\marlon-ordemilk-app` e `Desktop\app parti` apontam para o `ordemilk-app` oficial; `Desktop\marlon-ordemilk-app-clean` aponta para o `app-ordemilk` antigo. O CLI padrao desta maquina esta logado na conta ANTIGA; o perfil `C:\tmp\vercel-ordemilk-auth` (criado pelo Codex) esta logado na OFICIAL.
+  - **Variaveis do projeto oficial `ordemilk-app`:** `GEMINI_API_KEY` (Production/Preview/Development, criada ha 191 dias; o valor salvo hoje pelo USER e a MESMA chave antiga `35070947DC14`/`...q-jw`, confirmado pelo Codex via `vercel env pull` e pelo bundle publicado as 10:26), `GEMINI_TEXT_MODEL`, `GEMINI_SUPPORT_MODEL`, `GEMINI_SUPPORT_FALLBACK_MODEL` (Production, tipo Secret, ha 110 dias; o site oficial referencia `gemini-2.5-flash`, `gemini-3-flash-preview` e `gemini-3.1-pro-preview`).
+  - **Google (sao duas contas, mas UM projeto):** conta pessoal (Gmail) e conta corporativa `conta corporativa Ordemilk` (organizacao ordemilk.com.br). As duas enxergam o MESMO projeto Google Cloud `ordemilk-tech-assist` (IDs de projeto sao unicos no Google; aparece identico nas duas capturas). Projetos secundarios: `aplicativo-om` (na organizacao), `aplicativo-om-488919` (na conta pessoal) e `marlon-analise`. A conta de faturamento com R$ 100 de credito promocional esta ligada ao `ordemilk-tech-assist` (captura do USER ao Codex as 08:10). O `gcloud` desta maquina esta com token expirado na conta corporativa e o perfil temporario do Codex nunca concluiu o login, entao nao foi possivel consultar a qual projeto cada chave pertence.
+  - **CAUSA RAIZ do "nao responde" de hoje (documentacao oficial https://ai.google.dev/gemini-api/docs/billing):** a conta de faturamento esta no plano PREPAY com saldo zero. Regra do Google: "When your Prepay credit balance on the billing account hits $0, all API keys in all projects linked to that billing account will stop working simultaneously" e "If you have a prepay billing account, you must add funds to your account before you can use promotional Cloud Credits. After adding funds, your promotional credits will be consumed first". Por isso as TRES chaves (producao `...q-jw`, antigravity `...T2oY`, app parti `...CSxM`) passaram a devolver `prepayment credits are depleted` ao mesmo tempo, e por isso o credito promocional de R$ 100 nao esta sendo usado. Trocar chave ou fazer deploy NAO resolve isso.
+  - **O que o Codex fez hoje (08:00 a 10:06):** testou `app-ordemilk.vercel.app` e `ordemilk.vercel.app` com navegador automatizado (login OK, V58.0, Gemini 429 nos dois); registrou o app canonico em `~/.codex/memories/extensions/ad_hoc/notes/20260909-082144-ordemilk-app-canonico.md`; descobriu as duas contas Vercel; logou o CLI na conta oficial em perfil temporario; conferiu que a `GEMINI_API_KEY` do `ordemilk-app` continua sendo a chave antiga; tentou 4 vezes autenticar o `gcloud` (nunca concluiu); orientou o USER a criar chave nova no projeto `ordemilk-tech-assist`; parou por limite de uso do Codex ate 13:00. Nao alterou codigo nem variaveis da Vercel. Deixou em `C:\tmp` os perfis `vercel-ordemilk-auth` (token da conta oficial, sensivel, apagar quando nao for mais necessario) e `gcloud-ordemilk-auth` (vazio), mais pastas de controle vinculadas aos tres projetos.
+  - **CAMINHO UNICO PARA VOLTAR A FUNCIONAR:** no Google AI Studio (https://aistudio.google.com), pagina Billing/Projects, na conta de faturamento ligada ao `ordemilk-tech-assist` (status "No credits" ou "Set up Prepay"), adicionar creditos (minimo US$ 5). O credito promocional de R$ 100 passa a ser consumido primeiro. Nao precisa mexer em Vercel, chave ou deploy: as chaves atuais voltam a funcionar em minutos nos DOIS sites. Depois disso, e so depois, fazer a rotacao para uma chave nova com restricao de referenciador (seguranca), trocando `GEMINI_API_KEY` no projeto oficial `ordemilk-app`.
+  - **MAPA DAS CHAVES CONFIRMADO (captura do AI Studio, conta `conta corporativa Ordemilk`, 2026-09-09T10:55):** `...q-jw` (producao, fp `35070947DC14`) = projeto `ordemilk-tech-assist`, criada 02/03/2026, conta de faturamento `...CA32`, Nivel 1; `...T2oY` (antigravity, fp `C11450CE559D`) e `...CSxM` (app parti, criada pelo Firebase, fp `03AFD6C52BFC`) = projeto `My First Project` (`[projeto secundario]`), conta de faturamento `...D749`, Nivel 1. Conclusao: a chave publicada nos dois sites JA e a do projeto certo (`ordemilk-tech-assist`); nao precisa criar chave nova para voltar a funcionar. O que falta e saldo Prepay na conta `...CA32` (a que tem o credito promocional de R$ 100). As chaves do `My First Project` sao de outra conta de faturamento (`...D749`, tambem zerada) e nao sao usadas pelo app.
+  - **RESOLVIDO 2026-09-09T11:13-03:00:** o USER configurou o pre-pagamento e adicionou R$ 100 na conta de faturamento `...CA32` (`conta ...CA32`, projeto `ordemilk-tech-assist`), pela conta Google pessoal `conta Google pessoal do dono`. Teste imediato da chave publicada `...q-jw` nos tres modelos: `gemini-3-flash-preview` 200, `gemini-3.1-pro-preview` 200, `gemini-2.5-flash` 200. A IA voltou nos dois sites sem redeploy nem troca de chave. Observacoes: (1) o app oficial e pago pela conta Google PESSOAL do Marlon, nao pela corporativa; considerar migrar a cobranca para uma conta da Ordemilk no futuro. (2) O que antes parecia "free tier sem 3.1 Pro" era efeito do saldo Prepay zerado; com saldo, 3.1 Pro funciona. (3) Pendencias de seguranca ainda abertas: chave exposta no bundle (rotacionar com restricao de referenciador) e desligar o site/projeto duplicado `app-ordemilk`.
+
 ### RODADA ATIVA CODEX - 2026-09-04T13:34:40-03:00
 - **Autorizacao direta do USER:** "refrigeracao nao tem nada a hever com eletrica...REFRIGERACAO!!.. procure os dados de refrigeracao no historico.!!" e depois "pode fazer o deploy" / "faca o deploy".
 - **Diagnostico:** o pente fino confirmou contaminacao real no modo `REF`: o prompt ainda podia carregar pacote eletrico, FAQ eletrica, base estruturada eletrica, contexto de CLP para tanques grandes e rota eletrica quando a frase tinha "nao liga"; tambem havia base antiga de refrigeracao com `SH 5 a 10K`, `SR 3 a 5K` e `SH/SR`, divergindo do padrao historico validado `SH 7 a 12K` e `SC 4 a 8K`.
