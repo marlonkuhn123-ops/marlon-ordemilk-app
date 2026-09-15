@@ -16,6 +16,14 @@
 - **Validacao local:** lint OK, build OK. Playwright local em `127.0.0.1:51766`: SH R22 68 PSIG/10C retornou Tsat 4.2C, SH 5.8K, BAIXO; SC R404A 295 PSIG/53C retornou Tsat 46.6C, SC -6.4K, BAIXO. Rede da tela Superaq sem chamadas Gemini; console sem erros.
 - **Deploy/validacao producao:** commit `b8c0fa7` enviado ao `main`; `https://ordemilk.vercel.app` carregou `V66.0`. Playwright online: SH R22 68 PSIG/10C retornou Tsat 4.2C, SH 5.8K, BAIXO; SC R404A 295 PSIG/53C retornou Tsat 46.6C, SC -6.4K, BAIXO. Rede da tela Superaq sem chamadas Gemini; console sem erros.
 - **Versao publicada:** selo visual `V66.0` e cache `ordemilk-tech-v66`.
+- **CONFIRMACAO INDEPENDENTE (CLAUDE, 2026-09-15):** eu tambem estava com um fix quase identico em andamento
+  (timeout + pular base extensa no CALC) quando a Codex commitou `b8c0fa7`; a solucao dela e superior (tira a
+  chamada ao Gemini da calculadora por completo, entao nao ha mais como travar em "Sincronizando..." ali).
+  Retestei ao vivo, de forma independente: `git rev-list origin/main...HEAD` = `0 0` (sincronizado); lint e
+  build OK; caso SH R-22 68 PSIG/10C = Tsat 4.2C, SH 5.8K, BAIXO; caso SC R-404A 295 PSIG/53C = Tsat 46.6C,
+  SC -6.4K, BAIXO; zero chamadas ao Gemini na tela Superaq; resultado antigo some ao editar um campo antes de
+  clicar Calcular; zero erros de console. Regressao no suporte (compartilha geminiService.ts): pergunta de
+  agitador em tanque grande segue puxando o esquema CLP corretamente, HTTP 200, zero erros. Nada a corrigir.
 
 ### >>> ESTADO CANONICO E RESUMO PARA A CODEX - 2026-09-14 (deixado por CLAUDE) <<<
 LEIA ISTO PRIMEIRO. Depois de muita confusao entre apps, repositorios, contas Vercel e chaves de API, o quadro
