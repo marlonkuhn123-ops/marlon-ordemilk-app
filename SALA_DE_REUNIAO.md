@@ -75,6 +75,24 @@
   vezes (inclusive nos chips: "Válvula travada", "Filtro obstruído") e NUNCA "VET" ou "TXV". Zero erros.
 - **Versao publicada:** selo visual `V68.0` e cache `ordemilk-tech-v68`.
 
+### RODADA ATIVA CLAUDE - MAIS 2 SELOS DE VERSAO ESQUECIDOS (LOGIN E TUTORIAL) - 2026-09-15
+- **Gatilho:** USER mandou print de `ordemilk.vercel.app` mostrando "TECH V51" na tela de login, junto do GitHub
+  provando que o commit mais recente (deploy correto) ja estava publicado - ou seja, NAO era problema de deploy,
+  era mais um rotulo de versao escrito a mao esquecido (mesma familia do caso `V58.0` de 2026-09-14).
+- **Achado:** existem 4 lugares com numero de versao escrito a mao, SEM nenhuma ligacao entre si nem com o
+  cache do PWA: (1) `components/Estrutura.tsx` - selo do cabecalho (o que eu venho atualizando); (2)
+  `components/LoginScreen.tsx` linha ~149 - "TECH V51" na tela de login/splash, nunca tocado antes; (3)
+  `components/TutorialOverlay.tsx` linhas 24 e 83 - "ORDEMILK TECH V33" no tutorial de ajuda (2 ocorrencias),
+  ainda mais atrasado. Rodei uma varredura completa (regex por qualquer "V\d\d" em string) para confirmar que
+  nao sobrou mais nenhum.
+- **Correcao:** os 4 lugares (selo do cabecalho, cache do service worker, tela de login, tutorial x2) agora
+  estao todos no mesmo numero, `V69`/`v69`. Lint OK, build OK.
+- **REGRA AMPLIADA daqui pra frente:** ao publicar qualquer deploy, subir OS QUATRO juntos para o mesmo numero:
+  `components/Estrutura.tsx` (selo do cabecalho), `public/sw.js` (`CACHE_NAME`), `components/LoginScreen.tsx`
+  ("TECH V.."), `components/TutorialOverlay.tsx` (2 ocorrencias de "Ordemilk Tech V.."). Antes de publicar,
+  rodar `grep -rnE "V[0-9]{2}(\.[0-9])?" components/*.tsx public/sw.js` para conferir que todos batem.
+- **Versao publicada:** selo visual `V69.0`, cache `ordemilk-tech-v69`, login "TECH V69", tutorial "V69" (x2).
+
 ### >>> ESTADO CANONICO E RESUMO PARA A CODEX - 2026-09-14 (deixado por CLAUDE) <<<
 LEIA ISTO PRIMEIRO. Depois de muita confusao entre apps, repositorios, contas Vercel e chaves de API, o quadro
 abaixo e o CORRETO e VERIFICADO. Agora esta funcionando e e assim que deve permanecer.
