@@ -43,8 +43,8 @@ export const runSystemDiagnostics = () => {
         assert(p.includes("= 10.0K"), `Cálculo SH padrão falhou. Esperado 10.0K. Prompt: ${p}`);
 
         const audit = logicService.getCalculatorAudit(Refrigerant.R22, "68", "14.2", "Superaquecimento");
-        assert(audit.tsatLabel === "Tsat = 4.2\u00b0C", `Linha de Tsat incorreta no SH. Recebido: ${audit.tsatLabel}`);
-        assert(audit.resultLabel === "SH = 14.2\u00b0C - 4.2\u00b0C = 10.0K", `Linha de cálculo SH incorreta. Recebido: ${audit.resultLabel}`);
+        assert(audit.tsatLabel === "Tsat = 4.2\u00b0C", `Linha de Tsat incorreta no Sup.Aque. Recebido: ${audit.tsatLabel}`);
+        assert(audit.resultLabel === "Sup.Aque = 14.2\u00b0C - 4.2\u00b0C = 10.0K", `Linha de cálculo Sup.Aque incorreta. Recebido: ${audit.resultLabel}`);
     });
 
     test("Calculadora: Deve calcular Superaquecimento corretamente com temperaturas negativas", () => {
@@ -53,13 +53,13 @@ export const runSystemDiagnostics = () => {
         assert(p.includes("= 10.0K"), `Cálculo SH com negativos falhou. Esperado 10.0K. Prompt: ${p}`);
 
         const audit = logicService.getCalculatorAudit(Refrigerant.R22, "30", "-3.9", "Superaquecimento");
-        assert(audit.resultLabel === "SH = -3.9\u00b0C - (-13.9\u00b0C) = 10.0K", `Formula SH negativa sem parenteses. Recebido: ${audit.resultLabel}`);
+        assert(audit.resultLabel === "Sup.Aque = -3.9\u00b0C - (-13.9\u00b0C) = 10.0K", `Formula Sup.Aque negativa sem parenteses. Recebido: ${audit.resultLabel}`);
     });
 
     test("Calculadora: Deve exibir parenteses ao subtrair Tsat negativa no R-404A", () => {
         const audit = logicService.getCalculatorAudit(Refrigerant.R404A, "20", "-8", "Superaquecimento");
         assert(audit.tsatLabel === "Tsat = -25.9\u00b0C", `Tsat R-404A 20 PSIG incorreta. Recebido: ${audit.tsatLabel}`);
-        assert(audit.resultLabel === "SH = -8.0\u00b0C - (-25.9\u00b0C) = 17.9K", `Formula R-404A SH deveria usar parenteses. Recebido: ${audit.resultLabel}`);
+        assert(audit.resultLabel === "Sup.Aque = -8.0\u00b0C - (-25.9\u00b0C) = 17.9K", `Formula R-404A Sup.Aque deveria usar parenteses. Recebido: ${audit.resultLabel}`);
         assert(audit.classification === "ALTO", `Classificacao esperada ALTO. Recebido: ${audit.classification}`);
     });
 
@@ -73,9 +73,9 @@ export const runSystemDiagnostics = () => {
         assert(p.includes("R404A bubble/liquido"), `Prompt nao declarou curva bubble. Prompt: ${p}`);
 
         const audit = logicService.getCalculatorAudit(Refrigerant.R404A, "295", "53", "Sub-resfriamento");
-        assert(audit.tsatLabel === "Tsat = 46.6\u00b0C", `Linha de Tsat incorreta no SC. Recebido: ${audit.tsatLabel}`);
-        assert(audit.resultLabel === "SC = 46.6\u00b0C - 53.0\u00b0C = -6.4K", `Linha de cálculo SC incorreta. Recebido: ${audit.resultLabel}`);
-        assert(audit.classification === "BAIXO", `Classificacao incorreta para SC negativo. Recebido: ${audit.classification}`);
+        assert(audit.tsatLabel === "Tsat = 46.6\u00b0C", `Linha de Tsat incorreta no Sub.Res. Recebido: ${audit.tsatLabel}`);
+        assert(audit.resultLabel === "Sub.Res = 46.6\u00b0C - 53.0\u00b0C = -6.4K", `Linha de cálculo Sub.Res incorreta. Recebido: ${audit.resultLabel}`);
+        assert(audit.classification === "BAIXO", `Classificacao incorreta para Sub.Res negativo. Recebido: ${audit.classification}`);
     });
 
     test("Calculadora: Deve usar R-404A dew no superaquecimento", () => {
@@ -83,8 +83,8 @@ export const runSystemDiagnostics = () => {
         assert(satTemp !== null && Math.abs(satTemp - 46.9) < 0.1, `R-404A dew falhou. Esperado ~46.9 C, recebido ${satTemp}`);
 
         const audit = logicService.getCalculatorAudit(Refrigerant.R404A, "295", "56.9", "Superaquecimento");
-        assert(audit.resultLabel === "SH = 56.9\u00b0C - 46.9\u00b0C = 10.0K", `Linha de calculo SH/dew incorreta. Recebido: ${audit.resultLabel}`);
-        assert(audit.curveLabel.includes("dew"), `Curva SH deveria ser dew. Recebido: ${audit.curveLabel}`);
+        assert(audit.resultLabel === "Sup.Aque = 56.9\u00b0C - 46.9\u00b0C = 10.0K", `Linha de calculo Sup.Aque/dew incorreta. Recebido: ${audit.resultLabel}`);
+        assert(audit.curveLabel.includes("dew"), `Curva Sup.Aque deveria ser dew. Recebido: ${audit.curveLabel}`);
     });
 
     test("Calculadora: Deve encontrar chaves decimais exatas na tabela PT", () => {

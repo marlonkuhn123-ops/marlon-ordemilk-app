@@ -25,6 +25,32 @@
   clicar Calcular; zero erros de console. Regressao no suporte (compartilha geminiService.ts): pergunta de
   agitador em tanque grande segue puxando o esquema CLP corretamente, HTTP 200, zero erros. Nada a corrigir.
 
+### RODADA ATIVA CLAUDE - RENOMEIA SH/SC PARA SUP.AQUE/SUB.RES + CONDUTA CURTA - 2026-09-15
+- **Autorizacao direta do USER:** "preciso que apareça sup.Aque e sub.RES - tire as letras sh e sc, muitos
+  tecnicos se confundem. deixe claro sempre como mencionei. e tbm preciso do texto depois do resultado do que
+  deve ser feito de forma simples sem muitas delongas."
+- **Escopo:** so a tela Superaq (calculadora). NAO mexi no parser SH/SC do chat de suporte
+  (supportDiagnosticEngine.ts le "SH=18K" que o tecnico digita na conversa - e outra funcionalidade, fora do
+  pedido) nem em `formatCalculatorPrompt` (codigo morto da UI, so usado pelos testes internos).
+- **Mudado:** `services/logicService.ts` - `modeShortLabel` agora e `'Sup.Aque' | 'Sub.Res'` (o badge no topo do
+  card usa CSS `uppercase`, entao renderiza `SUP.AQUE`/`SUB.RES` na tela, exatamente como o USER escreveu);
+  `directionLabel` e `resultLabel` trocaram `SH =`/`SC =` por `Sup.Aque =`/`Sub.Res =`; `curveLabel` do R404A
+  trocou "correto para SH/SC" por "correto para Sup.Aque/Sub.Res"; `getRecommendedAction` foi reescrita mais
+  curta e direta (o que fazer, sem SH/SC), mantendo a regra de seguranca de cruzar Sup.Aque com Sub.Res antes
+  de mandar abrir a valvula quando Sup.Aque esta alto. `components/Tool_3_Calculator.tsx` - caixa de aviso
+  "(SH)"/"(SC)" virou "SUP.AQUE:"/"SUB.RES:". `services/testSuite.ts` - as 5 asseraoes que conferiam o texto
+  exato do `resultLabel` foram atualizadas para o novo formato (senao o botao "Status do sistema" acusaria
+  falha por engano).
+- **Validacao local (build com chave real, gitignored):** lint OK, build OK; badge renderiza `SUP.AQUE`
+  (confirmado via `getComputedStyle().textTransform === 'uppercase'` sobre o texto-fonte `Sup.Aque`); caso
+  Sup.Aque R-22 68 PSIG/10C = Tsat 4.2C, `Sup.Aque = 10.0°C - 4.2°C = 5.8K`, BAIXO, conduta "Risco de líquido
+  voltar pro compressor. Verifique se a válvula (VET) está muito aberta ou o bulbo solto antes de
+  fechar/ajustar."; caso Sub.Res R-404A 295 PSIG/53C = Tsat 46.6C, `Sub.Res = 46.6°C - 53.0°C = -6.4K`, BAIXO,
+  conduta "Sem reserva de líquido. Verifique vazamento ou falta de gás antes de completar a carga."; nenhum
+  "SH"/"SC" isolado sobrou na tela; botao "Status do sistema" (runSystemDiagnostics) = 18/18 testes aprovados;
+  zero erros de console.
+- **Versao publicada:** selo visual `V67.0` e cache `ordemilk-tech-v67`.
+
 ### >>> ESTADO CANONICO E RESUMO PARA A CODEX - 2026-09-14 (deixado por CLAUDE) <<<
 LEIA ISTO PRIMEIRO. Depois de muita confusao entre apps, repositorios, contas Vercel e chaves de API, o quadro
 abaixo e o CORRETO e VERIFICADO. Agora esta funcionando e e assim que deve permanecer.

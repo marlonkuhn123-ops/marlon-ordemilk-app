@@ -75,9 +75,9 @@ export const Tool_Calculator: React.FC = () => {
                 <div className="mb-4 p-3 rounded-lg border text-[10px] font-medium leading-relaxed flex items-start gap-2 transition-colors bg-[#2a3646]/50 border-[#4a5c73] text-[#9ca7b8]">
                     <i className="fa-solid fa-circle-info mt-0.5 text-xs text-[#00d9ff]"></i>
                     <span>
-                        {mode === 'Superaquecimento' 
-                            ? "SUPER AQUECIMENTO (SH): use pressao baixa em PSIG. Para ajuste de VET, prefira medir na saida do evaporador/bulbo; perto do compressor vira superaquecimento total."
-                            : "SUB-RESFRIAMENTO (SC): use pressao alta em PSIG. Em R404A o app usa bubble/liquido. Considere o ponto medido: saida do condensador ou antes da VET."}
+                        {mode === 'Superaquecimento'
+                            ? "SUP.AQUE: use pressao baixa em PSIG. Para ajuste de VET, prefira medir na saida do evaporador/bulbo; perto do compressor vira superaquecimento total."
+                            : "SUB.RES: use pressao alta em PSIG. Em R404A o app usa bubble/liquido. Considere o ponto medido: saida do condensador ou antes da VET."}
                     </span>
                 </div>
 

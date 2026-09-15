@@ -27,7 +27,8 @@ type PtLookupResult = {
 
 export interface CalculatorAudit {
     ready: boolean;
-    modeShortLabel: 'SH' | 'SC';
+    // Nomes por extenso (nao mais SH/SC): tecnicos de campo confundem as siglas.
+    modeShortLabel: 'Sup.Aque' | 'Sub.Res';
     directionLabel: string;
     sourceLabel: string;
     tsatLabel: string;
@@ -57,11 +58,11 @@ const getCurveKeyForMode = (fluid: Refrigerant, mode: CalcMode): PtCurveKey => {
 
 const getCurveLabel = (fluid: Refrigerant, curveKey: PtCurveKey): string => {
     if (fluid === Refrigerant.R404A && curveKey === 'dew') {
-        return 'R404A dew/vapor - correto para SH';
+        return 'R404A dew/vapor - correto para Sup.Aque';
     }
 
     if (fluid === Refrigerant.R404A && curveKey === 'bubble') {
-        return 'R404A bubble/liquido - correto para SC';
+        return 'R404A bubble/liquido - correto para Sub.Res';
     }
 
     return `${fluid} saturacao unica`;
@@ -100,24 +101,26 @@ const classifyCalculation = (resultKelvin: number, mode: CalcMode): 'BAIXO' | 'I
     return 'IDEAL';
 };
 
+// Texto curto e direto: o que fazer para corrigir. Sem SH/SC (tecnicos confundem as siglas)
+// e sem delongas - so o essencial para agir com seguranca.
 const getRecommendedAction = (mode: CalcMode, classification: 'BAIXO' | 'IDEAL' | 'ALTO'): string => {
     if (mode === 'Superaquecimento') {
         if (classification === 'BAIXO') {
-            return 'SH baixo: risco de retorno de liquido. Verificar VET muito aberta, bulbo solto/mal isolado ou orificio grande antes de fechar/ajustar.';
+            return 'Risco de líquido voltar pro compressor. Verifique se a válvula (VET) está muito aberta ou o bulbo solto antes de fechar/ajustar.';
         }
         if (classification === 'ALTO') {
-            return 'SH alto: evaporador recebendo pouco liquido. Cruzar com SC: se SC baixo, procurar falta de fluido/vazamento; se SC normal/alto, procurar restricao, filtro ou VET fechada.';
+            return 'Evaporador recebendo pouco líquido. Se o Sub.Res também estiver baixo: verifique vazamento ou falta de gás antes de abrir a válvula. Se o Sub.Res estiver normal ou alto: verifique filtro entupido ou válvula fechada demais.';
         }
-        return 'SH ideal: nao mexer na VET apenas por este dado. Confirmar SC, pressoes, troca termica e estabilidade do sistema.';
+        return 'Está no ideal. Não mexa na válvula só por este dado — confira também o Sub.Res e as pressões.';
     }
 
     if (classification === 'BAIXO') {
-        return 'SC baixo ou negativo: sem reserva liquida. Verificar carga, vazamento, flash gas, condensacao baixa, filtro/linha liquida e aquecimento da linha antes de adicionar fluido.';
+        return 'Sem reserva de líquido. Verifique vazamento ou falta de gás antes de completar a carga.';
     }
     if (classification === 'ALTO') {
-        return 'SC alto: pode haver excesso de fluido ou liquido preso no condensador. Antes de retirar fluido, confirmar condensador limpo, ventilacao, fan e ausencia de nao-condensaveis.';
+        return 'Pode ter excesso de gás. Verifique se o condensador está limpo e o ventilador funcionando antes de retirar gás.';
     }
-    return 'SC ideal: nao adicionar nem retirar fluido apenas por este dado. Cruzar com SH, visor, pressoes e carga termica.';
+    return 'Está no ideal. Não adicione nem retire gás só por este dado — confira também o Sup.Aque e o visor.';
 };
 
 const getSaturationLookup = (fluid: Refrigerant, pressure: number, mode: CalcMode): PtLookupResult => {
@@ -208,10 +211,10 @@ export const logicService = {
     getCalculatorAudit: (fluid: Refrigerant, press: string, temp: string, mode: CalcMode): CalculatorAudit => {
         const pressureVal = parseNumericInput(press);
         const tempMeasured = parseNumericInput(temp);
-        const modeShortLabel = mode === 'Superaquecimento' ? 'SH' : 'SC';
+        const modeShortLabel: 'Sup.Aque' | 'Sub.Res' = mode === 'Superaquecimento' ? 'Sup.Aque' : 'Sub.Res';
         const directionLabel = mode === 'Superaquecimento'
-            ? 'SH = temperatura do tubo de succao - Tsat'
-            : 'SC = Tsat - temperatura da linha de liquido';
+            ? 'Sup.Aque = temperatura do tubo de succao - Tsat'
+            : 'Sub.Res = Tsat - temperatura da linha de liquido';
         const reference = getReferenceRange(mode);
         const curveLabel = getCurveLabel(fluid, getCurveKeyForMode(fluid, mode));
         const baseAudit: Omit<CalculatorAudit, 'ready' | 'sourceLabel' | 'tsatLabel' | 'resultLabel' | 'satTemp' | 'resultKelvin'> = {
@@ -258,8 +261,8 @@ export const logicService = {
         const classification = classifyCalculation(resultKelvin, mode);
         const actionLabel = getRecommendedAction(mode, classification);
         const resultLabel = mode === 'Superaquecimento'
-            ? `SH = ${formatTemperature(tempMeasured)} - ${formatSubtractedTemperature(lookup.satTemp)} = ${formatKelvin(resultKelvin)}`
-            : `SC = ${formatTemperature(lookup.satTemp)} - ${formatSubtractedTemperature(tempMeasured)} = ${formatKelvin(resultKelvin)}`;
+            ? `${modeShortLabel} = ${formatTemperature(tempMeasured)} - ${formatSubtractedTemperature(lookup.satTemp)} = ${formatKelvin(resultKelvin)}`
+            : `${modeShortLabel} = ${formatTemperature(lookup.satTemp)} - ${formatSubtractedTemperature(tempMeasured)} = ${formatKelvin(resultKelvin)}`;
 
         return {
             ...baseAudit,
