@@ -1,7 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, SectionTitle, Button, Input, Select, AIOutputBox } from './UI';
-import { generateTechResponse } from '../services/geminiService';
 import { CalcMode, Refrigerant } from '../types';
 import { logicService } from '../services/logicService';
 
@@ -11,24 +10,41 @@ export const Tool_Calculator: React.FC = () => {
     const [temp, setTemp] = useState('');
     const [mode, setMode] = useState<CalcMode>('Superaquecimento');
     const [result, setResult] = useState('');
-    const [loading, setLoading] = useState(false);
     const localAudit = logicService.getCalculatorAudit(fluid, press, temp, mode);
     const pressureLabel = mode === 'Superaquecimento' ? 'Pressao Baixa (PSIG)' : 'Pressao Alta (PSIG)';
     const temperatureLabel = mode === 'Superaquecimento' ? 'Temp. Succao (C)' : 'Temp. Linha Liquida (C)';
     const temperaturePlaceholder = mode === 'Superaquecimento' ? 'Saida evaporador/bulbo' : 'Linha liquida';
 
-    const run = async () => {
-        if (!press || !temp) return;
-        setLoading(true);
-        try {
-            const prompt = logicService.formatCalculatorPrompt(fluid, press, temp, mode);
-            const text = await generateTechResponse(prompt, "CALC");
-            setResult(text);
-        } catch (error) { 
-            const errorMessage = error instanceof Error ? error.message : "Falha na comunicação com a IA.";
-            setResult(`ERRO TÉCNICO: ${errorMessage}`); 
+    useEffect(() => {
+        setResult('');
+    }, [fluid, press, temp, mode]);
+
+    const buildLocalResult = () => {
+        if (!localAudit.ready) {
+            return [
+                'RESULTADO LOCAL NAO CONCLUIDO',
+                localAudit.warning || 'Revise pressao e temperatura antes de interpretar o equipamento.',
+                `Fonte: ${localAudit.sourceLabel}`,
+            ].join('\n');
         }
-        setLoading(false);
+
+        return [
+            'RESULTADO LOCAL AUDITAVEL',
+            `Fluido: ${fluid}`,
+            `Modo: ${mode} (${localAudit.modeShortLabel})`,
+            localAudit.tsatLabel,
+            localAudit.resultLabel,
+            localAudit.classificationLabel,
+            localAudit.referenceLabel,
+            `Curva usada: ${localAudit.curveLabel}`,
+            `Conduta: ${localAudit.actionLabel}`,
+            `Fonte: ${localAudit.sourceLabel}`,
+        ].join('\n');
+    };
+
+    const run = () => {
+        if (!press || !temp) return;
+        setResult(buildLocalResult());
     };
 
     const classificationTone = localAudit.classification === 'IDEAL'
@@ -127,8 +143,8 @@ export const Tool_Calculator: React.FC = () => {
                     </div>
                 </div>
 
-                <Button onClick={run} disabled={loading}>CALCULAR AGORA</Button>
-                <AIOutputBox content={result} isLoading={loading} title={`ANALISE COMPLEMENTAR ${mode}`} />
+                <Button onClick={run} disabled={!press || !temp}>CALCULAR AGORA</Button>
+                <AIOutputBox content={result} isLoading={false} title={`RESULTADO LOCAL ${mode}`} />
             </Card>
         </div>
     );

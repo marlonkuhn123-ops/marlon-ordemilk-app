@@ -79,6 +79,10 @@ const handleApiError = (error: any) => {
   const lower = msg.toLowerCase();
   const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
 
+  if (lower.includes('tech_response_timeout')) {
+    return "⚠️ A IA demorou demais para responder. O cálculo local permanece válido; tente novamente se precisar da análise complementar.";
+  }
+
   // Sem internet no aparelho ou falha de rede/fetch
   if (isOffline || lower.includes('failed to fetch') || lower.includes('networkerror') || lower.includes('network error') || lower.includes('econnreset') || lower.includes('socket')) {
     return "📴 SEM INTERNET: verifique o sinal ou o Wi-Fi e toque em Repetir. Enquanto isso, uso o modo de consulta local.";
@@ -173,6 +177,9 @@ const isQuotaError = (error: any) => {
 const isEmptyResponseError = (error: any) =>
   String(error?.message || "").includes(EMPTY_RESPONSE_ERROR);
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Limite para as ferramentas (calculadora, erros, dimensionamento, laudo): evita a tela
+// ficar em "Sincronizando..." indefinidamente se a API demorar ou travar.
+const TECH_RESPONSE_TIMEOUT_MS = 45000;
 const hasContextValue = (value?: string) => Boolean(value && value.trim());
 const normalizeText = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 // Prioriza refrigeracao no modo REF, mas mantem o pacote eletrico disponivel como
@@ -541,16 +548,25 @@ export const generateTechResponse = async (
   const apiKey = ENV.GEMINI_API_KEY;
   const ai = new GoogleGenAI({ apiKey });
 
+  // A calculadora (CALC) ja envia o calculo local FECHADO no prompt; a IA so interpreta. Nao precisa da
+  // base extensa (FAQ + base 4 camadas, ~11k tokens): economiza custo e responde bem mais rapido.
+  // As demais ferramentas seguem com o conhecimento completo.
+  const includeExtendedKnowledge = toolType !== "CALC";
+
   try {
-    const systemInstruction = await getFullSystemInstruction(toolType, userPrompt);
-    const response = await ai.models.generateContent({
-      model: DEFAULT_TEXT_MODEL,
-      contents: userPrompt,
-      config: {
-        systemInstruction,
-        temperature: 0.1,
-      },
-    });
+    const systemInstruction = await getFullSystemInstruction(toolType, userPrompt, 'AUTO', {}, includeExtendedKnowledge);
+    const config: Record<string, any> = { systemInstruction, temperature: 0.1 };
+    if (DEFAULT_TEXT_MODEL.startsWith("gemini-3")) {
+      config.thinkingConfig = { thinkingLevel: "low" };
+    }
+
+    // Timeout: sem isso, se a API demorar ou travar, a tela fica em "Sincronizando..." para sempre.
+    const response = await Promise.race([
+      ai.models.generateContent({ model: DEFAULT_TEXT_MODEL, contents: userPrompt, config }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("TECH_RESPONSE_TIMEOUT")), TECH_RESPONSE_TIMEOUT_MS)
+      ),
+    ]);
 
     return response.text || "";
   } catch (error: any) {
