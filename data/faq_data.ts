@@ -28,16 +28,16 @@ MÓDULO 2: CONTROLADORES E SENSORES
 20. Inércia Térmica: O fundo mede a chapa de inox resfriada diretamente pelo gás (alta flutuação). O poço mergulhado lê a temperatura real e estável da massa de líquido.
 
 MÓDULO 3: CICLO, FLUIDO E EXPANSÃO
-21. Diagnóstico Duplo (VET): Assobio com bolhas indica falta de gás ou sub-resfriamento inexistente. Se fosse tela entupida, a pressão de alta estaria normal e o visor antes da VET estaria cheio.
+21. Diagnóstico Duplo (Válvula de Expansão): Assobio com bolhas indica falta de gás ou sub-resfriamento inexistente. Se fosse tela entupida, a pressão de alta estaria normal e o visor antes da válvula de expansão estaria cheio.
 22. Retorno de Líquido: Superaquecimento zero ou negativo. Gás não ferveu totalmente. Risco de quebra das válvulas de palheta por líquido incompressível.
 23. Falta de fluido refrigerante: Carga baixa faz o fluido evaporar totalmente logo no início da serpentina (Roll-Bond). Gelo desigual na placa.
-24. Inundação (Bulbo Solto): O bulbo sente calor ambiente e abre a VET ao máximo (100%), inundando o evaporador com líquido e despencando a pressão.
-25. Sentido de ajuste: Anti-horário alivia a mola, fazendo a VET abrir mais fácil, permitindo mais fluido e diminuindo o superaquecimento.
-26. Entupimento por Umidade (Gelo): Umidade congela no orifício da VET, bloqueando o gás. Ao desligar, o gelo derrete e o ciclo volta a funcionar até congelar de novo.
+24. Inundação (Bulbo Solto): O bulbo sente calor ambiente e abre a válvula de expansão ao máximo (100%), inundando o evaporador com líquido e despencando a pressão.
+25. Sentido de ajuste: Anti-horário alivia a mola, fazendo a válvula de expansão abrir mais fácil, permitindo mais fluido e diminuindo o superaquecimento.
+26. Entupimento por Umidade (Gelo): Umidade congela no orifício da válvula de expansão, bloqueando o gás. Ao desligar, o gelo derrete e o ciclo volta a funcionar até congelar de novo.
 27. Diferença de leitura: O Útil diz se o evaporador é eficiente. O Total (perto do compressor) garante que nenhum líquido chegará ao cárter.
 28. Miscibilidade: R-22 usa óleo mineral. R-404A exige óleo polioléster (POE). Sem a troca, o óleo não retorna ao compressor, causando fundição por falta de lubrificação.
 29. Gases Não Condensáveis: Ar/umidade no sistema. O ar se aloja no topo do condensador, rouba área de troca e faz a pressão de descarga explodir.
-30. Expansão Prematura: Filtro obstruído atua como válvula de expansão, causando perda de carga e queda de temperatura na linha de líquido (filtro suando).
+30. Expansão Prematura: Filtro secador obstruído atua como válvula de expansão, causando perda de carga e queda de temperatura na linha de líquido (filtro secador suando).
 
 MÓDULO 4: COMPRESSORES E CONDENSADORES
 31. Altíssimo Superaquecimento (Falta de gás): O fluido frio no retorno resfria o compressor. Sem gás, o motor superaquece e o óleo na descarga "frita", perdendo viscosidade.
@@ -56,7 +56,7 @@ MÓDULO 5: AGITAÇÃO, PRODUTO E LIMPEZA
 42. Retentor Mecânico: Desgaste do retentor do redutor (geralmente por jato d'água). Óleo escorre pelo eixo para dentro do leite.
 43. Lipólise (Quebra da Gordura): Agitação acima de 35 RPM rompe glóbulos de gordura, causando rancidez e inviabilizando o produto.
 44. Isolamento Térmico (Pedra de Leite): Biofilme atua como barreira isolante, impedindo o fluxo de calor do leite para o inox, aumentando o tempo de resfriamento.
-45. Dilatação Térmica (Água 80°C): Calor ferve fluido estagnado no evaporador. Com VET fechada, a pressão dispara (>500 psi), podendo estufar o tanque.
+45. Dilatação Térmica (Água 80°C): Calor ferve fluido estagnado no evaporador. Com a válvula de expansão fechada, a pressão dispara (>500 psi), podendo estufar o tanque.
 46. Estratificação Térmica: Sem agitação, leite no fundo perde calor e estaciona (vira gelo), enquanto o leite quente sobe.
 47. Pressurização Excessiva: Galerias Roll-Bond não suportam pressões extremas (>200 psi). Pressurizar com 350 psi de Nitrogênio estufa as paredes internas.
 48. Rompimento e Contaminação: Desgaste mecânico da pá raspando perfura a galeria de refrigerante, injetando gás e óleo no leite.

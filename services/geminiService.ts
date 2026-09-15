@@ -18,13 +18,13 @@ const SUPPORT_FIELD_BRAIN_PACK = `
 [PACOTE COMPACTO DE REFRIGERAÇÃO DE CAMPO - USAR DESDE A PRIMEIRA RESPOSTA]
 - Superaquecimento (SH) ideal em campo: 7K a 12K.
 - Sub-resfriamento (SC) ideal em campo: 4K a 8K.
-- SH alto + SC baixo: priorize falta de fluido, vazamento, carga incompleta ou flash gas. Não coloque restrição/filtro/VET como hipótese no mesmo peso nesse padrão sem excluir vazamento/carga/flash gas. Não mande abrir VET primeiro.
-- SH alto + SC normal/alto: priorize restrição, filtro secador, VET subalimentando, bulbo/igualador ou coluna líquida com restrição.
+- SH alto + SC baixo: priorize falta de fluido, vazamento, carga incompleta ou flash gas. Não coloque restrição/filtro secador/válvula de expansão como hipótese no mesmo peso nesse padrão sem excluir vazamento/carga/flash gas. Não mande abrir a válvula de expansão primeiro.
+- SH alto + SC normal/alto: priorize restrição, filtro secador, válvula de expansão subalimentando, bulbo/igualador ou coluna líquida com restrição.
 - SH baixo: risco de retorno de líquido/golpe; não force compressor.
 - Alta pressão/desarme por alta: verifique condensador, ventiladores, obstrução de ar, excesso de fluido e ar no sistema antes de insistir em partida.
 - Compressor liga e desliga: pense primeiro em pressostato, alta condensação, baixa sucção, proteção térmica do compressor e ventilação.
 - Tanque demora para baixar leite: confirme agitação, carga térmica real, condensador, ventilação, SH/SC, visor, fluido e temperatura ambiente.
-- Leite congelando no fundo: pense em baixa carga térmica/agitação ruim, VET aberta demais, sensor mal posicionado ou controle de temperatura descalibrado.
+- Leite congelando no fundo: pense em baixa carga térmica/agitação ruim, válvula de expansão aberta demais, sensor mal posicionado ou controle de temperatura descalibrado.
 - Primeira resposta deve ser curta, mas tecnicamente útil para o técnico no cliente.
 `;
 
@@ -46,7 +46,7 @@ Diagnosticar falhas do ciclo frigorífico de tanques de leite com ligação real
 - FASE 2 (continuação): só aprofunde depois de receber medidas de campo.
 
 [ESCOPO PRIORITARIO DO MODO REF]
-- Foque em compressor, condensador, VET/TXV, evaporador Roll-Bond, fluido refrigerante, pressões, SH, SC, visor, vazamento, carga térmica, agitação, retorno de líquido, óleo e troca de calor.
+- Foque em compressor, condensador, válvula de expansão, evaporador Roll-Bond, fluido refrigerante, pressões, SH, SC, visor, vazamento, carga térmica, agitação, retorno de líquido, óleo e troca de calor.
 - A rota principal de diagnóstico é frigorífica. Porém, quando o sintoma indicar causa/efeito elétrico (desarme, contatora, relé, A1/A2, CLP, borne, IHM, falta de fase), traga a verificação elétrica pertinente como apoio, sem perder o foco frigorífico. Nunca isole as disciplinas.
 - Se a frase do técnico tiver "não liga" dentro do modo REF, interprete primeiro como "não entra em ciclo frigorífico / não resfria" e peça dados frigoríficos: pressão de sucção/descarga, SH/SC, fluido, visor, condensador e temperatura do leite; se houver sinal claro de comando/partida, confirme também o lado elétrico.
 - Não misture com ar-condicionado, chiller ou câmara fria genérica.
@@ -55,8 +55,8 @@ Diagnosticar falhas do ciclo frigorífico de tanques de leite com ligação real
 - SH ideal em campo: 7K a 12K.
 - SC ideal em campo: 4K a 8K.
 - R404A: usar dew/vapor para SH e bubble/líquido para SC.
-- SH alto + SC baixo: falta de fluido, vazamento, carga incompleta ou flash gas antes de culpar VET/filtro.
-- SH alto + SC normal/alto: restrição, filtro secador, VET subalimentando, bulbo/igualador ou coluna líquida com restrição.
+- SH alto + SC baixo: falta de fluido, vazamento, carga incompleta ou flash gas antes de culpar a válvula de expansão ou o filtro secador.
+- SH alto + SC normal/alto: restrição, filtro secador, válvula de expansão subalimentando, bulbo/igualador ou coluna líquida com restrição.
 - SH baixo: risco de retorno de líquido/golpe; não force compressor.
 
 [POSTURA E TOM]
@@ -206,7 +206,7 @@ const getDiagnosticGuidance = (mode: 'AUTO' | 'REF' | 'ELEC') => {
 [DIRETRIZES DE RACIOCÍNIO TÉCNICO - REFRIGERAÇÃO]
 1. NÃO CONCLUA SEM MEDIDA: Se o sintoma for genérico, peça pressão de sucção/descarga, SH, SC, fluido, visor e temperatura do leite.
 2. ESTRUTURA DE DIAGNÓSTICO: Sempre que possível, responda com Sintoma, Causa Provável, Causas Possíveis, Ordem de Verificação e Segurança frigorífica.
-3. PRIORIDADE: trate primeiro ciclo frigorífico, troca térmica, VET, condensador, evaporador, carga de fluido, retorno de líquido e mecânica do compressor.
+3. PRIORIDADE: trate primeiro ciclo frigorífico, troca térmica, válvula de expansão, condensador, evaporador, carga de fluido, retorno de líquido e mecânica do compressor.
 4. CRUZAMENTO QUANDO HOUVER INDÍCIO: o foco é refrigeração, mas se o sintoma apontar causa/efeito elétrico (desarme, contatora, CLP, bornes, A1/A2, falta de fase), traga a verificação elétrica pertinente de forma objetiva. Nunca isole as disciplinas.
 5. CAMPO: quando o técnico disser que "não gela", traduza para resfriamento lento do leite e confira carga térmica, agitação, condensação e SH/SC.
 `;
@@ -278,7 +278,7 @@ const getDiagnosticContextInstruction = (
   const tankCapacity = extractTankCapacityLiters(diagnosticContext.model);
   if (tankCapacity !== null && tankCapacity >= 4000) {
     if (mode === 'REF') {
-      lines.push(`- REGRA OPERACIONAL: trate este equipamento como resfriador de leite de grande porte com VET, condensador dimensionado e evaporador Roll-Bond; não use lógica de ar-condicionado, chiller ou tubo capilar pequeno.`);
+      lines.push(`- REGRA OPERACIONAL: trate este equipamento como resfriador de leite de grande porte com válvula de expansão, condensador dimensionado e evaporador Roll-Bond; não use lógica de ar-condicionado, chiller ou tubo capilar pequeno.`);
     } else {
       lines.push(`- REGRA OPERACIONAL: trate este equipamento como tanque >= 4000L com arquitetura CLP Panasonic. Não pergunte sobre Full Gauge, Ageon ou controlador comercial.`);
       const normalizedPrompt = normalizeText(userPrompt);
@@ -377,8 +377,8 @@ const getSymptomSpecificInstruction = (
   ) {
     lines.push('[REGRA ESPECÍFICA - SH/SC INFORMADOS]');
     lines.push('- Se SH está alto e SC está baixo, a primeira hipótese é falta de fluido/vazamento/flash gas.');
-    lines.push('- Não classifique como restrição/filtro/VET na primeira conclusão quando o SC está baixo; confirme carga/vazamento/visor/pressões primeiro.');
-    lines.push('- Não oriente abrir VET primeiro nesse padrão.');
+    lines.push('- Não classifique como restrição/filtro secador/válvula de expansão na primeira conclusão quando o SC está baixo; confirme carga/vazamento/visor/pressões primeiro.');
+    lines.push('- Não oriente abrir a válvula de expansão primeiro nesse padrão.');
   }
 
   return lines.length ? `\n\n${lines.join('\n')}` : "";
@@ -471,13 +471,13 @@ const getFullSystemInstruction = async (
   if (mode === 'ELEC') {
     modeInstruction = "\n\n🚨 [MODO FOCO EM ELÉTRICA]\nPriorize esquemas elétricos, bornes, CLP e componentes de comando. Use a base de dados de esquemas, a seção de [SUPORTE TÉCNICO: PERGUNTAS E RESPOSTAS ELÉTRICAS] e a seção de [DIAGNÓSTICO RÁPIDO: O QUE PODE SER?] para responder sobre componentes, funções do painel e falhas de funcionamento. Traga o lado frigorífico só quando houver indício técnico claro de que a causa é de refrigeração/mecânica (ex.: desarme por alta pressão, corrente elevada por condensador sujo). Nunca isole as disciplinas.";
   } else if (mode === 'REF') {
-    modeInstruction = "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO]\nPriorize o ciclo frigorífico: pressões, fluido, SH/SC, troca de calor, VET, condensador, evaporador e mecânica do compressor. Traga a verificação elétrica (esquema, CLP, bornes, contatoras, relés, A1/A2) só quando o sintoma apontar causa/efeito elétrico. Nunca isole as disciplinas: uma falha elétrica costuma ser consequência de um problema frigorífico/mecânico.";
+    modeInstruction = "\n\n🚨 [MODO FOCO EM REFRIGERAÇÃO]\nPriorize o ciclo frigorífico: pressões, fluido, SH/SC, troca de calor, válvula de expansão, condensador, evaporador e mecânica do compressor. Traga a verificação elétrica (esquema, CLP, bornes, contatoras, relés, A1/A2) só quando o sintoma apontar causa/efeito elétrico. Nunca isole as disciplinas: uma falha elétrica costuma ser consequência de um problema frigorífico/mecânico.";
   }
 
   if (mode === 'ELEC') {
     modeInstruction += "\n\n[SEQUÊNCIA ELÉTRICA DE CAMPO]\nPara IHM acesa e contatora que não fecha, responda com ordem segura: 1) alarme/status na IHM, 2) DM/relé térmico/falta de fase/pressostatos, 3) tensão A1/A2 da bobina, 4) saída do controlador/CLP. Se o compressor não está partindo, não peça pressões de manifold como confirmação principal.";
   } else if (mode === 'REF') {
-    modeInstruction += "\n\n[MATRIZ REFRIGERAÇÃO DE CAMPO]\nSe o técnico informar SH/SC, aplique: SH alto + SC baixo = falta de fluido/vazamento/flash gas; SH alto + SC normal/alto = restrição/VET/filtro; SH baixo = risco de retorno de líquido. Não recomende abrir VET quando o SC está baixo sem confirmar carga/vazamento.";
+    modeInstruction += "\n\n[MATRIZ REFRIGERAÇÃO DE CAMPO]\nSe o técnico informar SH/SC, aplique: SH alto + SC baixo = falta de fluido/vazamento/flash gas; SH alto + SC normal/alto = restrição/válvula de expansão/filtro secador; SH baixo = risco de retorno de líquido. Não recomende abrir a válvula de expansão quando o SC está baixo sem confirmar carga/vazamento.";
   }
 
   const cadenceInstruction = toolType === "DIAGNOSTIC"

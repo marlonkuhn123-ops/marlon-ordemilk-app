@@ -106,10 +106,10 @@ const classifyCalculation = (resultKelvin: number, mode: CalcMode): 'BAIXO' | 'I
 const getRecommendedAction = (mode: CalcMode, classification: 'BAIXO' | 'IDEAL' | 'ALTO'): string => {
     if (mode === 'Superaquecimento') {
         if (classification === 'BAIXO') {
-            return 'Risco de líquido voltar pro compressor. Verifique se a válvula (VET) está muito aberta ou o bulbo solto antes de fechar/ajustar.';
+            return 'Risco de líquido voltar pro compressor. Verifique se a válvula de expansão está muito aberta ou o bulbo solto antes de fechar/ajustar.';
         }
         if (classification === 'ALTO') {
-            return 'Evaporador recebendo pouco líquido. Se o Sub.Res também estiver baixo: verifique vazamento ou falta de gás antes de abrir a válvula. Se o Sub.Res estiver normal ou alto: verifique filtro entupido ou válvula fechada demais.';
+            return 'Evaporador recebendo pouco líquido. Se o Sub.Res também estiver baixo: verifique vazamento ou falta de gás antes de abrir a válvula de expansão. Se o Sub.Res estiver normal ou alto: verifique o filtro secador entupido ou a válvula de expansão fechada demais.';
         }
         return 'Está no ideal. Não mexa na válvula só por este dado — confira também o Sub.Res e as pressões.';
     }
@@ -306,7 +306,7 @@ export const logicService = {
         NÃO use formatação Markdown ou símbolos especiais.
         1. Apresente o resultado final do cálculo em Kelvin (K). Se o cálculo foi fornecido acima, use-o obrigatoriamente.
         2. Classifique o resultado como ALTO, IDEAL ou BAIXO, comparando com a faixa de referência.
-        3. Use a conduta local como trilho tecnico. Nao recomende adicionar fluido, recolher fluido, abrir VET ou fechar VET sem antes citar a confirmacao necessaria.
+        3. Use a conduta local como trilho tecnico. Nao recomende adicionar fluido, recolher fluido, abrir a valvula de expansao ou fechar a valvula de expansao sem antes citar a confirmacao necessaria.
         `.trim();
     },
 

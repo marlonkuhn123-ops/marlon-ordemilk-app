@@ -51,6 +51,30 @@
   zero erros de console.
 - **Versao publicada:** selo visual `V67.0` e cache `ordemilk-tech-v67`.
 
+### RODADA ATIVA CLAUDE - PECAS SEMPRE POR EXTENSO (VET/TXV -> VALVULA DE EXPANSAO) - 2026-09-15
+- **Autorizacao direta do USER:** "sobre as peças, sempre diga- FUNDO DE EXPANSSAO- FILTRO SECADOR- VALVULA DE
+  EXPANSÃO. USE OS TERMOS POR COMPLETO. NAO ABREVIE NADA. NO APP POR INTEIRO. ATE NA PARTE DE SUPORTE."
+  Esclarecimentos do USER apos eu perguntar sobre o termo ambiguo: "VET = VALVULA DE EXPANSAO" e
+  "EVAPORADOR = FUNDO DE EXPANÃO" (ou seja, nao existe peca nova; "fundo" e so a localizacao do evaporador no
+  tanque, ja sempre grafado como "Evaporador (Fundo Roll-Bond)"/"Evaporador (Fundo do Tanque)" no codigo - nada
+  a mudar ali).
+- **Escopo:** app inteiro, incluindo os textos que moldam a fala da IA no suporte (persona, brain packs,
+  base de conhecimento), nao so telas estaticas. 44 substituicoes em 9 arquivos: `constants.ts`,
+  `data/faq_data.ts`, `data/knowledge_base.ts`, `services/geminiService.ts`, `services/localSupportService.ts`,
+  `services/logicService.ts`, `services/supportDiagnosticEngine.ts`, `services/testSuite.ts`,
+  `components/Tool_3_Calculator.tsx`. Todo "VET" e "TXV" virou "válvula de expansão"; todo "filtro" solto (que
+  se referia ao filtro secador, nao ao filtro eletrico de EMI) virou "filtro secador".
+- **Reforco no prompt do suporte:** `constants.ts` (SYSTEM_PROMPT_BASE, regra TÉCNICO) agora diz explicitamente
+  "Nunca abrevie peças como 'VET' ou 'TXV' - escreva sempre 'válvula de expansão' por extenso" - isso e o que
+  garante que a propria IA, nao so o texto estatico do app, passe a responder por extenso.
+- **Validacao local (build com chave real, gitignored):** lint OK, build OK; botao "Status do sistema"
+  (testSuite.ts, com a asserção atualizada) = 18/18 aprovados; calculadora (caso Sup.Aque ALTO) mostra
+  "verifique o filtro secador entupido ou a válvula de expansão fechada demais", zero "VET"/"TXV" na tela.
+  **Teste com Gemini real (2 turnos, caso propenso a citar a peca):** 1a resposta (gemini-3-flash-preview) e
+  continuacao (gemini-3.1-pro-preview) usaram "válvula de expansão" e "filtro secador" por extenso repetidas
+  vezes (inclusive nos chips: "Válvula travada", "Filtro obstruído") e NUNCA "VET" ou "TXV". Zero erros.
+- **Versao publicada:** selo visual `V68.0` e cache `ordemilk-tech-v68`.
+
 ### >>> ESTADO CANONICO E RESUMO PARA A CODEX - 2026-09-14 (deixado por CLAUDE) <<<
 LEIA ISTO PRIMEIRO. Depois de muita confusao entre apps, repositorios, contas Vercel e chaves de API, o quadro
 abaixo e o CORRETO e VERIFICADO. Agora esta funcionando e e assim que deve permanecer.

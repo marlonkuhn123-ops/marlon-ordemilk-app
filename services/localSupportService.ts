@@ -114,7 +114,7 @@ const buildHypothesis = (route: OfflineRoute, prompt: string, context: SupportDi
 
     if (route === 'refrigeration') {
         if (hasHighShLowScClue(normalizedPrompt)) {
-            return 'SH alto com SC baixo aponta primeiro para falta de fluido, vazamento, carga incompleta ou flash gas; não é caso de abrir VET como primeira ação.';
+            return 'SH alto com SC baixo aponta primeiro para falta de fluido, vazamento, carga incompleta ou flash gas; não é caso de abrir a válvula de expansão como primeira ação.';
         }
         if (normalizedPrompt.includes('alta pressao')) {
             return 'O desarme por alta pressão aponta primeiro para falha de rejeição de calor no condensador, ventilação ruim, excesso de fluido ou ar no sistema.';
@@ -209,7 +209,7 @@ const buildAction = (route: OfflineRoute, prompt: string, analysis: SupportCaseA
     }
     if (route === 'refrigeration') {
         if (hasHighShLowScClue(normalizedPrompt)) {
-            return 'Não abra a VET agora; confirme vazamento/carga pelo visor, pressões e estabilidade antes de adicionar fluido com critério.';
+            return 'Não abra a válvula de expansão agora; confirme vazamento/carga pelo visor, pressões e estabilidade antes de adicionar fluido com critério.';
         }
         if (normalizedPrompt.includes('alta pressao')) {
             return 'Desligue e confira fluxo de ar do condensador, ventiladores e serpentina antes de religar.';

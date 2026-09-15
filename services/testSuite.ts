@@ -135,7 +135,7 @@ export const runSystemDiagnostics = () => {
         assert(analysis.shSc?.shKelvin === 18, `SH nao foi lido corretamente. Recebido: ${analysis.shSc?.shKelvin}`);
         assert(analysis.shSc?.scKelvin === 1.2, `SC decimal nao foi lido corretamente. Recebido: ${analysis.shSc?.scKelvin}`);
         assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrao SH/SC incorreto. Recebido: ${analysis.shSc?.pattern}`);
-        assert(Boolean(analysis.shSc?.action.includes("Não abra a VET")), `Ação deveria bloquear abertura de VET. Recebido: ${analysis.shSc?.action}`);
+        assert(Boolean(analysis.shSc?.action.includes("Não abra a válvula de expansão")), `Ação deveria bloquear abertura da válvula de expansão. Recebido: ${analysis.shSc?.action}`);
     });
 
     test("Suporte: Deve interpretar formula de SH e pegar o resultado final em K", () => {

@@ -9,7 +9,7 @@ Esta camada explica como o sistema Ordemilk deve operar e a função de cada com
    - INTERLIGAÇÃO: Feita via borneiras e cabos multicondutores (Sinais de 24Vcc e permissivos).
 
 2. REGRAS DE EQUIPAMENTOS (OBRIGATÓRIO RESPEITAR CAPACIDADE):
-   - Tanques >= 4.000L: OBRIGATORIAMENTE usam CLP Panasonic FP-X0 L40MR e Válvula de Expansão Termostática (VET). NUNCA mencione Ageon, Full Gauge ou tubo capilar para estes modelos.
+   - Tanques >= 4.000L: OBRIGATORIAMENTE usam CLP Panasonic FP-X0 L40MR e Válvula de Expansão Termostática. NUNCA mencione Ageon, Full Gauge ou tubo capilar para estes modelos.
    - Tanques < 4.000L: Usam Controladores eletrônicos (Ageon/Full Gauge). Expansão por capilar geralmente restrita a modelos até 2000L.
 
 3. FUNÇÕES DOS COMPONENTES:
@@ -159,7 +159,7 @@ Este bloco traduz a teoria do ciclo frigorífico para a prática bruta de campo,
 1. OS 4 CORAÇÕES DA MÁQUINA TRADUZIDOS PRO CAMPO:
 - Compressor (O Coração): Succiona o vapor em baixa pressão/temperatura e o comprime. (No contexto de leite: geralmente compressores Maneurop Danfoss ou equivalentes).
 - Condensador (O Dissipador): A que junta poeira no ambiente rústico da fazenda e desarma tudo por alta pressão. Rejeita o calor para o ambiente externo.
-- Dispositivo de Expansão (O Regulador): Válvula de expansão (VET) ou tubo capilar que reduz abruptamente a pressão do líquido.
+- Dispositivo de Expansão (O Regulador): Válvula de expansão ou tubo capilar que reduz abruptamente a pressão do líquido.
 - Evaporador (O Absorvedor): A chapa Inox/Roll-bond no fundo do tanque. Onde o fluido em baixa pressão absorve o calor do leite e evapora completamente.
 
 2. A OBRIGATORIEDADE DA COMPRESSÃO SECA:
@@ -171,7 +171,7 @@ Este bloco traduz a teoria do ciclo frigorífico para a prática bruta de campo,
   * Função: Protege o compressor. SH muito baixo significa: "Compressor vai quebrar por golpe de líquido".
   * Cálculo Prático: Temp. da Linha de Sucção (medida no tubo) MINUS Temp. de Saturação (lida no manifold de baixa).
 - Sub-resfriamento (SC - Subcooling) em campo: 4 a 8 K:
-  * Função: Para proteger a expansão e evitar que a VET jogue uma rajada inútil de vapor (o "Flash Gas") dentro do tanque.
+  * Função: Para proteger a expansão e evitar que a válvula de expansão jogue uma rajada inútil de vapor (o "Flash Gas") dentro do tanque.
   * Cálculo Prático: Temp. de Saturação (lida no manifold de alta) MINUS Temp. da Linha de Líquido (medida no tubo).
 
 4. ARMADILHAS DE DIAGNÓSTICO (SEGREDOS DE CAMPO):

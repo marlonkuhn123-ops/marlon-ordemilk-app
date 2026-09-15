@@ -139,28 +139,28 @@ const buildShScDiagnostic = (prompt: string, context: SupportDiagnosticContext):
         'Quais são as pressões de sucção e descarga no manifold, em psi ou bar?',
         'O visor de líquido tem bolhas ou há sinal de óleo/vazamento nas conexões?'
     ];
-    let action = 'Não ajuste VET nem carga ainda; confirme pressões, visor e estabilidade do sistema primeiro.';
+    let action = 'Não ajuste a válvula de expansão nem a carga ainda; confirme pressões, visor e estabilidade do sistema primeiro.';
 
     if (shStatus === 'alto' && scStatus === 'baixo') {
         pattern = 'SH alto + SC baixo';
-        hypothesis = 'SH alto com SC baixo aponta primeiro para falta de fluido, vazamento, carga incompleta ou flash gas; não é padrão para abrir VET primeiro.';
+        hypothesis = 'SH alto com SC baixo aponta primeiro para falta de fluido, vazamento, carga incompleta ou flash gas; não é padrão para abrir a válvula de expansão primeiro.';
         questions = [
             'O visor de líquido está com bolhas e existe mancha de óleo/vazamento em conexões, evaporador ou condensador?',
             'Quais são as pressões de sucção e descarga com o compressor estabilizado?'
         ];
-        action = 'Não abra a VET agora; procure vazamento/bolhas e confirme carga antes de adicionar fluido com critério.';
-        guardrails.push('Proibido orientar abrir VET como primeira ação neste padrão.');
+        action = 'Não abra a válvula de expansão agora; procure vazamento/bolhas e confirme carga antes de adicionar fluido com critério.';
+        guardrails.push('Proibido orientar abrir a válvula de expansão como primeira ação neste padrão.');
     } else if (shStatus === 'alto' && (scStatus === 'ideal' || scStatus === 'alto')) {
         pattern = scStatus === 'alto' ? 'SH alto + SC alto' : 'SH alto + SC ideal';
-        hypothesis = 'SH alto com SC normal/alto indica evaporador subalimentado por restrição, filtro secador, VET, bulbo/igualador ou coluna líquida com perda.';
+        hypothesis = 'SH alto com SC normal/alto indica evaporador subalimentado por restrição, filtro secador, válvula de expansão, bulbo/igualador ou coluna líquida com perda.';
         questions = [
             'Há queda de temperatura antes/depois do filtro secador ou sinal de congelamento na linha?',
-            'O bulbo da VET está bem fixado/isolado e o igualador externo está conectado?'
+            'O bulbo da válvula de expansão está bem fixado/isolado e o igualador externo está conectado?'
         ];
-        action = 'Confira restrição, filtro secador e montagem da VET antes de mexer na carga.';
+        action = 'Confira restrição, filtro secador e montagem da válvula de expansão antes de mexer na carga.';
     } else if (shStatus === 'baixo') {
         pattern = scStatus === 'alto' ? 'SH baixo + SC alto' : 'SH baixo';
-        hypothesis = 'SH baixo indica risco de retorno de líquido ao compressor, possível excesso de alimentação, baixa carga térmica ou VET aberta demais.';
+        hypothesis = 'SH baixo indica risco de retorno de líquido ao compressor, possível excesso de alimentação, baixa carga térmica ou válvula de expansão aberta demais.';
         questions = [
             'O retorno do compressor está suando/congelando ou há ruído de líquido na sucção?',
             'A carga térmica está baixa, com leite já frio ou evaporador muito frio?'
@@ -176,7 +176,7 @@ const buildShScDiagnostic = (prompt: string, context: SupportDiagnosticContext):
         action = 'Verifique condensador/ventiladores e histórico de carga antes de retirar fluido.';
     } else if (scStatus === 'baixo') {
         pattern = 'SC baixo';
-        hypothesis = 'SC baixo sugere falta de líquido na linha, carga baixa, flash gas ou alimentação instável da VET.';
+        hypothesis = 'SC baixo sugere falta de líquido na linha, carga baixa, flash gas ou alimentação instável da válvula de expansão.';
         questions = [
             'O visor de líquido apresenta bolhas depois de estabilizar?',
             'Existe vazamento/óleo em conexões ou queda de pressão na linha de líquido?'
@@ -189,7 +189,7 @@ const buildShScDiagnostic = (prompt: string, context: SupportDiagnosticContext):
             'Qual sintoma continua acontecendo mesmo com SH/SC dentro da faixa?',
             'A temperatura do leite está caindo no tempo esperado?'
         ];
-        action = 'Não altere carga nem VET agora; procure causa em troca térmica, comando ou sensor.';
+        action = 'Não altere carga nem a válvula de expansão agora; procure causa em troca térmica, comando ou sensor.';
     }
 
     return {
