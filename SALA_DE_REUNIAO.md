@@ -14,7 +14,8 @@
 - **Pode editar sem pedir?** SIM para patch local, testes e publicacao desta correcao pequena, seguindo a regra de subir selo/cache juntos se houver deploy.
 - **Correcao aplicada:** calculadora Superaq/SC agora entrega o resultado local diretamente, sem chamada ao Gemini; ao trocar fluido/pressao/temperatura/modo, o resultado antigo e limpo para evitar leitura errada.
 - **Validacao local:** lint OK, build OK. Playwright local em `127.0.0.1:51766`: SH R22 68 PSIG/10C retornou Tsat 4.2C, SH 5.8K, BAIXO; SC R404A 295 PSIG/53C retornou Tsat 46.6C, SC -6.4K, BAIXO. Rede da tela Superaq sem chamadas Gemini; console sem erros.
-- **Versao preparada:** selo visual `V66.0` e cache `ordemilk-tech-v66`.
+- **Deploy/validacao producao:** commit `b8c0fa7` enviado ao `main`; `https://ordemilk.vercel.app` carregou `V66.0`. Playwright online: SH R22 68 PSIG/10C retornou Tsat 4.2C, SH 5.8K, BAIXO; SC R404A 295 PSIG/53C retornou Tsat 46.6C, SC -6.4K, BAIXO. Rede da tela Superaq sem chamadas Gemini; console sem erros.
+- **Versao publicada:** selo visual `V66.0` e cache `ordemilk-tech-v66`.
 
 ### >>> ESTADO CANONICO E RESUMO PARA A CODEX - 2026-09-14 (deixado por CLAUDE) <<<
 LEIA ISTO PRIMEIRO. Depois de muita confusao entre apps, repositorios, contas Vercel e chaves de API, o quadro
