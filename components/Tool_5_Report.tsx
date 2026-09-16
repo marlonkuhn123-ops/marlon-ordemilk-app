@@ -59,8 +59,8 @@ const INSTALL_STEPS = [
         points: [
             "Sentido de Giro: Bomba de Limpeza e Agitador (Jogando p/ baixo).",
             "Nível de Óleo: Entre 1/4 e 3/4 do visor (estável).",
-            `Superaquecimento (SH): Ajustar entre ${SUPERHEAT_RANGE.min}K e ${SUPERHEAT_RANGE.max}K.`,
-            `Sub-resfriamento (SC): Ajustar entre ${SUBCOOLING_RANGE.min}K e ${SUBCOOLING_RANGE.max}K.`,
+            `Sup.Aque (Superaquecimento): Ajustar entre ${SUPERHEAT_RANGE.min}K e ${SUPERHEAT_RANGE.max}K.`,
+            `Sub.Res (Sub-resfriamento): Ajustar entre ${SUBCOOLING_RANGE.min}K e ${SUBCOOLING_RANGE.max}K.`,
             "Teste de Gelo: Verificar retorno de líquido na sucção."
         ]
     },
@@ -243,8 +243,8 @@ Verifique o console do navegador (F12) para ver o resultado detalhado.`);
                         </p>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <Input label="SH (K)" type="number" value={superHeat} onChange={e => setSuperHeat(e.target.value)} placeholder="0" className="!p-2 text-xs !mb-0 border-orange-500/30" />
-                        <Input label="SC (K)" type="number" value={subCooling} onChange={e => setSubCooling(e.target.value)} placeholder="0" className="!p-2 text-xs !mb-0 border-orange-500/30" />
+                        <Input label="Sup.Aque (K)" type="number" value={superHeat} onChange={e => setSuperHeat(e.target.value)} placeholder="0" className="!p-2 text-xs !mb-0 border-orange-500/30" />
+                        <Input label="Sub.Res (K)" type="number" value={subCooling} onChange={e => setSubCooling(e.target.value)} placeholder="0" className="!p-2 text-xs !mb-0 border-orange-500/30" />
                         <Input label="Temp Final" type="number" value={finalTemp} onChange={e => setFinalTemp(e.target.value)} placeholder="°C" className="!p-2 text-xs !mb-0" />
                     </div>
                 </div>

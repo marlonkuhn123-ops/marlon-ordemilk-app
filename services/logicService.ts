@@ -321,7 +321,8 @@ export const logicService = {
         - Equipamento: ${data.model || 'NÃO INFORMADO'}
         - Tipo: ${data.serviceMode.toUpperCase()}
         
-        PARÂMETROS: SH: ${data.params.sh}K, SC: ${data.params.sc}K, Temp: ${data.params.temp}°C.
+        PARÂMETROS: Sup.Aque: ${data.params.sh}K, Sub.Res: ${data.params.sc}K, Temp: ${data.params.temp}°C.
+        REGRA DE ESCRITA: no documento, escreva sempre "Sup.Aque" e "Sub.Res". Nunca use as siglas "SH" ou "SC".
         
         ${data.procedureText}
         
