@@ -1402,3 +1402,61 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 - Risco residual:
   - Muito baixo.
   - Rodada apenas textual, sem impacto funcional no suporte.
+
+### EXECUCAO CLAUDE - TESTE ONLINE COMPLETO DO APP + CORRECAO SH/SC (v70) - 2026-09-16
+- Pedido do USER: "teste o app por inteiro on line".
+- Metodo: navegador automatizado (Playwright/Chromium) contra `https://ordemilk.vercel.app`,
+  em 3 formatos (Android 412px, iPhone 390px, desktop 1440px), com chamadas REAIS a IA.
+- Cobertura: 5 fases, 108 verificacoes no total.
+  - Fase 1 (24/24): login, senha errada recusada, selos de versao, 7 telas, autoteste interno
+    (18/18), tutorial completo, service worker, manifest, console limpo.
+  - Fase 2 (29/30): calculadora Superaq com 5 casos reais (R-22 e R-404A, Sup.Aque e Sub.Res),
+    todos entre 0,6s e 0,9s, sem travar em "Sincronizando"; decodificador de erros (E1) em 3,6s.
+    A unica falha era do proprio script (modulo travado por senha, nao bug do app).
+  - Fase 3 (14/14 apos destravar): modulos Dimensionamento e Dados abrem com `om20266`,
+    memorial de calculo de 4000L OK, catalogo OK, laudo gerado OK.
+  - Fase 4 (21/21): suporte com 4 perguntas reais. 1a resposta em 3,3s no `gemini-3-flash-preview`,
+    continuacoes no `gemini-3.1-pro-preview` (cadencia confirmada na rede). Pergunta eletrica puxou
+    o esquema (CLP/DM/A1-A2). Caso cruzado trouxe as duas disciplinas. Chips de resposta rapida e
+    botao Ouvir funcionando. Conversa limpa ao reabrir confirmada.
+  - Fase 5 (18/18): erro de rede mostra texto claro + botao Repetir; app abre offline pelo cache;
+    calculadora funciona offline; sem scroll horizontal em nenhum formato; instrucao de instalar
+    no iPhone OK.
+
+- DEFEITO ENCONTRADO E CORRIGIDO (commit `f17806f`, v70):
+  As siglas `SH`/`SC` ainda apareciam FORA da calculadora, contrariando a ordem do USER
+  ("tire as letras sh e sc, muitos tecnicos se confundem"):
+  1. `components/Tool_5_Report.tsx` - campos "SH (K)" e "SC (K)" -> "Sup.Aque (K)" e "Sub.Res (K)".
+  2. `components/Tool_5_Report.tsx` - checklist de startup dizia "Superaquecimento (SH)" e
+     "Sub-resfriamento (SC)" -> agora "Sup.Aque (Superaquecimento)" e "Sub.Res (Sub-resfriamento)".
+  3. `services/logicService.ts` (`formatReportPrompt`) - o prompt do laudo mandava
+     "SH: XK, SC: YK" para a IA, entao o laudo saia com as siglas. Agora manda Sup.Aque/Sub.Res
+     e proibe as siglas explicitamente.
+  4. `components/TutorialOverlay.tsx` passo 3 - "Superaquecimento (SH) e Sub-resfriamento (SC)"
+     -> "Sup.Aque (superaquecimento) e Sub.Res (sub-resfriamento)".
+  5. `constants.ts` - nova regra de postura proibindo a IA de escrever "SH" ou "SC" na resposta.
+
+- MANTIDO DE PROPOSITO (nao e bug, nao mexer):
+  - `services/geminiService.ts` continua usando SH/SC nas REGRAS INTERNAS do prompt. Isso e
+    atalho de leitura para o modelo, nao texto de tela. A regra nova em `constants.ts` cuida
+    da saida.
+  - `services/testSuite.ts` linha 130 continua com a entrada `"R404A com SH=18K e SC: 1,2K"`.
+    Isso e proposital: o motor PRECISA continuar entendendo o que o tecnico digita. A proibicao
+    vale so para o que o app MOSTRA.
+
+- REGRA AMPLIADA (mantida): todo deploy sobe OS QUATRO selos juntos -> `components/Estrutura.tsx`,
+  `public/sw.js` (`CACHE_NAME`), `components/LoginScreen.tsx`, `components/TutorialOverlay.tsx`
+  (2 ocorrencias). Nesta rodada todos foram para V70.
+
+- Validacao tecnica: `npm run lint` = OK, `npm run build` = OK.
+- Verificacao pos-deploy em producao (16/17): laudo agora sai com "Sup.Aque (Superaquecimento): 9K"
+  e "Sub.Res (Sub-resfriamento): 9K"; a IA nao devolveu nenhuma sigla mesmo quando o tecnico
+  escreveu "SH de 18K e SC de 1,5K" na pergunta; autoteste interno segue 18/18.
+  O unico item nao aprovado foi uma assercao fraca do meu proprio script (a IA parafraseou
+  "vapor excessivamente aquecido na succao" em vez de nomear o parametro) - nao e defeito.
+
+- PENDENCIA COSMETICA (nao corrigida, avaliar depois):
+  Parte dos textos da calculadora esta SEM ACENTO ("pressao", "valvula de expansao",
+  "CALCULO LOCAL AUDITAVEL", "DIRECAO DO CALCULO", "Classificacao local", "succao"), convivendo
+  com textos acentuados na mesma tela. Nao toquei porque pode ser contorno proposital de
+  problema de encoding ja enfrentado nesses arquivos. Decidir com o USER antes de mexer.
