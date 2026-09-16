@@ -10,7 +10,7 @@ import { analyzeSupportCase, buildSupportAnalysisInstruction } from "./supportDi
 const DEFAULT_TEXT_MODEL = ENV.GEMINI_TEXT_MODEL;
 const SUPPORT_PRIMARY_MODEL = ENV.GEMINI_SUPPORT_MODEL;
 const SUPPORT_FALLBACK_MODEL = ENV.GEMINI_SUPPORT_FALLBACK_MODEL;
-const ATTACHMENT_ANALYSIS_MARKER = "[ANEXO_TECNICO_ORDEMILK]";
+const ATTACHMENT_ANALYSIS_MARKER = "[ANEXO_TÉCNICO_ORDEMILK]";
 const EMPTY_RESPONSE_ERROR = "EMPTY_SUPPORT_RESPONSE";
 
 const SUPPORT_FIELD_BRAIN_PACK = `
@@ -45,7 +45,7 @@ Diagnosticar falhas do ciclo frigorífico de tanques de leite com ligação real
 - FASE 1 (primeira resposta): identifique o sintoma frigorífico, levante a hipótese mais provável e faça no máximo 2 perguntas técnicas.
 - FASE 2 (continuação): só aprofunde depois de receber medidas de campo.
 
-[ESCOPO PRIORITARIO DO MODO REF]
+[ESCOPO PRIORITÁRIO DO MODO REF]
 - Foque em compressor, condensador, válvula de expansão, evaporador Roll-Bond, fluido refrigerante, pressões, SH, SC, visor, vazamento, carga térmica, agitação, retorno de líquido, óleo e troca de calor.
 - A rota principal de diagnóstico é frigorífica. Porém, quando o sintoma indicar causa/efeito elétrico (desarme, contatora, relé, A1/A2, CLP, borne, IHM, falta de fase), traga a verificação elétrica pertinente como apoio, sem perder o foco frigorífico. Nunca isole as disciplinas.
 - Se a frase do técnico tiver "não liga" dentro do modo REF, interprete primeiro como "não entra em ciclo frigorífico / não resfria" e peça dados frigoríficos: pressão de sucção/descarga, SH/SC, fluido, visor, condensador e temperatura do leite; se houver sinal claro de comando/partida, confirme também o lado elétrico.
@@ -123,9 +123,9 @@ let cachedSchematicsData: string | null = null;
 const getElectricalContext = async (userPrompt: string) => {
   const keywords = [
     // Termos diretos de elétrica
-    "ELÉTRICA", "ELETRICA", "ESQUEMA", "FIO", "BORNE", "LIGAÇÃO", "LIGACAO", "DISJUNTOR", "CONTATORA", "CABO", "TENSÃO", "TENSAO", "VOLT", "AMPER", "CORRENTE", "TRIFÁSICO", "TRIFASICO", "MONOFÁSICO", "MONOFASICO", "CONTROLADOR", "AGEON", "FULL GAUGE", "CLP", "PANASONIC",
+    "ELÉTRICA", "ELÉTRICA", "ESQUEMA", "FIO", "BORNE", "LIGAÇÃO", "LIGAÇÃO", "DISJUNTOR", "CONTATORA", "CABO", "TENSÃO", "TENSÃO", "VOLT", "AMPER", "CORRENTE", "TRIFÁSICO", "TRIFÁSICO", "MONOFÁSICO", "MONOFÁSICO", "CONTROLADOR", "AGEON", "FULL GAUGE", "CLP", "PANASONIC",
     // Componentes exclusivos de painel/comando
-    "RELÉ", "RELE", "COMANDO", "PAINEL", "QUADRO", "FUSÍVEL", "FUSIVEL",
+    "RELÉ", "RELÉ", "COMANDO", "PAINEL", "QUADRO", "FUSÍVEL", "FUSÍVEL",
     // Sintomas característicos de falha elétrica/comando
     "NÃO LIGA", "NAO LIGA", "NÃO PARTE", "NAO PARTE", "NÃO ACIONA", "NAO ACIONA", "DESARMA", "CAINDO", "CURTO", "QUEIMOU"
   ];
@@ -659,7 +659,7 @@ export const generateChatResponseStream = async (
     return await runStreamWithRetry(primaryModel, retries);
   } catch (error: any) {
     if (fallbackModel !== primaryModel && (isModelAvailabilityError(error) || isQuotaError(error) || isEmptyResponseError(error))) {
-      console.warn(`Modelo de suporte ${primaryModel} indisponivel ou sem cota. Recuando para ${fallbackModel}.`);
+      console.warn(`Modelo de suporte ${primaryModel} indisponível ou sem cota. Recuando para ${fallbackModel}.`);
       try {
         return await runStreamWithRetry(fallbackModel, retries);
       } catch (fallbackError: any) {

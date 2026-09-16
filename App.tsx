@@ -26,7 +26,7 @@ const clearStoredAuthTimestamp = () => {
     try {
         localStorage.removeItem(AUTH_STORAGE_KEY);
     } catch (error) {
-        console.warn('[App] Falha ao limpar horario de autenticacao:', error);
+        console.warn('[App] Falha ao limpar horário de autenticação:', error);
     }
 };
 
@@ -159,7 +159,7 @@ const AppContent: React.FC = () => {
         try {
             localStorage.setItem(AUTH_STORAGE_KEY, Date.now().toString());
         } catch (error) {
-            console.warn('[App] Falha ao persistir horario de autenticacao:', error);
+            console.warn('[App] Falha ao persistir horário de autenticação:', error);
         }
 
         setIsAuthenticated(true);

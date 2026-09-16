@@ -38,7 +38,7 @@ const DIAGNOSTIC_FIELD_META = {
     temperature: { icon: 'fa-temperature-half', placeholder: 'Temp. atual do leite' }
 } as const;
 
-const ATTACHMENT_ANALYSIS_MARKER = '[ANEXO_TECNICO_ORDEMILK]';
+const ATTACHMENT_ANALYSIS_MARKER = '[ANEXO_TÉCNICO_ORDEMILK]';
 
 type SelectedSupportFile = {
     id: string;
@@ -93,7 +93,7 @@ const isUiOnlySupportMessage = (message: ChatMessage) =>
     message.id === 'welcome' ||
     message.text === WELCOME_TEXT ||
     message.text.startsWith('Modo de diagnóstico focado em **') ||
-    message.text.startsWith('Modo de diagnostico focado em **');
+    message.text.startsWith('Modo de diagnóstico focado em **');
 
 const buildAttachmentMeta = (files: SelectedSupportFile[]): SupportAttachmentMeta[] =>
     files.map(file => ({
@@ -224,7 +224,7 @@ const normalizeImageFile = (file: File): Promise<SelectedSupportFile | null> =>
 
             resolve({
                 id: createSupportId(),
-                name: file.name || 'imagem-tecnica.jpg',
+                name: file.name || 'imagem-técnica.jpg',
                 data: canvas.toDataURL('image/jpeg', IMAGE_JPEG_QUALITY),
                 mime: 'image/jpeg',
                 type: 'image'
@@ -315,11 +315,11 @@ const isDiagnosticHeading = (value: string) => {
         .replace(/[\u0300-\u036f]/g, '');
 
     return [
-        'hipotese inicial',
+        'hipótese inicial',
         'preciso confirmar',
         'faca agora',
-        'acao segura',
-        'verificacao inicial',
+        'ação segura',
+        'verificação inicial',
         'causa raiz',
         'anexos',
         'leitura da imagem',
@@ -382,7 +382,7 @@ const cleanTextForSpeech = (text: string) =>
         .replace(/\s{2,}/g, ' ')
         .trim();
 
-// Detecta voz pt-BR; se o navegador do celular nao oferecer, o botao de ouvir some.
+// Detecta voz pt-BR; se o navegador do celular nao oferecer, o botão de ouvir some.
 const useSupportTts = () => {
     const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null);
     const [supported, setSupported] = useState(false);
@@ -607,8 +607,8 @@ export const Tool_Assistant: React.FC = () => {
     const wasDiagnosticContextCompleteRef = useRef(isDiagnosticContextComplete(restoredSnapshot?.diagnosticContext));
     const conversationStarted = hasStartedConversation(messages);
 
-    // Leitura em voz (some se o celular nao tiver voz pt-BR) e callbacks estaveis para os
-    // botoes das bolhas (Repetir / respostas rapidas), sem quebrar o React.memo do ChatBubble.
+    // Leitura em voz (some se o celular nao tiver voz pt-BR) e callbacks estáveis para os
+    // botões das bolhas (Repetir / respostas rápidas), sem quebrar o React.memo do ChatBubble.
     const tts = useSupportTts();
     const retryMessageRef = useRef<(messageId: string) => void>(() => {});
     const sendQuickReplyRef = useRef<(text: string) => void>(() => {});
@@ -923,7 +923,7 @@ export const Tool_Assistant: React.FC = () => {
         );
     };
 
-    // Executa a chamada da IA para uma mensagem do usuario ja existente, atualizando a
+    // Executa a chamada da IA para uma mensagem do usuário ja existente, atualizando a
     // bolha do modelo (modelMessageId). Compartilhado por sendMessage e retryMessage.
     const runSupportAi = async (
         userMsg: ChatMessage,
@@ -975,7 +975,7 @@ export const Tool_Assistant: React.FC = () => {
             allowAiUpdates = false;
             console.error('Chat Error:', error?.message || 'Unknown error');
 
-            const errorMessage = error?.message || 'FALHA DE CONEXAO. Tente novamente.';
+            const errorMessage = error?.message || 'FALHA DE CONEXÃO. Tente novamente.';
             const browserOffline = typeof navigator !== 'undefined' && !navigator.onLine;
             const shouldUseLocalFallback = browserOffline || /503|429|quota|limite|conex|fetch|network|timeout|support_stream_timeout|socket|indispon|unavailable|empty_support_response/i.test(errorMessage.toLowerCase());
 
@@ -991,8 +991,8 @@ export const Tool_Assistant: React.FC = () => {
         }
     };
 
-    // Reenvia a ultima pergunta do tecnico quando a resposta anterior falhou (botao Repetir),
-    // sem criar uma bolha de usuario duplicada.
+    // Reenvia a última pergunta do técnico quando a resposta anterior falhou (botão Repetir),
+    // sem criar uma bolha de usuário duplicada.
     const retryMessage = (modelMessageId: string) => {
         if (isLoadingChat) return;
         const msgs = messagesRef.current;
@@ -1019,7 +1019,7 @@ export const Tool_Assistant: React.FC = () => {
         void runSupportAi(userMsg, modelMessageId, localPrompt, attachmentCount, previousMessages);
     };
 
-    // Mantem os callbacks estaveis apontando para as funcoes atuais desta renderizacao.
+    // Mantem os callbacks estáveis apontando para as funções atuais desta renderização.
     retryMessageRef.current = retryMessage;
     sendQuickReplyRef.current = (text: string) => { void sendMessage(text); };
 

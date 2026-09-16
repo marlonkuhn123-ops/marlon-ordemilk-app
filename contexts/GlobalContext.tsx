@@ -32,7 +32,7 @@ export const readStoredTechData = (): TechData => {
         const parsed = JSON.parse(saved);
         return isTechData(parsed) ? parsed : EMPTY_TECH_DATA;
     } catch (error) {
-        console.warn('[GlobalContext] Falha ao ler dados do tecnico do localStorage:', error);
+        console.warn('[GlobalContext] Falha ao ler dados do técnico do localStorage:', error);
         return EMPTY_TECH_DATA;
     }
 };
@@ -77,7 +77,7 @@ export const GlobalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(techData));
         } catch (error) {
-            console.warn('[GlobalContext] Falha ao salvar dados do tecnico no localStorage:', error);
+            console.warn('[GlobalContext] Falha ao salvar dados do técnico no localStorage:', error);
         }
     }, [techData]);
 

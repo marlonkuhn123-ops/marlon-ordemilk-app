@@ -27,7 +27,7 @@ export const Tool_CourseSlides: React.FC = () => {
 
         fetch(MANIFEST_URL, { cache: 'no-store' })
             .then((response) => {
-                if (!response.ok) throw new Error('Arquivo de slides nao encontrado.');
+                if (!response.ok) throw new Error('Arquivo de slides não encontrado.');
                 return response.json() as Promise<CourseManifest>;
             })
             .then((manifest) => {
@@ -101,7 +101,7 @@ export const Tool_CourseSlides: React.FC = () => {
                         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#00d9ff] font-heading">Biblioteca do curso</p>
                         <h3 className="mt-1 text-base font-black text-white font-heading">Treinamentos e slides</h3>
                         <p className="mt-1 text-[11px] leading-relaxed text-white/65">
-                            Material de apoio para consulta direta no app, em paginas estaticas e sem saida externa.
+                            Material de apoio para consulta direta no app, em paginas estaticas e sem saída externa.
                         </p>
                     </div>
                 </div>
@@ -198,7 +198,7 @@ export const Tool_CourseSlides: React.FC = () => {
                                 disabled={activeSlideIndex >= slideCount - 1}
                                 className="!py-3"
                             >
-                                Proximo <i className="fa-solid fa-chevron-right" />
+                                Próximo <i className="fa-solid fa-chevron-right" />
                             </Button>
                         </div>
                     </Card>

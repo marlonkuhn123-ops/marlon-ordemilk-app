@@ -11,9 +11,9 @@ export const Tool_Calculator: React.FC = () => {
     const [mode, setMode] = useState<CalcMode>('Superaquecimento');
     const [result, setResult] = useState('');
     const localAudit = logicService.getCalculatorAudit(fluid, press, temp, mode);
-    const pressureLabel = mode === 'Superaquecimento' ? 'Pressao Baixa (PSIG)' : 'Pressao Alta (PSIG)';
-    const temperatureLabel = mode === 'Superaquecimento' ? 'Temp. Succao (C)' : 'Temp. Linha Liquida (C)';
-    const temperaturePlaceholder = mode === 'Superaquecimento' ? 'Saida evaporador/bulbo' : 'Linha liquida';
+    const pressureLabel = mode === 'Superaquecimento' ? 'Pressão Baixa (PSIG)' : 'Pressão Alta (PSIG)';
+    const temperatureLabel = mode === 'Superaquecimento' ? 'Temp. Sucção (C)' : 'Temp. Linha Líquida (C)';
+    const temperaturePlaceholder = mode === 'Superaquecimento' ? 'Saída evaporador/bulbo' : 'Linha líquida';
 
     useEffect(() => {
         setResult('');
@@ -22,14 +22,14 @@ export const Tool_Calculator: React.FC = () => {
     const buildLocalResult = () => {
         if (!localAudit.ready) {
             return [
-                'RESULTADO LOCAL NAO CONCLUIDO',
-                localAudit.warning || 'Revise pressao e temperatura antes de interpretar o equipamento.',
+                'RESULTADO LOCAL NÃO CONCLUÍDO',
+                localAudit.warning || 'Revise pressão e temperatura antes de interpretar o equipamento.',
                 `Fonte: ${localAudit.sourceLabel}`,
             ].join('\n');
         }
 
         return [
-            'RESULTADO LOCAL AUDITAVEL',
+            'RESULTADO LOCAL AUDITÁVEL',
             `Fluido: ${fluid}`,
             `Modo: ${mode} (${localAudit.modeShortLabel})`,
             localAudit.tsatLabel,
@@ -76,16 +76,16 @@ export const Tool_Calculator: React.FC = () => {
                     <i className="fa-solid fa-circle-info mt-0.5 text-xs text-[#00d9ff]"></i>
                     <span>
                         {mode === 'Superaquecimento'
-                            ? "SUP.AQUE: use pressao baixa em PSIG. Para ajuste da valvula de expansao, prefira medir na saida do evaporador/bulbo; perto do compressor vira superaquecimento total."
-                            : "SUB.RES: use pressao alta em PSIG. Em R404A o app usa bubble/liquido. Considere o ponto medido: saida do condensador ou antes da valvula de expansao."}
+                            ? "SUP.AQUE: use pressão baixa em PSIG. Para ajuste da válvula de expansão, prefira medir na saída do evaporador/bulbo; perto do compressor vira superaquecimento total."
+                            : "SUB.RES: use pressão alta em PSIG. Em R404A o app usa bubble/líquido. Considere o ponto medido: saída do condensador ou antes da válvula de expansão."}
                     </span>
                 </div>
 
                 <div className={`mb-4 rounded-[18px] border overflow-hidden ${classificationTone}`}>
                     <div className="px-4 py-2.5 border-b border-white/10 bg-black/10 flex items-center justify-between gap-3">
                         <div>
-                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] font-heading">CALCULO LOCAL AUDITAVEL</p>
-                            <p className="text-[11px] mt-1 opacity-90">A conta abaixo e o valor de referencia do app.</p>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.18em] font-heading">CÁLCULO LOCAL AUDITÁVEL</p>
+                            <p className="text-[11px] mt-1 opacity-90">A conta abaixo é o valor de referência do app.</p>
                         </div>
                         <div className="px-2.5 py-1 rounded-full border border-white/10 bg-black/15 text-[10px] font-bold uppercase tracking-[0.12em]">
                             {localAudit.modeShortLabel}
@@ -94,7 +94,7 @@ export const Tool_Calculator: React.FC = () => {
 
                     <div className="px-4 py-3">
                         <div className="text-[11px] font-semibold uppercase tracking-[0.12em] opacity-80 mb-2">
-                            DIRECAO DO CALCULO
+                            DIREÇÃO DO CÁLCULO
                         </div>
                         <div className="rounded-[14px] border border-white/10 bg-black/15 px-3 py-2.5 text-[13px] font-mono text-white mb-3">
                             {localAudit.directionLabel}

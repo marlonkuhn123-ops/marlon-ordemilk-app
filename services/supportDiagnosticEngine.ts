@@ -461,7 +461,7 @@ const buildElectricalDecision = (prompt: string, mode: SupportMode, context: Sup
             'Se comando chega e carga não roda, ir para potência/motor.'
         ]);
     } else if (includesAny(text, ['choque', 'lataria', 'carcaca energizada'])) {
-        symptom = 'choque na lataria/carcaca';
+        symptom = 'choque na lataria/carcaça';
         hypothesis = 'Choque na lataria indica fuga para massa e aterramento ausente/ineficiente; é falha de segurança, não simples ajuste de operação.';
         questions = [
             'Existe aterramento medido e DR/DPS em condição correta?',
@@ -535,7 +535,7 @@ export const buildSupportAnalysisInstruction = (analysis: SupportCaseAnalysis) =
             ...analysis.shSc.facts.map(fact => `- ${fact}`),
             `- Padrão: ${analysis.shSc.pattern}.`,
             `- Hipótese técnica: ${analysis.shSc.hypothesis}`,
-            `- Perguntas prioritarias: 1) ${analysis.shSc.questions[0]} 2) ${analysis.shSc.questions[1]}`,
+            `- Perguntas prioritárias: 1) ${analysis.shSc.questions[0]} 2) ${analysis.shSc.questions[1]}`,
             `- Ação imediata: ${analysis.shSc.action}`,
             ...analysis.shSc.guardrails.map(rule => `- Regra: ${rule}`)
         ].join('\n'));
@@ -549,7 +549,7 @@ export const buildSupportAnalysisInstruction = (analysis: SupportCaseAnalysis) =
             `- Referência local/PDF: ${analysis.electrical.reference}`,
             `- Rota de comando: ${analysis.electrical.outputPath}`,
             `- Hipótese técnica: ${analysis.electrical.hypothesis}`,
-            `- Perguntas prioritarias: 1) ${analysis.electrical.questions[0]} 2) ${analysis.electrical.questions[1]}`,
+            `- Perguntas prioritárias: 1) ${analysis.electrical.questions[0]} 2) ${analysis.electrical.questions[1]}`,
             `- Ação imediata: ${analysis.electrical.action}`,
             '- Sequência de decisão:',
             ...analysis.electrical.decisionTree.map((step, index) => `  ${index + 1}. ${step}`)

@@ -114,7 +114,7 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
 
     const handleCopy = async () => {
         if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
-            console.warn('[UI] Clipboard API indisponivel para copiar conteudo.');
+            console.warn('[UI] Clipboard API indisponível para copiar conteúdo.');
             return;
         }
 
@@ -123,7 +123,7 @@ export const AIOutputBox: React.FC<{ content: string; isLoading: boolean; title?
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (error) {
-            console.warn('[UI] Falha ao copiar conteudo para a area de transferencia:', error);
+            console.warn('[UI] Falha ao copiar conteúdo para a área de transferência:', error);
         }
     };
 

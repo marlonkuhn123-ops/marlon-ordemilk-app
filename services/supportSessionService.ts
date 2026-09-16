@@ -39,7 +39,7 @@ const clearStoredSnapshot = () => {
     try {
         sessionStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-        console.warn('Falha ao limpar sessao do suporte:', error);
+        console.warn('Falha ao limpar sessão do suporte:', error);
     }
 };
 
@@ -154,7 +154,7 @@ export const supportSessionService = {
                 updatedAt: isFiniteNumber(parsed.updatedAt) ? parsed.updatedAt : Date.now()
             };
         } catch (error) {
-            console.warn('Falha ao restaurar sessao do suporte:', error);
+            console.warn('Falha ao restaurar sessão do suporte:', error);
             clearStoredSnapshot();
             return null;
         }
@@ -182,7 +182,7 @@ export const supportSessionService = {
         try {
             sessionStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
         } catch (error) {
-            console.warn('Falha ao salvar sessao do suporte:', error);
+            console.warn('Falha ao salvar sessão do suporte:', error);
         }
     },
 

@@ -53,14 +53,14 @@ export const runSystemDiagnostics = () => {
         assert(p.includes("= 10.0K"), `Cálculo SH com negativos falhou. Esperado 10.0K. Prompt: ${p}`);
 
         const audit = logicService.getCalculatorAudit(Refrigerant.R22, "30", "-3.9", "Superaquecimento");
-        assert(audit.resultLabel === "Sup.Aque = -3.9\u00b0C - (-13.9\u00b0C) = 10.0K", `Formula Sup.Aque negativa sem parenteses. Recebido: ${audit.resultLabel}`);
+        assert(audit.resultLabel === "Sup.Aque = -3.9\u00b0C - (-13.9\u00b0C) = 10.0K", `Fórmula Sup.Aque negativa sem parenteses. Recebido: ${audit.resultLabel}`);
     });
 
     test("Calculadora: Deve exibir parenteses ao subtrair Tsat negativa no R-404A", () => {
         const audit = logicService.getCalculatorAudit(Refrigerant.R404A, "20", "-8", "Superaquecimento");
         assert(audit.tsatLabel === "Tsat = -25.9\u00b0C", `Tsat R-404A 20 PSIG incorreta. Recebido: ${audit.tsatLabel}`);
-        assert(audit.resultLabel === "Sup.Aque = -8.0\u00b0C - (-25.9\u00b0C) = 17.9K", `Formula R-404A Sup.Aque deveria usar parenteses. Recebido: ${audit.resultLabel}`);
-        assert(audit.classification === "ALTO", `Classificacao esperada ALTO. Recebido: ${audit.classification}`);
+        assert(audit.resultLabel === "Sup.Aque = -8.0\u00b0C - (-25.9\u00b0C) = 17.9K", `Fórmula R-404A Sup.Aque deveria usar parenteses. Recebido: ${audit.resultLabel}`);
+        assert(audit.classification === "ALTO", `Classificação esperada ALTO. Recebido: ${audit.classification}`);
     });
 
     test("Calculadora: Deve usar R-404A bubble no sub-resfriamento conforme Danfoss", () => {
@@ -70,12 +70,12 @@ export const runSystemDiagnostics = () => {
         // R-404A a 295 PSIG em bubble = ~46.6 C. Logo 46.6 - 53 = -6.4K, nao 8K.
         const p = logicService.formatCalculatorPrompt(Refrigerant.R404A, "295", "53", "Sub-resfriamento");
         assert(p.includes("= -6.4K"), `Cálculo SC R-404A falhou. Esperado -6.4K. Prompt: ${p}`);
-        assert(p.includes("R404A bubble/liquido"), `Prompt nao declarou curva bubble. Prompt: ${p}`);
+        assert(p.includes("R404A bubble/líquido"), `Prompt nao declarou curva bubble. Prompt: ${p}`);
 
         const audit = logicService.getCalculatorAudit(Refrigerant.R404A, "295", "53", "Sub-resfriamento");
         assert(audit.tsatLabel === "Tsat = 46.6\u00b0C", `Linha de Tsat incorreta no Sub.Res. Recebido: ${audit.tsatLabel}`);
         assert(audit.resultLabel === "Sub.Res = 46.6\u00b0C - 53.0\u00b0C = -6.4K", `Linha de cálculo Sub.Res incorreta. Recebido: ${audit.resultLabel}`);
-        assert(audit.classification === "BAIXO", `Classificacao incorreta para Sub.Res negativo. Recebido: ${audit.classification}`);
+        assert(audit.classification === "BAIXO", `Classificação incorreta para Sub.Res negativo. Recebido: ${audit.classification}`);
     });
 
     test("Calculadora: Deve usar R-404A dew no superaquecimento", () => {
@@ -83,7 +83,7 @@ export const runSystemDiagnostics = () => {
         assert(satTemp !== null && Math.abs(satTemp - 46.9) < 0.1, `R-404A dew falhou. Esperado ~46.9 C, recebido ${satTemp}`);
 
         const audit = logicService.getCalculatorAudit(Refrigerant.R404A, "295", "56.9", "Superaquecimento");
-        assert(audit.resultLabel === "Sup.Aque = 56.9\u00b0C - 46.9\u00b0C = 10.0K", `Linha de calculo Sup.Aque/dew incorreta. Recebido: ${audit.resultLabel}`);
+        assert(audit.resultLabel === "Sup.Aque = 56.9\u00b0C - 46.9\u00b0C = 10.0K", `Linha de cálculo Sup.Aque/dew incorreta. Recebido: ${audit.resultLabel}`);
         assert(audit.curveLabel.includes("dew"), `Curva Sup.Aque deveria ser dew. Recebido: ${audit.curveLabel}`);
     });
 
@@ -97,9 +97,9 @@ export const runSystemDiagnostics = () => {
         const p = logicService.formatCalculatorPrompt(Refrigerant.R22, "9999", "10", "Superaquecimento");
         const audit = logicService.getCalculatorAudit(Refrigerant.R22, "9999", "10", "Superaquecimento");
         assert(audit.ready === false, "Auditoria local deveria sinalizar cálculo indisponível.");
-        assert(p.includes("Pressao fora da faixa da tabela PT local"), "Mensagem de fallback para saturação não encontrada falhou.");
-        assert(p.includes("Realize o calculo com base em seu conhecimento"), "Instrução para a IA em caso de falha não encontrada.");
-        assert(!p.includes("CALCULO LOCAL REALIZADO"), "Contexto de cálculo local não deveria existir no fallback.");
+        assert(p.includes("Pressão fora da faixa da tabela PT local"), "Mensagem de fallback para saturação não encontrada falhou.");
+        assert(p.includes("Realize o cálculo com base em seu conhecimento"), "Instrução para a IA em caso de falha não encontrada.");
+        assert(!p.includes("CÁLCULO LOCAL REALIZADO"), "Contexto de cálculo local não deveria existir no fallback.");
     });
 
     // --- TESTES DO RELATÓRIO ---
@@ -125,7 +125,7 @@ export const runSystemDiagnostics = () => {
     });
 
     // --- TESTES DO SUPORTE / MOTOR TECNICO ---
-    test("Suporte: Deve interpretar SH alto e SC baixo de forma deterministica", () => {
+    test("Suporte: Deve interpretar SH alto e SC baixo de forma determinística", () => {
         const analysis = analyzeSupportCase(
             "R404A com SH=18K e SC: 1,2K no manifold",
             "REF",
@@ -134,20 +134,20 @@ export const runSystemDiagnostics = () => {
 
         assert(analysis.shSc?.shKelvin === 18, `SH nao foi lido corretamente. Recebido: ${analysis.shSc?.shKelvin}`);
         assert(analysis.shSc?.scKelvin === 1.2, `SC decimal nao foi lido corretamente. Recebido: ${analysis.shSc?.scKelvin}`);
-        assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrao SH/SC incorreto. Recebido: ${analysis.shSc?.pattern}`);
+        assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrão SH/SC incorreto. Recebido: ${analysis.shSc?.pattern}`);
         assert(Boolean(analysis.shSc?.action.includes("Não abra a válvula de expansão")), `Ação deveria bloquear abertura da válvula de expansão. Recebido: ${analysis.shSc?.action}`);
     });
 
-    test("Suporte: Deve interpretar formula de SH e pegar o resultado final em K", () => {
+    test("Suporte: Deve interpretar fórmula de SH e pegar o resultado final em K", () => {
         const analysis = analyzeSupportCase(
             "SH = -8.0C - (-25.9C) = 17.9K e sub-resfriamento 2K",
             "REF",
             { refrigerant: "R-404A" }
         );
 
-        assert(analysis.shSc?.shKelvin === 17.9, `Formula SH deveria usar resultado final 17.9K. Recebido: ${analysis.shSc?.shKelvin}`);
+        assert(analysis.shSc?.shKelvin === 17.9, `Fórmula SH deveria usar resultado final 17.9K. Recebido: ${analysis.shSc?.shKelvin}`);
         assert(analysis.shSc?.scKelvin === 2, `SC deveria ser 2K. Recebido: ${analysis.shSc?.scKelvin}`);
-        assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrao deveria ser SH alto + SC baixo. Recebido: ${analysis.shSc?.pattern}`);
+        assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrão deveria ser SH alto + SC baixo. Recebido: ${analysis.shSc?.pattern}`);
     });
 
     test("Suporte: SH/SC não deve confundir capacidade do tanque com medida", () => {
@@ -159,7 +159,7 @@ export const runSystemDiagnostics = () => {
 
         assert(analysis.shSc?.shKelvin === 18, `SH deveria ser 18K, não capacidade do tanque. Recebido: ${analysis.shSc?.shKelvin}`);
         assert(analysis.shSc?.scKelvin === 1, `SC deveria ser 1K. Recebido: ${analysis.shSc?.scKelvin}`);
-        assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrao deveria ser falta de fluido/vazamento. Recebido: ${analysis.shSc?.pattern}`);
+        assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrão deveria ser falta de fluido/vazamento. Recebido: ${analysis.shSc?.pattern}`);
     });
 
     test("Suporte REF: Não deve puxar árvore elétrica por frase ambígua", () => {

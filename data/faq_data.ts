@@ -149,9 +149,9 @@ Use estas perguntas e respostas como base direta para suporte técnico quando o 
 - P: Como uma sobrecarga de motor afeta a operação do tanque?
   R: A sobrecarga normalmente desarma a proteção, desliga a carga e gera alarme ou bloqueio no sistema.
 - P: Qual é a sequência básica da refrigeração em um tanque automatizado?
-  R: Um controlador ou lógica de comando gera a demanda, o painel valida permissivos e proteções, aciona o contator e alimenta o compressor.
+  R: Um controlador ou lógica de comando gera a demanda, o painel válida permissivos e proteções, aciona o contator e alimenta o compressor.
 - P: Qual é a sequência básica de uma limpeza automática?
-  R: O operador habilita o ciclo, o CLP valida os permissivos, aciona válvulas, bomba e dosadoras, monitora retornos e encerra a receita.
+  R: O operador habilita o ciclo, o CLP válida os permissivos, aciona válvulas, bomba e dosadoras, monitora retornos e encerra a receita.
 - P: Qual é a função do aterramento em um tanque de leite?
   R: O aterramento protege pessoas e equipamentos, melhora a referência elétrica do sistema e ajuda na atuação das proteções.
 - P: Em um sistema com robô de ordenha, o que muda na automação do tanque?

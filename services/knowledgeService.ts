@@ -26,7 +26,7 @@ const parseStoredTips = (saved: string | null): FieldTip[] => {
         const parsed = JSON.parse(saved);
         return Array.isArray(parsed) ? parsed.filter(isFieldTip) : [];
     } catch (error) {
-        console.warn('[knowledgeService] Falha ao ler memoria de campo do localStorage:', error);
+        console.warn('[knowledgeService] Falha ao ler memória de campo do localStorage:', error);
         return [];
     }
 };
@@ -52,7 +52,7 @@ export const knowledgeService = {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify([newTip, ...tips]));
         } catch (error) {
-            console.warn('[knowledgeService] Falha ao salvar memoria de campo no localStorage:', error);
+            console.warn('[knowledgeService] Falha ao salvar memória de campo no localStorage:', error);
         }
 
         return newTip;
@@ -66,7 +66,7 @@ export const knowledgeService = {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(tips));
         } catch (error) {
-            console.warn('[knowledgeService] Falha ao remover memoria de campo do localStorage:', error);
+            console.warn('[knowledgeService] Falha ao remover memória de campo do localStorage:', error);
         }
     },
 

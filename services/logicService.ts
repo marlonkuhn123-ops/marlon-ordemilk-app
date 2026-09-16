@@ -62,10 +62,10 @@ const getCurveLabel = (fluid: Refrigerant, curveKey: PtCurveKey): string => {
     }
 
     if (fluid === Refrigerant.R404A && curveKey === 'bubble') {
-        return 'R404A bubble/liquido - correto para Sub.Res';
+        return 'R404A bubble/líquido - correto para Sub.Res';
     }
 
-    return `${fluid} saturacao unica`;
+    return `${fluid} saturação única`;
 };
 
 const getSortedPtTablePoints = (fluid: Refrigerant, curveKey: PtCurveKey): PtTablePoint[] => {
@@ -132,7 +132,7 @@ const getSaturationLookup = (fluid: Refrigerant, pressure: number, mode: CalcMod
             satTemp: null,
             sourceLabel: PT_TABLE_SOURCE,
             curveLabel,
-            warning: 'Pressao invalida. Digite um valor numerico para localizar a Tsat.'
+            warning: 'Pressão inválida. Digite um valor numérico para localizar a Tsat.'
         };
     }
 
@@ -142,7 +142,7 @@ const getSaturationLookup = (fluid: Refrigerant, pressure: number, mode: CalcMod
             satTemp: null,
             sourceLabel: PT_TABLE_SOURCE,
             curveLabel,
-            warning: `Tabela PT local indisponivel para ${fluid} (${curveLabel}).`
+            warning: `Tabela PT local indisponível para ${fluid} (${curveLabel}).`
         };
     }
 
@@ -151,7 +151,7 @@ const getSaturationLookup = (fluid: Refrigerant, pressure: number, mode: CalcMod
             satTemp: null,
             sourceLabel: `${PT_TABLE_SOURCE}: ${curveLabel}`,
             curveLabel,
-            warning: `Pressao fora da faixa da tabela PT local para ${fluid}. Confira o fluido e o manometro antes de agir.`
+            warning: `Pressão fora da faixa da tabela PT local para ${fluid}. Confira o fluido e o manômetro antes de agir.`
         };
     }
 
@@ -193,7 +193,7 @@ const getSaturationLookup = (fluid: Refrigerant, pressure: number, mode: CalcMod
         satTemp: null,
         sourceLabel: `${PT_TABLE_SOURCE}: ${curveLabel}`,
         curveLabel,
-        warning: `Nao foi possivel localizar a Tsat local para ${fluid} em ${pressure} PSI.`
+        warning: `Nao foi possível localizar a Tsat local para ${fluid} em ${pressure} PSI.`
     };
 };
 
@@ -213,15 +213,15 @@ export const logicService = {
         const tempMeasured = parseNumericInput(temp);
         const modeShortLabel: 'Sup.Aque' | 'Sub.Res' = mode === 'Superaquecimento' ? 'Sup.Aque' : 'Sub.Res';
         const directionLabel = mode === 'Superaquecimento'
-            ? 'Sup.Aque = temperatura do tubo de succao - Tsat'
-            : 'Sub.Res = Tsat - temperatura da linha de liquido';
+            ? 'Sup.Aque = temperatura do tubo de sucção - Tsat'
+            : 'Sub.Res = Tsat - temperatura da linha de líquido';
         const reference = getReferenceRange(mode);
         const curveLabel = getCurveLabel(fluid, getCurveKeyForMode(fluid, mode));
         const baseAudit: Omit<CalculatorAudit, 'ready' | 'sourceLabel' | 'tsatLabel' | 'resultLabel' | 'satTemp' | 'resultKelvin'> = {
             modeShortLabel,
             directionLabel,
             referenceLabel: reference.label,
-            classificationLabel: 'Classificacao local: aguardando dados',
+            classificationLabel: 'Classificação local: aguardando dados',
             classification: null,
             curveLabel,
             actionLabel: 'Conduta local: aguardando dados.'
@@ -236,7 +236,7 @@ export const logicService = {
                 resultLabel: `${modeShortLabel} = --`,
                 satTemp: null,
                 resultKelvin: null,
-                warning: 'Preencha pressao e temperatura validas para exibir a conta auditavel.'
+                warning: 'Preencha pressão e temperatura válidas para exibir a conta auditável.'
             };
         }
 
@@ -275,7 +275,7 @@ export const logicService = {
             curveLabel: lookup.curveLabel,
             actionLabel,
             classification,
-            classificationLabel: `Classificacao local: ${classification}`
+            classificationLabel: `Classificação local: ${classification}`
         };
     },
 
@@ -287,26 +287,26 @@ export const logicService = {
 
         // Se tivermos dados suficientes, passamos o cálculo fechado para a IA já processado.
         const calculationContext = audit.ready
-            ? `CALCULO LOCAL REALIZADO (USE ESTE VALOR): ${audit.tsatLabel}. ${audit.resultLabel}. ${audit.classificationLabel}. Curva usada: ${audit.curveLabel}. Conduta local: ${audit.actionLabel}. Fonte: ${audit.sourceLabel}.`
-            : `AVISO: ${audit.warning || `Nao foi possivel calcular localmente a temperatura de saturacao para ${fluid} a ${press} PSI.`} Realize o calculo com base em seu conhecimento.`;
+            ? `CÁLCULO LOCAL REALIZADO (USE ESTE VALOR): ${audit.tsatLabel}. ${audit.resultLabel}. ${audit.classificationLabel}. Curva usada: ${audit.curveLabel}. Conduta local: ${audit.actionLabel}. Fonte: ${audit.sourceLabel}.`
+            : `AVISO: ${audit.warning || `Nao foi possível calcular localmente a temperatura de saturação para ${fluid} a ${press} PSI.`} Realize o cálculo com base em seu conhecimento.`;
 
         return `
         COMANDO: CALCULAR ${mode === 'Superaquecimento' ? 'Superaquecimento (SH)' : 'Sub-resfriamento (SC)'}.
-        DADOS: Fluido ${fluid}, Pressao ${press} PSIG/manifold, Temperatura ${temp} C.
+        DADOS: Fluido ${fluid}, Pressão ${press} PSIG/manifold, Temperatura ${temp} C.
         
         ${calculationContext}
 
         CONTEXTO DE REFERÊNCIA:
-        - Faixa IDEAL para Superaquecimento (SH): ${shRange.min}K a ${shRange.max}K (T.Sucção - T.Evaporação).
-        - Faixa IDEAL para Sub-resfriamento (SC): ${scRange.min}K a ${scRange.max}K (T.Condensação - T.Linha de Líquido).
-        - Para R404A, use dew/vapor no SH e bubble/liquido no SC. Nao use curva unica para blend.
-        - A pressao informada pelo tecnico e PSIG/gauge de manifold, nao pressao absoluta.
+        - Faixa IDEAL para Sup.Aque (superaquecimento): ${shRange.min}K a ${shRange.max}K (T.Sucção - T.Evaporação).
+        - Faixa IDEAL para Sub.Res (sub-resfriamento): ${scRange.min}K a ${scRange.max}K (T.Condensação - T.Linha de Líquido).
+        - Para R404A, use dew/vapor no Sup.Aque e bubble/líquido no Sub.Res. Não use curva única para blend.
+        - A pressão informada pelo técnico é PSIG/gauge de manifold, não pressão absoluta.
         
         INSTRUÇÃO DE SAÍDA:
         NÃO use formatação Markdown ou símbolos especiais.
         1. Apresente o resultado final do cálculo em Kelvin (K). Se o cálculo foi fornecido acima, use-o obrigatoriamente.
         2. Classifique o resultado como ALTO, IDEAL ou BAIXO, comparando com a faixa de referência.
-        3. Use a conduta local como trilho tecnico. Nao recomende adicionar fluido, recolher fluido, abrir a valvula de expansao ou fechar a valvula de expansao sem antes citar a confirmacao necessaria.
+        3. Use a conduta local como trilho técnico. Nao recomende adicionar fluido, recolher fluido, abrir a válvula de expansão ou fechar a válvula de expansão sem antes citar a confirmação necessária.
         `.trim();
     },
 
