@@ -1467,3 +1467,55 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   "CALCULO LOCAL AUDITAVEL", "DIRECAO DO CALCULO", "Classificacao local", "succao"), convivendo
   com textos acentuados na mesma tela. Nao toquei porque pode ser contorno proposital de
   problema de encoding ja enfrentado nesses arquivos. Decidir com o USER antes de mexer.
+
+### EXECUCAO CLAUDE - ACENTUACAO DE TODO O TEXTO VISIVEL (v71 + v72) - 2026-09-16
+- Pedido do USER: "corrija todas as palavras! isso e inaceitavel" (sobre textos sem acento no app).
+- Resultado: 1310 palavras corrigidas. 713 no codigo (v71) + 597 nos dados em public/ (v72).
+  App verificado ao vivo em producao: 10 telas sem nenhuma palavra sem acento.
+
+- METODO (importante para a Codex nao refazer errado):
+  Um scanner que so altera CONTEUDO de string literal e texto JSX. Nunca toca em codigo,
+  nome de variavel, chave de objeto, import ou classe CSS.
+  TRES INVARIANTES aplicadas em cada arquivo ANTES de gravar:
+  1. acentuar nunca muda a quantidade de caracteres -> o arquivo resultante tem de ter
+     EXATAMENTE o mesmo tamanho do original;
+  2. removendo os acentos dos dois lados, o conteudo tem de ficar identico;
+  3. em JSON, o arquivo tem de continuar sendo JSON valido.
+  Qualquer arquivo que falhasse era abortado sem gravar.
+  Isso salvou a rodada: a PRIMEIRA versao do scanner duplicava texto dentro de template
+  literal (`Tabela PT local indisponivel para Tabela PT local indisponivel para ...`) e foi
+  detectada e descartada pela invariante 1. Ficou guardada em `git stash` com a mensagem
+  "tentativa-acentos-quebrada-scanner-duplicou-texto" (pode ser descartada com git stash drop).
+
+- O QUE NAO FOI ACENTUADO, DE PROPOSITO (acentuar QUEBRA o app):
+  1. `STRONG_ELECTRICAL_TERMS`, `WEAK_ELECTRICAL_TERMS` (supportDiagnosticEngine),
+     `ELECTRICAL_KEYWORDS`, `REFRIGERATION_KEYWORDS`, `ERROR_KEYWORDS`,
+     `ELECTRICAL_PRIORITY_KEYWORDS` (localSupportService) e os `includes()` de geminiService.
+     MOTIVO: o texto do tecnico passa por `normalize()` que REMOVE o acento antes de comparar.
+     Se os termos virarem acentuados, o app para de reconhecer o sintoma. Confirmado ao vivo:
+     "A contatora nao fecha e o disjuntor motor esta desarmando" continua puxando CLP/contatora/
+     disjuntor normalmente.
+  2. Valores gravados na sessao: `ihmOn` e `compressorStarts` guardam 'sim'/'nao'.
+  3. No `testSuite.ts`: as entradas simuladas do tecnico (ex.: "compressor desarma por alta
+     pressao") e a assercao NEGATIVA que verifica ausencia de "pressao"/"conexao" sem acento.
+     O corretor chegou a acentuar essa assercao e criou uma contradicao logica que derrubou o
+     teste de 18/18 para 17/18. Foi revertida a mao.
+  4. Palavras que estao CORRETAS sem acento em pt-BR e nao devem ser "corrigidas":
+     fluido, inox, solenoide, unidade, capacidade, continuidade, umidade, estabilidade,
+     prioridade, tentativa, realidade, teoria, objetiva, normativo, dispositivo, fica,
+     significa, indica, acima, queima, bloqueia.
+
+- Tambem nesta rodada: o prompt de calculo em `logicService.formatCalculatorPrompt` passou a
+  dizer Sup.Aque/Sub.Res no lugar de (SH)/(SC).
+
+- Arquivo `public/data/bom_database.json` foi corrigido mas HOJE NAO E LIDO pelo app
+  (a tela de Dados importa `bom_database.ts` direto). Corrigido so para nao voltar errado
+  se algum dia passar a ser usado. A formatacao original foi preservada, nada foi reserializado.
+
+- Validacao: `npm run lint` OK, `npm run build` OK, autoteste interno 18/18 (local e em producao).
+- Verificacao ao vivo em producao (24/25): Login, Suporte, Superaq, Erros, Servicos, Dados,
+  Dimensionamento, Curso e Tutorial todos sem palavra sem acento. O unico item nao aprovado era
+  falso positivo do meu proprio script: ele contava o ECO das mensagens que EU tinha digitado no
+  chat sem acento. Com sessao limpa, os 6 passos do tutorial deram limpo.
+
+- Commits: `82c0fc2` (v71, codigo) e `2096a3c` (v72, dados em public/).
