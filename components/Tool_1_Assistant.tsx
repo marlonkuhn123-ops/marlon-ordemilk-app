@@ -171,7 +171,14 @@ const mapSupportMessageToApi = (message: ChatMessage, includeFileData: boolean) 
 };
 
 const buildSupportApiHistory = (previousMessages: ChatMessage[], currentUserMessage: ChatMessage) => {
-    const previousContext = previousMessages
+    const lastModeBoundaryIndex = previousMessages.findLastIndex(message =>
+        message.text.startsWith('Modo de diagnóstico focado em **')
+    );
+    const scopedPreviousMessages = lastModeBoundaryIndex >= 0
+        ? previousMessages.slice(lastModeBoundaryIndex + 1)
+        : previousMessages;
+
+    const previousContext = scopedPreviousMessages
         .filter(isApiContextMessage)
         .slice(-AI_CONTEXT_MESSAGE_LIMIT)
         .map(message => mapSupportMessageToApi(message, false))

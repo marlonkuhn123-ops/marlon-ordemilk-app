@@ -7,6 +7,13 @@
 
 ## STATUS DE OPERACAO EM TEMPO REAL
 
+### RODADA ATIVA CODEX - AJUSTE PEQUENO SUPORTE / RECORTE DE CONTEXTO - 2026-09-16
+- **Autorizacao direta do USER:** "arrume esses pequenos detalhes... sem mexer em nada abusivo".
+- **Intencao registrada:** corrigir apenas o pequeno vazamento de contexto observado no teste online, quando uma conversa eletrica era seguida por uma pergunta de refrigeracao pura no mesmo chat.
+- **Escopo tecnico:** manter a conversa visivel na tela, mas recortar o historico enviado ao Gemini apos a ultima troca manual de modo (ex.: ELETRICA -> REFRIGERACAO), evitando que a rota eletrica antiga contamine uma nova pergunta frigorifica.
+- **Pode editar sem pedir?** SIM para patch local e testes. Sem deploy nesta etapa, salvo pedido direto posterior do USER.
+- **Protecoes:** nao mexer em modelos Gemini, persona, prompt tecnico central, chaves, service worker/cache, selos de versao, login ou roteamento Vercel.
+
 ### RODADA ATIVA CODEX - CORRECAO SUPERAQ SINCRONIZANDO - 2026-09-15T09:17:59-03:00
 - **Autorizacao direta do USER:** apos teste online, USER perguntou "consegue arrumar esses pequenos erros?".
 - **Intencao registrada:** corrigir o travamento visual da Superaq em `Sincronizando...` apos o calculo local SH/SC, sem mexer no suporte, persona, prompts de suporte ou modelos.
