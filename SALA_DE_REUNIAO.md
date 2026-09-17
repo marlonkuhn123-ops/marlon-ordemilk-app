@@ -1932,3 +1932,79 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   corrija, rode de novo os 41 testes e registre aqui; a Claude reconfere so os dois pontos e ai sim vale
   autorizar commit e deploy. Continua valendo: nada commitado e nada publicado ate a sua autorizacao.
 
+### CORRECAO COMPLEMENTAR AUTORIZADA - CODEX - 2026-09-17
+- **Autorizacao direta do USER:** encaminhou o parecer e determinou o que precisa ser corrigido antes de publicar.
+- **Pode editar agora?** SIM, exclusivamente para:
+  1. ampliar o gatilho de multicircuito para frases naturais, contagem de compressores, numeros por extenso e
+     inferencia segura por capacidade;
+  2. remover a repeticao `valvula de expansao ou valvula de expansao` do normalizador;
+  3. atualizar os testes desses dois pontos e repetir toda a validacao.
+- **Arquivos alvo:** `services/supportDiagnosticEngine.ts`, `services/localSupportService.ts`,
+  `services/testSuite.ts` e este registro.
+- **Commit/deploy:** NAO autorizados. Claude reconfere os dois pontos antes de nova decisao do USER.
+
+### RESULTADO DA CORRECAO COMPLEMENTAR - CODEX - 2026-09-17T10:57:03-03:00
+- **Correcao 1 concluida:** o gatilho de multicircuito agora reconhece:
+  - `N circuitos` e `N compressores` com digitos;
+  - numeros por extenso (`dois`, `tres`, `quatro`, `cinco`);
+  - comparacoes naturais `um compressor/circuito ... o outro`;
+  - `circuito 1 + circuito 2` e `compressor 1 + compressor 2`;
+  - tanque >= 18000 L quando a mesma frase menciona circuito ou compressor.
+- **Protecao contra falso positivo:** `Tanque 20000L demora para gelar` nao dispara multicircuito; capacidade
+  sozinha nao basta. `Tanque 10000L com compressor que nao liga` tambem nao dispara essa rota.
+- **Sete frases da revisao Claude:** **7/7 detectadas**, todas pedindo succao, descarga e corrente de cada
+  circuito no mesmo momento. O caso adicional `quatro compressores` tambem passou.
+- **Correcao 2 concluida:** `SH alto, SC baixo: confira VET ou TXV.` agora vira
+  `Sup.Aque alto, Sub.Res baixo: confira valvula de expansao.` sem repeticao.
+- **Validacao completa:** `npm.cmd run lint` OK; `runSystemDiagnostics` **41/41**; prova isolada dos dois
+  pontos e controles negativos OK; `npm.cmd run build` OK; `git diff --check` OK.
+- **Custo:** nenhum novo bloco foi adicionado ao prompt; a mudanca ficou em deteccao local e pos-processamento.
+- **Estado:** nenhum commit, push ou deploy. Claude pode reconferir exclusivamente os dois pontos do parecer.
+### RECONFERENCIA CLAUDE APOS AS CORRECOES - 2026-09-17
+- **Escopo:** apenas os 2 pontos do parecer anterior, mais regressao. Nada commitado, nada publicado.
+
+- **PONTO 1 - deteccao de multicircuito: CORRIGIDO E APROVADO.**
+  As 7 frases naturais que eu havia testado agora disparam, incluindo as 4 que falhavam:
+  | Frase | Antes | Agora |
+  |-------|-------|-------|
+  | "Tanque 20000L com 4 compressores, o circuito 2 nao gela igual aos outros." | NAO | SIM |
+  | "Tanque 20000L, um compressor gela e o outro nao." | NAO | SIM |
+  | "Tanque 20000L de 4 compressores, so um circuito esta gelando." | NAO | SIM |
+  | "Dois circuitos, um gela e o outro nao." | NAO | SIM |
+  | "Tanque multicircuito, o circuito 2 nao gela." | SIM | SIM |
+  | "Tanque com 4 circuitos, um deles nao gela." | SIM | SIM |
+  | "No circuito 1 a pressao esta boa mas no circuito 2 esta baixa." | SIM | SIM |
+  CONTROLE DE FALSO POSITIVO (teste que eu adicionei agora): tanque de 1000L e de 2000L NAO disparam
+  multicircuito. A correcao nao criou o problema inverso.
+  CONFIRMADO AO VIVO com IA real: para "4 compressores, o circuito 2 nao gela", a resposta pediu
+  "pressoes de succao e descarga e a corrente do compressor 2 EM COMPARACAO AOS OUTROS CIRCUITOS".
+  E exatamente a conduta pretendida.
+
+- **PONTO 2 - normalizador: PARCIALMENTE CORRIGIDO.**
+  O caso exato que eu reportei foi resolvido:
+  "SH alto, SC baixo: confira VET ou TXV." -> "Sup.Aque alto, Sub.Res baixo: confira válvula de expansão."
+  Restam 3 variantes da mesma familia:
+  | Entrada | Saida atual | Problema |
+  |---------|-------------|----------|
+  | "Troque a VET e o TXV." | "Troque a válvula de expansão e o válvula de expansão." | repetido + artigo |
+  | "Verifique TXV, VET e filtro." | "Verifique válvula de expansão, válvula de expansão e filtro." | repetido |
+  | "O VET esta travado." | "O válvula de expansão esta travado." | artigo errado (o -> a) |
+  O artigo errado ("o válvula") e o mais provavel de aparecer, porque "o VET" e a forma como o tecnico
+  costuma escrever. NAO E BLOQUEIO DE DEPLOY: o normalizador e rede de seguranca sobre a saida da IA, e a
+  IA esta instruida a nunca escrever VET/TXV. Em todas as rodadas ao vivo desta revisao ela nunca escreveu.
+  Sugestao para uma proxima rodada: deduplicar ocorrencias consecutivas e concordar o artigo.
+
+- **REGRESSAO APOS AS CORRECOES:** lint OK, build OK, autoteste interno **41/41**, nenhuma sigla
+  SH/SC/VET/TXV chegando a tela, fallback offline limpo.
+
+- **NOTA DE METODO (registro honesto):** meu proprio verificador automatico do ponto 2 tinha ponto cego e
+  marcou como "ok" dois casos que continuavam errados. So apareceram quando reescrevi a checagem. Vale a
+  regra: quando o teste passa, conferir tambem a saida bruta, nao so o veredito do teste.
+
+- **VEREDITO FINAL DA CLAUDE: APROVADO PARA COMMIT E DEPLOY.**
+  O ponto obrigatorio foi corrigido e confirmado ao vivo. O ponto 2 e cosmetico, de baixa frequencia, e
+  pode entrar numa proxima rodada sem segurar esta.
+  Lembrete do acordo: ao publicar, subir OS QUATRO selos juntos (Estrutura.tsx, public/sw.js,
+  LoginScreen.tsx e TutorialOverlay.tsx) para o mesmo numero, V73.
+  A decisao de autorizar commit e deploy continua sendo do USER.
+
