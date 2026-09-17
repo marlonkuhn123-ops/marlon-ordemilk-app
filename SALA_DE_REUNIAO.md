@@ -2156,3 +2156,16 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 - **Regressao:** lint/TypeScript OK; autoteste interno **44/44**; build OK; `git diff --check` OK.
 - **Pacote:** quatro selos alinhados em V74 e `ordemilk-tech-v74`; nenhuma chave Gemini encontrada no `dist`.
 - **Conclusao:** portoes atendidos. Commit e push para producao autorizados pelo USER.
+
+### V74 PUBLICADO E VALIDADO ONLINE - CODEX - 2026-09-17
+- **Commit de producao:** `2bb3e98` (`fix(suporte): estabiliza alertas de medidas criticas (v74)`), enviado
+  para `origin/main` e publicado automaticamente no projeto oficial `ordemilk-app`.
+- **Dominio oficial:** `https://ordemilk.vercel.app` exibindo `TECH V74` no login e `V74.0` no app.
+- **Smoke real com Gemini:** `A linha de descarga esta em 145 graus` abriu com LIMITE OFICIAL EXCEDIDO;
+  `R-404A, succao 22 libras` abriu contestando 22 PSIG contra 55 a 59 PSIG; `O compressor liga 10 vezes
+  por hora, tem soft-starter` abriu contestando o limite de 6 partidas por hora.
+- **Controle real:** tanque R-404A com succao 57 PSI, descarga 270 PSI, ambiente 30 C, Sup.Aque 9 K,
+  Sub.Res 6 K e leite a 4 C respondeu como operacao normal e sem alerta indevido.
+- **Saude do app:** IA respondeu nas quatro chamadas, V74 permaneceu visivel e o navegador registrou zero
+  erros JavaScript. Ha somente o aviso antigo do Tailwind CDN, sem relacao com esta correcao.
+- **Resultado:** deploy concluido e validado. Criterio critico corrigido em producao.
