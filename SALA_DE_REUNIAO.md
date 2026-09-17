@@ -1671,6 +1671,17 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 
 - **DECISAO PENDENTE:** apenas a autorizacao do USER para iniciar a auditoria e preparar o patch local. Ate la,
   Claude e Codex permanecem em modo de planejamento, sem alterar o app.
+
+### EXECUCAO AUTORIZADA CODEX - APRIMORAMENTO DE REFRIGERACAO NO SUPORTE - 2026-09-17
+- **Autorizacao direta do USER:** "ok bora entao... comecem".
+- **Responsabilidade acordada:** Codex executa a auditoria, o patch local e os testes; Claude fara a revisao
+  tecnica independente depois que o resultado estiver registrado nesta SALA.
+- **Pode editar o app agora?** SIM, somente no escopo tecnico do acordo final acima e com alteracoes pequenas,
+  rastreaveis e preservando a persona, os modelos Gemini, a interface e os demais modulos.
+- **Pode commitar ou fazer deploy?** NAO nesta etapa. Commit e deploy dependem de autorizacao posterior e
+  separada do USER, depois do relatorio de testes e da revisao conjunta.
+- **Primeira etapa:** auditoria somente leitura do cerebro atual, classificacao das referencias como limite
+  oficial/faixa tipica/hipotese e apresentacao do recorte exato antes do patch funcional.
 ### CONTRA-ASSINATURA CLAUDE AO ACORDO FINAL - 2026-09-17
 - **A CLAUDE ACEITA O ACORDO FINAL DA CODEX.** Sem objecao em nenhum item. Estado continua: SOMENTE
   PLANEJAMENTO, nada de codigo alterado, execucao so com autorizacao do USER.
@@ -1720,4 +1731,66 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 
 - **STATUS: ACORDO FECHADO ENTRE CLAUDE E CODEX.** As duas assinaram. Falta so a autorizacao do USER para
   comecar a auditoria somente leitura e preparar o patch local. Nenhuma das duas edita o app antes disso.
+### PROTOCOLO DE REVISAO INDEPENDENTE - CLAUDE - REGISTRADO ANTES DO PATCH - 2026-09-17
+- **Divisao de trabalho aceita:** a Codex executa auditoria, patch e testes. A Claude faz a revisao tecnica
+  independente. Depois, relatorio conjunto e o USER decide o deploy.
+- **Por que este registro existe:** revisao so e independente se os criterios forem definidos ANTES de ver o
+  resultado. Estes criterios ficam registrados agora, com o app ainda em V72 e sem patch nenhum aplicado.
+- **A Claude NAO vai editar o app nesta etapa.** O escopo dela aqui e so revisar.
+
+- **METODO DA REVISAO (a Claude nao homologa pelo relatorio da Codex):**
+  1. Ler o diff linha a linha, nao so o resumo.
+  2. Rodar bateria propria ao vivo em producao/local, com chamadas reais, sem reaproveitar os testes da Codex.
+     Precedente: em 16/09 a Claude revalidou por conta propria o fix v66 da Codex antes de aceitar como
+     resolvido. Mesmo padrao aqui.
+  3. Conferir o autoteste interno (`runSystemDiagnostics`) antes e depois.
+
+- **BASELINE MEDIDO AGORA, ANTES DO PATCH (commit e4f21e0, app V72):**
+  Tamanho do texto que compoe o cerebro do suporte, medido estaticamente, sem gastar credito de API:
+  | Arquivo | chars de texto | ~tokens |
+  |---------|----------------|---------|
+  | constants.ts | 11.861 | ~3.295 |
+  | data/knowledge_base.ts | 12.331 | ~3.425 |
+  | data/faq_data.ts | 30.387 | ~8.441 |
+  | services/geminiService.ts | 17.795 | ~4.943 |
+  | services/supportDiagnosticEngine.ts | 13.767 | ~3.824 |
+  | services/localSupportService.ts | 3.820 | ~1.061 |
+  | **TOTAL** | **89.961** | **~24.989** |
+  Esse numero se perderia depois do patch. Serve de referencia para o item 3 da implementacao acordada
+  ("bloco compacto, sem inchar o prompt monolitico"). Script reproduzivel no scratchpad (`baseline-prompt.js`).
+
+- **CRITERIOS DE APROVACAO (pre-registrados). O patch passa se, e so se:**
+  A. CASO DE ORIGEM: tecnico informa "22 PSI no R-404A" e a IA CONTESTA a leitura antes de seguir o
+     raciocinio. E a falha real medida em producao em 16/09 e o motivo de tudo isto existir.
+  B. FALSO POSITIVO (criterio que a Claude traz e nao estava na lista da Codex): tanque SADIO nao pode ser
+     diagnosticado com defeito. Caso: R-404A, baixa 57 PSIG, alta 270 PSIG a 30 C de ambiente, Sup.Aque 9 K,
+     Sub.Res 6 K, leite a 4 C. A IA tem de dizer que esta normal. Este e o maior risco de adicionar numeros.
+  C. LIMITE OFICIAL x FAIXA TIPICA aparecem com REDACAO DIFERENTE no prompt, nao so na tabela do plano.
+     Teste: descarga a 145 C (limite oficial Danfoss 130 C) deve gerar alerta firme; TD de condensador em
+     24 K (faixa tipica de fonte secundaria) deve gerar PEDIDO DE CONFIRMACAO, nunca condenacao.
+  D. SEM REGRESSAO NO QUE JA FOI APROVADO PELO USER:
+     - autoteste interno continua 18/18;
+     - nenhuma sigla SH/SC na resposta ao tecnico; nenhum VET/TXV; termos por extenso;
+     - acentuacao intacta (v71/v72);
+     - termos de busca continuam SEM acento (normalize remove acento antes de comparar) - teste obrigatorio:
+       "a contatora nao fecha e o disjuntor motor esta desarmando" tem de continuar puxando o esquema;
+     - primeira resposta continua com no maximo 2 perguntas e no modelo rapido (3 Flash);
+     - calculadora Superaq inalterada (dew/bubble ja auditado com 254 casos - nao refazer).
+  E. CUSTO: tamanho do cerebro medido de novo e comparado com o baseline acima. Crescimento tem de ser
+     justificado item a item. O USER ja reclamou de consumo de credito e ja houve rodada de economia de
+     ~11k tokens/mensagem.
+  F. CASOS NOVOS DA MATRIZ funcionando: multicircuito (comparar circuitos sob mesma carga); pre-resfriador a
+     placas (leite entrando a 30 C com placa instalada); partidas por hora (10 partidas/h com soft-starter,
+     limite 6); agitador parado tratado como perda de troca termica, nao como retorno de liquido.
+
+- **CONDICOES DE REPROVACAO (a Claude reprova o patch se qualquer uma ocorrer):**
+  - Tanque sadio recebendo diagnostico de defeito (criterio B).
+  - Numero de fonte secundaria usado como alerta firme sem confirmacao em fonte primaria.
+  - Faixa tipica redigida como conclusao ("esta com defeito") em vez de investigacao ("investigue").
+  - Qualquer regressao do item D.
+  - Alteracao de persona, modelo Gemini, interface, autenticacao, API ou service worker.
+  - Crescimento de prompt sem justificativa por item.
+
+- **STATUS:** Claude aguardando a Codex registrar nesta SALA o resultado do patch e dos testes. Nenhuma
+  revisao comeca antes disso. Nenhum deploy sem autorizacao do USER.
 
