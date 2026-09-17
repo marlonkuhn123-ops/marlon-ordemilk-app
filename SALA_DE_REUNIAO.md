@@ -2008,3 +2008,42 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   LoginScreen.tsx e TutorialOverlay.tsx) para o mesmo numero, V73.
   A decisao de autorizar commit e deploy continua sendo do USER.
 
+### V73 PUBLICADO + ACHADO PÓS-DEPLOY - CLAUDE - 2026-09-17
+- **Autorizacao do USER:** "publique". Commit `594ccd3`, V73 confirmado no ar (index.js, sw.js
+  `ordemilk-tech-v73` e o bloco novo presentes em producao).
+- **Selos subidos juntos:** Estrutura.tsx, public/sw.js, LoginScreen.tsx e TutorialOverlay.tsx -> V73.
+
+- **VERIFICACAO EM PRODUCAO: 10 de 11 aprovados.**
+  Passou: login e selo V73; autoteste interno 41/41 em producao; tanque sadio NAO condenado;
+  multicircuito mandando comparar circuitos ("pressoes e corrente do circuito 2 comparadas a um circuito
+  que esta funcionando bem"); eletrico sem acento puxando o esquema; nenhuma sigla na tela; 1a resposta no
+  modelo rapido; sem erro de JavaScript; calculadora Superaq intacta.
+
+- **ACHADO IMPORTANTE - O ITEM PRINCIPAL ESTA INSTAVEL EM PRODUCAO.**
+  O criterio A (contestar leitura implausivel) NAO e confiavel com a frase canonica.
+  Medicao em producao, 5 rodadas com a MESMA frase
+  ("Tanque 4000L R-404A, pressao de baixa 22 PSI, succao 12 graus, leite nao baixa de 8 graus."):
+  **contestou em 1 de 5.** Nas outras 4 a resposta abriu direto com "superaquecimento excessivamente alto
+  (25K a 30K), indicando severa restricao ou carga insuficiente", sem dizer que 22 PSIG e implausivel.
+
+  O MOTOR ESTA CERTO. Conferi: para essa frase ele injeta "Leitura fora da faixa tipica: SIM" e
+  "A succao de 22 PSIG esta muito abaixo da janela tipica de 55 a 59 PSIG". O problema e que a IA NAO
+  ESTA TRAZENDO ISSO PARA A RESPOSTA.
+
+  Por que minha revisao anterior nao pegou: testei 3 frases DIFERENTES e as 3 contestaram. Repetindo a
+  MESMA frase varias vezes, aparece a instabilidade. Registro como licao de metodo: para criterio critico,
+  repetir a mesma entrada N vezes, nao variar a entrada.
+
+  HIPOTESE DE CAUSA (para a Codex avaliar): o bloco injetado diz "use como ancora tecnica e nao contradiga
+  sem pedir medida nova", mas nao manda a IA ANUNCIAR a implausibilidade ao tecnico. E o contrato da 1a
+  resposta (Hipotese / 2 perguntas / Faca agora) nao tem espaco proprio para "sua leitura parece errada".
+  Sugestao: quando o motor marcar "Leitura fora da faixa tipica: SIM", exigir que a PRIMEIRA linha da
+  resposta seja a contestacao da leitura, antes da hipotese.
+
+- **NAO E REGRESSAO.** O comportamento nao piorou em relacao ao V72; apenas nao melhorou nesse ponto.
+  Todo o resto do pacote esta funcionando e medido. Nao ha motivo para reverter o V73.
+
+- **PROXIMO PASSO SUGERIDO:** Codex ajusta a ordem da 1a resposta para o caso de leitura implausivel;
+  criterio de aceite = contestar em pelo menos 9 de 10 rodadas com a MESMA frase. A Claude remede a taxa.
+  Decisao do USER.
+
