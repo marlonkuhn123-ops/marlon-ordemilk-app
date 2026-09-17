@@ -2169,3 +2169,51 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 - **Saude do app:** IA respondeu nas quatro chamadas, V74 permaneceu visivel e o navegador registrou zero
   erros JavaScript. Ha somente o aviso antigo do Tailwind CDN, sem relacao com esta correcao.
 - **Resultado:** deploy concluido e validado. Criterio critico corrigido em producao.
+### TESTE DA V74 EM PRODUCAO - CLAUDE - 2026-09-17
+- **Objeto:** V74 publicada pela Codex (commits `2bb3e98` e `5c8dc1b`). Producao confirmada: login TECH V74,
+  selo V74.0, cache `ordemilk-tech-v74`. Local igual ao origin, arvore limpa.
+- **VEREDITO: APROVADO. O criterio de aceite foi superado e nao houve regressao.**
+
+- **1) CRITERIO DE ACEITE COMBINADO (13 de 15 frases): 15/15. APROVADO.**
+  | Detector | Antes da correcao | Agora |
+  |----------|-------------------|-------|
+  | Temperatura de descarga | 2/7 | **7/7** |
+  | Pressao de succao | 3/5 | **5/5** |
+  | Partidas por hora | 1/3 | **3/3** |
+  Os 4 controles seguem sem aviso indevido: tanque sadio, agitador parado, eletrico puro e pergunta generica.
+
+- **2) TESTE COM FRASES QUE A CODEX NAO VIU (feito de proposito, para nao medir decoreba): 7/12.**
+  Escrevi 12 frases novas, nunca publicadas nesta SALA, com numeros diferentes e portugues de campo.
+  Passaram 7. Nao reconhecidas:
+  - "o cabecote ta com 152 graus na descarga"  (numero antes do termo)
+  - "tirei 149 na descarga com o termometro"   (numero antes do termo)
+  - "a baixa caiu pra 15 psig, fluido r404a"   (verbo "caiu pra")
+  - "manometro de baixa marcando 12 psi r404a" (verbo "marcando")
+  - "liga e desliga 9 vezes na hora, tem soft-starter" ("na hora" em vez de "por hora")
+  LEITURA HONESTA: a cobertura subiu muito (antes 6/15 no total; agora 100% na lista publicada e 58% em
+  frase nova), mas o reconhecimento continua sendo por padrao de texto e generaliza so em parte. O ganho e
+  real e nao e decoreba pura, mas tambem nao e completo. Fica como melhoria futura, sem urgencia.
+
+- **3) O MAIS IMPORTANTE: ZERO FALSO POSITIVO EM 12 ARMADILHAS.**
+  Testei valores normais e pegadinhas. Nenhuma gerou aviso indevido, inclusive a melhor delas:
+  "a temperatura do leite esta em 145 graus" NAO foi lida como temperatura de descarga.
+  Quando o motor nao entende, ele fica quieto em vez de assustar o tecnico. E o comportamento certo.
+
+- **4) PRODUCAO, 23 verificacoes, TODAS OK:**
+  login V74 e senha errada recusada; selo V74.0; autoteste interno **44/44** dentro do app; estabilidade
+  **6/6** com o aviso antes da hipotese; tanque sadio sem aviso e sem condenar peca; descarga 145 C com o
+  aviso de limite oficial citando os 130 C; multicircuito mandando comparar circuitos; eletrico sem acento
+  puxando o esquema e sem aviso frigorifico indevido; nenhuma sigla SH/SC/VET/TXV na tela; 1a resposta no
+  modelo rapido; sem erro de JavaScript; telas Erros, Superaq, Curso, Servicos, Dimensionamento e Dados
+  funcionando; sem scroll horizontal no celular.
+
+- **5) GANHO DE VELOCIDADE NAO PREVISTO:** a 1a resposta caiu de ~3,2 s para ~2,1 s nas 6 medicoes.
+  Provavel efeito de a abertura critica ja vir pronta do motor local.
+
+- **6) NOTA DE METODO (terceira vez hoje):** meu script marcou o caso da descarga como reprovado, mas o
+  aviso ESTAVA la; o recorte do texto cortou o inicio da linha. Confirmei no texto cru. Mantida a regra:
+  criterio critico so e dado por reprovado depois de olhar a saida bruta.
+
+- **HISTORICO DO ITEM PRINCIPAL:** V72 aceitava "22 PSI no R-404A" sem questionar. V73 contestava em 1 de 5.
+  V74 contesta em 6 de 6, sempre antes da hipotese. Objetivo do trabalho atingido.
+
