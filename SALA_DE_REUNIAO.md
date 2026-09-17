@@ -1,7 +1,48 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-14 (CLAUDE)
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-17 (CLAUDE)
+
+---
+
+## ESTADO ATUAL DO APP  *(ler isto primeiro)*
+
+| Campo | Valor |
+|-------|-------|
+| **Data** | 2026-09-17 |
+| **Versao em producao** | **V75** |
+| **Commit publicado** | `7017dc6` |
+| **Endereco** | https://ordemilk.vercel.app |
+| **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
+| **Autoteste interno** | **47/47** (botao de status dentro do app) |
+| **Verificacao em producao** | 23/23 em 2026-09-17 (CLAUDE) |
+| **Pendencias abertas** | **NENHUMA** |
+| **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
+
+**Ultima atualizacao (o que mudou na V75):**
+Fechadas as duas pendencias que sobraram da V74.
+1. Termos por extenso com concordancia correta e sem repetir: "O VET esta travado" agora vira
+   "A valvula de expansao esta travado", e "Troque a VET e o TXV" vira "Troque a valvula de expansao".
+2. Cobertura da linguagem de campo no reconhecimento de medidas: 12/12 em frases novas (antes 7/12),
+   aceitando "ta com", "caiu pra", "marcando", "liga e desliga N vezes na hora", numero antes do termo
+   e "graus celsius" por extenso. Com trava: numero sem unidade so e aceito se houver pista de
+   temperatura, para "149 na descarga" nao ser confundido com pressao em PSI.
+Zero falso positivo em 21 armadilhas. As tres correcoes ficaram travadas por teste permanente.
+
+**Historico curto de versoes:**
+| Versao | Data | O que entrou |
+|--------|------|--------------|
+| V75 | 2026-09-17 | Linguagem de campo + concordancia dos termos (CLAUDE) |
+| V74 | 2026-09-17 | Alerta deterministico montado pelo app + extratores ampliados (CODEX) |
+| V73 | 2026-09-17 | Referencia frigorifica e plausibilidade de leitura (CODEX + pesquisa CLAUDE) |
+| V72 | 2026-09-16 | Acentuacao dos dados em public/ (CLAUDE) |
+| V71 | 2026-09-16 | Acentuacao de todo o texto visivel do app (CLAUDE) |
+| V70 | 2026-09-16 | Remocao das siglas SH/SC do laudo, tutorial e respostas (CLAUDE) |
+| V69 | 2026-09-15 | Alinhamento dos 4 selos de versao (CLAUDE) |
+
+**REGRA DE DEPLOY (vale para as duas IAs):** ao publicar, subir OS QUATRO selos juntos para o mesmo
+numero -> `components/Estrutura.tsx`, `public/sw.js` (`CACHE_NAME`), `components/LoginScreen.tsx` e
+`components/TutorialOverlay.tsx` (2 ocorrencias). E atualizar este bloco de ESTADO ATUAL.
 
 ---
 
