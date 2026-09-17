@@ -28,14 +28,14 @@ MÓDULO 2: CONTROLADORES E SENSORES
 20. Inércia Térmica: O fundo mede a chapa de inox resfriada diretamente pelo gás (alta flutuação). O poço mergulhado lê a temperatura real e estável da massa de líquido.
 
 MÓDULO 3: CICLO, FLUIDO E EXPANSÃO
-21. Diagnóstico Duplo (Válvula de Expansão): Assobio com bolhas indica falta de gás ou sub-resfriamento inexistente. Se fosse tela entupida, a pressão de alta estaria normal e o visor antes da válvula de expansão estaria cheio.
+21. Diagnóstico Duplo (Válvula de Expansão): Assobio e bolhas não separam sozinhos falta de fluido, flash gas e restrição. Compare Sub.Res, pressão/temperatura antes e depois do filtro secador/solenoide e condição do visor com o sistema estabilizado.
 22. Retorno de Líquido: Superaquecimento zero ou negativo. Gás não ferveu totalmente. Risco de quebra das válvulas de palheta por líquido incompressível.
 23. Falta de fluido refrigerante: Carga baixa faz o fluido evaporar totalmente logo no início da serpentina (Roll-Bond). Gelo desigual na placa.
-24. Inundação (Bulbo Solto): O bulbo sente calor ambiente e abre a válvula de expansão ao máximo (100%), inundando o evaporador com líquido e despencando a pressão.
+24. Inundação (Bulbo Solto): O bulbo exposto ao ar quente tende a abrir demais a válvula de expansão, reduzindo o Sup.Aque e podendo elevar a pressão de sucção/causar retorno de líquido. Confirme fixação, isolamento e leitura antes de ajustar.
 25. Sentido de ajuste: Anti-horário alivia a mola, fazendo a válvula de expansão abrir mais fácil, permitindo mais fluido e diminuindo o superaquecimento.
 26. Entupimento por Umidade (Gelo): Umidade congela no orifício da válvula de expansão, bloqueando o gás. Ao desligar, o gelo derrete e o ciclo volta a funcionar até congelar de novo.
 27. Diferença de leitura: O Útil diz se o evaporador é eficiente. O Total (perto do compressor) garante que nenhum líquido chegará ao cárter.
-28. Miscibilidade: R-22 usa óleo mineral. R-404A exige óleo polioléster (POE). Sem a troca, o óleo não retorna ao compressor, causando fundição por falta de lubrificação.
+28. Óleo e Compressor: Não escolha óleo apenas pelo refrigerante. Na família Maneurop, MT usa óleo mineral 160P e MTZ usa óleo poliéster 175PZ; confirme sempre o modelo e a placa do compressor.
 29. Gases Não Condensáveis: Ar/umidade no sistema. O ar se aloja no topo do condensador, rouba área de troca e faz a pressão de descarga explodir.
 30. Expansão Prematura: Filtro secador obstruído atua como válvula de expansão, causando perda de carga e queda de temperatura na linha de líquido (filtro secador suando).
 
@@ -47,7 +47,7 @@ MÓDULO 4: COMPRESSORES E CONDENSADORES
 35. Rotação Invertida (Scroll): Se as fases estiverem invertidas, gira ao contrário e não comprime, gerando ruído estridente. Inverter duas fases no disjuntor.
 36. Fadiga capilar: Tubos capilares dos pressostatos sofrem ressonância e costumam trincar na base da solda ou rosca.
 37. Quebra das Palhetas de Descarga: Ao desligar, a alta pressão "vaza" de volta para o cárter (baixa), equalizando o sistema em segundos.
-38. Pump Down: Mantém o evaporador vazio na parada. Garante partida sem peso mecânico na sucção e impossibilita golpe de líquido.
+38. Pump Down: Reduz refrigerante no evaporador durante a parada e ajuda a evitar migração/partida inundada. Não é proteção absoluta: solenoide vazando, regulagem incorreta ou falha de controle ainda podem permitir retorno/migração.
 39. Recirculação de Ar: Ar quente é sugado de volta pelo condensador por falta de exaustão. Mata a eficiência termodinâmica.
 40. Falta de Compressão (Bombeamento): Pressões de alta e baixa muito próximas. O motor gira mas as válvulas não vedam a câmara de compressão.
 

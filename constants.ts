@@ -36,7 +36,7 @@ ATENÇÃO: Um sintoma elétrico (desarme, travamento) é frequentemente a CONSEQ
 1. **ANÁLISE FRIGORÍFICA (A CAUSA RAIZ MECÂNICA):**
    - **Pressões "Normais":** Pressão de manômetro isolada NÃO garante funcionamento. É obrigatório calcular SUPER AQUECIMENTO e SUB-RESFRIAMENTO.
      * Superaquecimento Baixo (<7K): Retorno de líquido -> Diluição do óleo -> Travamento mecânico do compressor -> Alta corrente elétrica -> Desarme elétrico.
-     * Sub-resfriamento Baixo (<4K): Falta de fluido ou baixa troca no condensador -> Flash gas na expansão.
+     * Sub-resfriamento Baixo (<4K): Falta de reserva líquida, carga baixa, flash gas ou queda de pressão na linha. Condensador sujo normalmente aparece primeiro como alta condensação e deve ser analisado separadamente.
    - **Condensação (O Vilão Oculto):** Condensador sujo ou ventilador lento eleva a pressão de alta. Isso força o compressor (aumenta corrente elétrica) até o desarme térmico ou pelo pressostato de alta.
    - **Filtro Secador:** Diferença de temperatura entre entrada e saída indica obstrução parcial (estrangulamento).
    - **Válvula de Expansão:** Bulbo solto ou sem isolamento faz a válvula abrir demais (inundação do evaporador).
@@ -62,7 +62,7 @@ ATENÇÃO: Um sintoma elétrico (desarme, travamento) é frequentemente a CONSEQ
 - Potência Frigorífica Requerida (Q_dot) para a meta da ISO 5708 (resfriar em até 3 horas = 10800s): Q_dot = 125484.9 / 10800 = 11.62 kW.
 3. Evaporador (Fundo do Tanque) e Falha de Agitação:
 - Lei do Resfriamento de Newton em Trocadores: Q_dot = U * A * ΔT_ml
-- Se o agitador para, o coeficiente convectivo (U) despenca vertiginosamente. Se U cai, a taxa Q_dot também despenca, o sistema não absorve calor, a pressão de sucção desaba no compressor e há retorno brutal de líquido.
+- Se o agitador para, o coeficiente convectivo (U) e a taxa Q_dot caem, surgem estratificação e risco de congelamento localizado. Retorno de líquido não é automático: só entra como risco se a válvula de expansão continuar alimentando além da carga térmica disponível.
 4. Ciclo de Compressão de Vapor:
 - Capacidade de Refrigeração: Q_dot_evap = m_dot_ref * (h1 - h4)
 - Trabalho/Potência de Compressão: W_dot_c = m_dot_ref * (h2 - h1). Se esquenta demais a descarga, h2 dispara.
@@ -101,7 +101,7 @@ Use esta lista apenas se o técnico pedir peça para compra.
 3. **Boas Práticas Inegociáveis:**
    - **Isolamento da Sucção:** Exigido desde a saída do Roll-Bond até o compressor, evita falso aquecimento que adultera o cálculo de SH.
    - **Limpeza do Condensador:** Serpentina suja é o principal causador invisível: destrói a troca térmica, eleva pressão de alta, desarma o relé por corrente do compressor.
-   - **Carga de Fluido via Visor/Balança:** O visor não deve apresentar bolhas na alta. Porém, apenas o visor engana. A carga exata cruza SH e SC em tempo real sob agitação do leite vivo.
+   - **Carga de Fluido via Visor/Balança:** Bolhas no visor podem indicar carga baixa, mas também flash gas por falta de sub-resfriamento ou queda de pressão no filtro secador, solenoide e linha de líquido. Nunca ajustar carga só pelo visor; cruzar SH, SC, pressões e estabilidade sob agitação.
 `;
 
 export const SYSTEM_PROMPT_BASE = `

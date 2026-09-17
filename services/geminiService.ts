@@ -6,6 +6,8 @@ import { KNOWLEDGE_BASE } from "../data/knowledge_base";
 import { ENV } from "../config/env";
 import { SupportDiagnosticContext } from "../types";
 import { analyzeSupportCase, buildSupportAnalysisInstruction } from "./supportDiagnosticEngine";
+import { getRefrigerationReferenceContext } from "../data/refrigeration_support_reference";
+import { normalizeSupportFieldTerminology } from "./localSupportService";
 
 const DEFAULT_TEXT_MODEL = ENV.GEMINI_TEXT_MODEL;
 const SUPPORT_PRIMARY_MODEL = ENV.GEMINI_SUPPORT_MODEL;
@@ -25,6 +27,9 @@ const SUPPORT_FIELD_BRAIN_PACK = `
 - Compressor liga e desliga: pense primeiro em pressostato, alta condensação, baixa sucção, proteção térmica do compressor e ventilação.
 - Tanque demora para baixar leite: confirme agitação, carga térmica real, condensador, ventilação, SH/SC, visor, fluido e temperatura ambiente.
 - Leite congelando no fundo: pense em baixa carga térmica/agitação ruim, válvula de expansão aberta demais, sensor mal posicionado ou controle de temperatura descalibrado.
+- Agitador parado causa primeiro perda de troca térmica, estratificação e congelamento localizado; não declare retorno de líquido automático.
+- Bolhas no visor não provam falta de fluido. Cruze Sub.Res, pressões e possíveis quedas no filtro secador/solenoide antes de orientar carga.
+- Em tanque com mais de um circuito, compare as medidas de cada circuito sob a mesma carga antes de condenar componente.
 - Primeira resposta deve ser curta, mas tecnicamente útil para o técnico no cliente.
 `;
 
@@ -466,6 +471,7 @@ const getFullSystemInstruction = async (
   const attachmentContext = getAttachmentContextInstruction(userPrompt, mode);
   const symptomSpecificContext = getSymptomSpecificInstruction(userPrompt, mode, diagnosticContext);
   const localAnalysisContext = buildSupportAnalysisInstruction(analyzeSupportCase(userPrompt, mode, diagnosticContext));
+  const refrigerationReferenceContext = getRefrigerationReferenceContext(userPrompt, mode);
 
   let modeInstruction = "";
   if (mode === 'ELEC') {
@@ -494,14 +500,14 @@ const getFullSystemInstruction = async (
 
   const diagnosticGuidance = getDiagnosticGuidance(mode);
 
-  return `${supportSystemPromptBase}\n\n${technicalContext}${PORTUGUESE_QUALITY_RULE}${supportFieldBrainPack}${localAnalysisContext}${symptomSpecificContext}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
+  return `${supportSystemPromptBase}\n\n${technicalContext}${PORTUGUESE_QUALITY_RULE}${supportFieldBrainPack}${refrigerationReferenceContext}${localAnalysisContext}${symptomSpecificContext}${equipmentContext}${attachmentContext}\n${brandManual}\n${electricalContext}\n\n${fieldKnowledge}\n${faqContext}\n${structuredKnowledge}\n${diagnosticGuidance}\n\n${toolPrompt}\n${modeInstruction}${cadenceInstruction}`;
 };
 
 // NAO DESTRUTIVO: a cadencia de "2 perguntas" na 1a resposta e orientada pelo prompt
 // (getSupportCadenceInstruction). Aqui apenas normalizamos espacos em branco e NUNCA
 // apagamos linhas, para nao remover um passo tecnico legitimo que a IA tenha incluido.
 const enforceFirstReplyContract = (text: string, _isFirstReply: boolean) =>
-  text.replace(/\n{3,}/g, '\n\n').trim();
+  normalizeSupportFieldTerminology(text).replace(/\n{3,}/g, '\n\n').trim();
 
 const extractRouteFromAction = (action: string) => {
   const directRoute = action.match(/Siga o esquema parte por parte:\s*(.+?)\.?$/i)?.[1];

@@ -1,9 +1,12 @@
 
 import { logicService } from './logicService';
 import { analyzeSupportCase } from './supportDiagnosticEngine';
-import { localSupportService } from './localSupportService';
+import { localSupportService, normalizeSupportFieldTerminology } from './localSupportService';
 import { Refrigerant } from '../types';
 import { KNOWLEDGE_BASE } from '../data/knowledge_base';
+import { getRefrigerationReferenceContext, getTypicalPressureWindow, REFRIGERATION_SUPPORT_REFERENCE_CONTEXT } from '../data/refrigeration_support_reference';
+import { FAQ_DATABASE } from '../data/faq_data';
+import { TECHNICAL_CONTEXT } from '../constants';
 
 /**
  * UTILS DE TESTE
@@ -162,6 +165,204 @@ export const runSystemDiagnostics = () => {
         assert(analysis.shSc?.pattern === "SH alto + SC baixo", `Padrão deveria ser falta de fluido/vazamento. Recebido: ${analysis.shSc?.pattern}`);
     });
 
+    test("Suporte REF: R404A com sucção de 22 PSIG deve gerar alerta de plausibilidade", () => {
+        const analysis = analyzeSupportCase(
+            "R404A, pressão de sucção 22 PSI no circuito 1",
+            "REF",
+            { refrigerant: "R-404A", model: "10000L" }
+        );
+
+        assert(analysis.refrigeration?.suctionPsig === 22, `Sucção deveria ser 22 PSIG. Recebido: ${analysis.refrigeration?.suctionPsig}`);
+        assert(analysis.refrigeration?.isOutlier === true, "22 PSIG em R404A deveria exigir confirmação/investigação.");
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("muito abaixo")), `Hipótese deveria destacar leitura muito baixa. Recebido: ${analysis.refrigeration?.hypothesis}`);
+        assert(!analysis.refrigeration?.hypothesis.includes("defeito confirmado"), "Faixa típica não pode fechar defeito automaticamente.");
+    });
+
+    test("Suporte REF: janela típica R404A deve vir da tabela PT local", () => {
+        const window = getTypicalPressureWindow('R-404A', 30);
+        assert(window?.suctionPsig.min === 55 && window?.suctionPsig.max === 59, `Sucção típica R404A esperada 55-59. Recebido: ${JSON.stringify(window?.suctionPsig)}`);
+        assert(window?.dischargePsig?.min === 220 + 31, `Descarga mínima R404A a 30C esperada 251. Recebido: ${window?.dischargePsig?.min}`);
+        assert(window?.dischargePsig?.max === 284, `Descarga máxima R404A a 30C esperada 284. Recebido: ${window?.dischargePsig?.max}`);
+    });
+
+    test("Suporte REF: janela típica R22 deve vir da tabela PT local", () => {
+        const window = getTypicalPressureWindow('R-22', 30);
+        assert(window?.suctionPsig.min === 43 && window?.suctionPsig.max === 47, `Sucção típica R22 esperada 43-47. Recebido: ${JSON.stringify(window?.suctionPsig)}`);
+        assert(window?.dischargePsig?.min === 208 && window?.dischargePsig?.max === 236, `Descarga R22 esperada 208-236. Recebido: ${JSON.stringify(window?.dischargePsig)}`);
+    });
+
+    test("Suporte REF: pressão em bar deve ser convertida para PSIG", () => {
+        const analysis = analyzeSupportCase(
+            "R404A com pressão de sucção 1,5 bar",
+            "REF",
+            { refrigerant: "R-404A" }
+        );
+        assert(Math.abs((analysis.refrigeration?.suctionPsig || 0) - 21.8) < 0.1, `1,5 bar deveria converter para 21,8 PSIG. Recebido: ${analysis.refrigeration?.suctionPsig}`);
+        assert(analysis.refrigeration?.isOutlier === true, "Leitura convertida deveria ser reconhecida como muito baixa.");
+    });
+
+    test("Suporte REF: descarga alta deve considerar temperatura ambiente", () => {
+        const analysis = analyzeSupportCase(
+            "R404A sucção 57 PSI, descarga 340 PSI e ambiente 30 C",
+            "REF",
+            { refrigerant: "R-404A" }
+        );
+        assert(analysis.refrigeration?.dischargePsig === 340, `Descarga deveria ser 340 PSIG. Recebido: ${analysis.refrigeration?.dischargePsig}`);
+        assert(analysis.refrigeration?.ambientC === 30, `Ambiente deveria ser 30C. Recebido: ${analysis.refrigeration?.ambientC}`);
+        assert(analysis.refrigeration?.isOutlier === true, "340 PSIG a 30C deveria ficar acima da faixa típica.");
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("fluxo de ar")), `Hipótese deveria priorizar lado de alta. Recebido: ${analysis.refrigeration?.hypothesis}`);
+    });
+
+    test("Suporte REF: pressões típicas não devem gerar falso alarme", () => {
+        const analysis = analyzeSupportCase(
+            "R404A sucção 57 PSI, descarga 270 PSI e ambiente 30 C",
+            "REF",
+            { refrigerant: "R-404A" }
+        );
+        assert(analysis.refrigeration?.isOutlier === false, `Leituras típicas não deveriam gerar alerta. Recebido: ${analysis.refrigeration?.hypothesis}`);
+        assert(analysis.refrigeration?.compressionRatio === 3.97, `Taxa esperada 3,97. Recebido: ${analysis.refrigeration?.compressionRatio}`);
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("não comprova")), `Pressão normal não deve fechar diagnóstico. Recebido: ${analysis.refrigeration?.hypothesis}`);
+    });
+
+    test("Suporte REF: caso saudável completo não deve ser diagnosticado como falha", () => {
+        const prompt = "R404A, sucção 57 PSI, descarga 270 PSI, ambiente 30 C, superaquecimento 9 K, sub-resfriamento 6 K e leite a 4 C";
+        const context = { refrigerant: "R-404A", currentTemperature: "4" };
+        const analysis = analyzeSupportCase(prompt, "REF", context);
+        const local = localSupportService.generateResponse(prompt, "REF", context).text;
+        assert(analysis.refrigeration?.isOutlier === false, "Pressões do caso saudável devem ficar dentro da faixa típica.");
+        assert(analysis.shSc?.shStatus === "ideal" && analysis.shSc?.scStatus === "ideal", "Sup.Aque/Sub.Res do caso saudável devem ser ideais.");
+        assert(local.includes("compatível com operação normal"), `Resposta deve declarar operação normal. Recebido: ${local}`);
+        assert(local.includes("não indica falha frigorífica"), `Resposta deve declarar ausência de indício de falha. Recebido: ${local}`);
+        assert(!local.includes("causa mais provável"), `Caso saudável não pode receber diagnóstico provável. Recebido: ${local}`);
+    });
+
+    test("Suporte ELEC: pergunta puramente elétrica não deve carregar referência frigorífica", () => {
+        const context = getRefrigerationReferenceContext("Tanque 10000L não liga o agitador, saída YE apagada", "ELEC");
+        assert(context === '', "Modo elétrico puro não deveria carregar o pacote frigorífico adicional.");
+        const crossed = getRefrigerationReferenceContext("Disjuntor desarma quando a pressão de descarga sobe", "ELEC");
+        assert(crossed.includes("REFERÊNCIA FRIGORÍFICA"), "Modo elétrico deve cruzar quando houver sinal frigorífico claro.");
+    });
+
+    test("Suporte REF: descarga a 145C deve gerar alerta de limite oficial", () => {
+        const analysis = analyzeSupportCase("Maneurop MTZ com temperatura de descarga 145 C", "REF", {});
+        assert(analysis.refrigeration?.evidenceClass === "limite oficial", `Classe deveria ser limite oficial. Recebido: ${analysis.refrigeration?.evidenceClass}`);
+        assert(analysis.refrigeration?.isOutlier === true, "145C deveria gerar alerta firme.");
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("ultrapassa")), `Deveria indicar ultrapassagem do limite. Recebido: ${analysis.refrigeration?.hypothesis}`);
+        assert(Boolean(analysis.refrigeration?.action.includes("Interrompa")), `Ação deveria impedir insistência de funcionamento. Recebido: ${analysis.refrigeration?.action}`);
+    });
+
+    test("Suporte REF: TD de 24K deve pedir confirmação como faixa típica", () => {
+        const analysis = analyzeSupportCase("TD do condensador 24 K", "REF", {});
+        assert(analysis.refrigeration?.evidenceClass === "faixa típica", `TD deveria ser faixa típica, não limite. Recebido: ${analysis.refrigeration?.evidenceClass}`);
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("pede confirmação")), `TD deveria pedir confirmação. Recebido: ${analysis.refrigeration?.hypothesis}`);
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("não condena")), `TD não deveria condenar componente. Recebido: ${analysis.refrigeration?.hypothesis}`);
+    });
+
+    test("Suporte REF: 10 partidas por hora com soft-starter deve exceder limite de 6", () => {
+        const analysis = analyzeSupportCase("Compressor Maneurop com soft-starter fazendo 10 partidas por hora", "REF", {});
+        assert(analysis.refrigeration?.evidenceClass === "limite oficial", `Partidas deveriam usar limite oficial. Recebido: ${analysis.refrigeration?.evidenceClass}`);
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("limite de 6")), `Deveria aplicar limite 6. Recebido: ${analysis.refrigeration?.hypothesis}`);
+    });
+
+    test("Suporte REF: desequilíbrio de 3% deve ultrapassar limite oficial de 2%", () => {
+        const analysis = analyzeSupportCase("Desequilíbrio de tensão 3% entre fases", "REF", {});
+        assert(analysis.refrigeration?.evidenceClass === "limite oficial", `Desequilíbrio deveria ser limite oficial. Recebido: ${analysis.refrigeration?.evidenceClass}`);
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("2%")), `Deveria citar limite 2%. Recebido: ${analysis.refrigeration?.hypothesis}`);
+    });
+
+    test("Suporte REF: pré-resfriador com leite a 30C deve ser investigado antes do gás", () => {
+        const analysis = analyzeSupportCase("Tem pré-resfriador a placas, mas o leite entra no tanque a 30 C", "REF", {});
+        assert(analysis.refrigeration?.evidenceClass === "faixa típica", `Pré-resfriador deveria usar faixa típica. Recebido: ${analysis.refrigeration?.evidenceClass}`);
+        assert(Boolean(analysis.refrigeration?.action.includes("vazão")), `Deveria verificar vazão da placa. Recebido: ${analysis.refrigeration?.action}`);
+        assert(Boolean(analysis.refrigeration?.action.includes("antes de alterar carga")), `Não deveria mexer no gás primeiro. Recebido: ${analysis.refrigeration?.action}`);
+    });
+
+    test("Suporte REF: agitador parado deve priorizar troca térmica, não retorno automático", () => {
+        const analysis = analyzeSupportCase("Agitador parado durante o resfriamento e leite congela no fundo", "REF", {});
+        assert(analysis.refrigeration?.evidenceClass === "hipótese diagnóstica", `Agitador deveria ser hipótese. Recebido: ${analysis.refrigeration?.evidenceClass}`);
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("perda de troca térmica")), `Deveria explicar a troca térmica. Recebido: ${analysis.refrigeration?.hypothesis}`);
+        assert(Boolean(analysis.refrigeration?.hypothesis.includes("não prova retorno")), `Não deveria concluir retorno de líquido. Recebido: ${analysis.refrigeration?.hypothesis}`);
+    });
+
+    test("Suporte REF: tanque multicircuito deve pedir comparação lado a lado", () => {
+        const prompts = [
+            "Tanque 20000L com 4 compressores, o circuito 2 nao gela igual aos outros.",
+            "Tanque 20000L, um compressor gela e o outro nao.",
+            "Tanque 20000L de 4 compressores, so um circuito esta gelando.",
+            "Dois circuitos, um gela e o outro nao.",
+            "Tanque multicircuito, o circuito 2 nao gela.",
+            "Tanque com 4 circuitos, um deles nao gela.",
+            "No circuito 1 a pressao esta boa mas no circuito 2 esta baixa."
+        ];
+
+        prompts.forEach(prompt => {
+            const analysis = analyzeSupportCase(prompt, "REF", {});
+            assert(analysis.refrigeration?.evidenceClass === "hipótese diagnóstica", `Multicircuito deveria orientar método para: ${prompt}`);
+            assert(Boolean(analysis.refrigeration?.questions[0].includes("cada circuito")), `Deveria comparar circuitos para: ${prompt}. Recebido: ${analysis.refrigeration?.questions.join(' | ')}`);
+        });
+    });
+
+    test("Suporte local: resposta visível deve usar Sup.Aque/Sub.Res sem SH/SC", () => {
+        const result = localSupportService.generateResponse(
+            "R404A com SH=18K e SC=1K",
+            "REF",
+            { refrigerant: "R-404A" }
+        );
+        assert(result.text.includes("Sup.Aque") && result.text.includes("Sub.Res"), `Resposta deveria usar termos visíveis aprovados. Recebido: ${result.text}`);
+        assert(!/\bSH\b|\bSC\b/.test(result.text), `Resposta não pode exibir SH/SC. Recebido: ${result.text}`);
+    });
+
+    test("Suporte: saída online e local deve normalizar siglas de campo", () => {
+        const normalized = normalizeSupportFieldTerminology("SH alto, SC baixo: confira VET ou TXV.");
+        assert(normalized === "Sup.Aque alto, Sub.Res baixo: confira válvula de expansão.", `Normalização incorreta. Recebido: ${normalized}`);
+        assert(!/\bSH\b|\bSC\b|\bVET\b|\bTXV\b/i.test(normalized), `Siglas proibidas permaneceram na saída. Recebido: ${normalized}`);
+    });
+
+    test("Suporte REF: descarga sem ambiente deve pedir ar de entrada", () => {
+        const analysis = analyzeSupportCase(
+            "R404A com pressão de descarga 300 PSI",
+            "REF",
+            { refrigerant: "R-404A" }
+        );
+        assert(Boolean(analysis.refrigeration?.questions[0].includes("ar entrando")), `Deveria pedir ar de entrada. Recebido: ${analysis.refrigeration?.questions.join(' | ')}`);
+        assert(Boolean(analysis.refrigeration?.action.includes("Não classifique")), `Ação deveria impedir conclusão sem ambiente. Recebido: ${analysis.refrigeration?.action}`);
+    });
+
+    test("Suporte REF: pressão sem fluido deve pedir confirmação antes de comparar", () => {
+        const analysis = analyzeSupportCase("pressão de sucção 45 PSI", "REF", {});
+        assert(!analysis.refrigeration?.refrigerant, "Fluido não deveria ser inventado.");
+        assert(Boolean(analysis.refrigeration?.questions[0].includes("fluido")), `Deveria pedir o fluido. Recebido: ${analysis.refrigeration?.questions.join(' | ')}`);
+    });
+
+    test("Suporte REF: capacidade de 10 mil litros não deve virar pressão", () => {
+        const analysis = analyzeSupportCase(
+            "Tanque 10 mil litros R404A demora para gelar",
+            "REF",
+            { model: "10000L", refrigerant: "R-404A" }
+        );
+        assert(!analysis.refrigeration, `Capacidade não deveria gerar leitura de pressão. Recebido: ${JSON.stringify(analysis.refrigeration)}`);
+    });
+
+    test("Suporte REF: fallback local deve priorizar pressão muito improvável", () => {
+        const result = localSupportService.generateResponse(
+            "R404A com pressão de sucção 22 PSI no circuito 1",
+            "REF",
+            { refrigerant: "R-404A", model: "10000L" }
+        );
+        assert(result.text.includes("muito abaixo"), `Fallback deveria destacar a leitura improvável. Recebido: ${result.text}`);
+        assert(result.text.includes("Não complete carga"), `Fallback deveria bloquear ajuste prematuro. Recebido: ${result.text}`);
+    });
+
+    test("Base técnica: não deve manter os quatro conflitos frigoríficos corrigidos", () => {
+        const combined = `${TECHNICAL_CONTEXT}\n${KNOWLEDGE_BASE}\n${FAQ_DATABASE}`;
+        assert(!combined.includes("retorno brutal de líquido"), "Agitador parado não pode implicar retorno automático.");
+        assert(!combined.includes("R-404A exige óleo polioléster"), "Óleo não pode ser definido apenas pelo refrigerante.");
+        assert(!combined.includes("despencando a pressão"), "Bulbo solto não pode indicar pressão no sentido errado.");
+        assert(!combined.includes("impossibilita golpe de líquido"), "Pump-down não pode ser descrito como proteção absoluta.");
+        assert(REFRIGERATION_SUPPORT_REFERENCE_CONTEXT.includes("FAIXA TÍPICA"), "Referência estruturada deve distinguir faixa típica.");
+        assert(REFRIGERATION_SUPPORT_REFERENCE_CONTEXT.includes("tanque multicircuito"), "Referência deve exigir comparação por circuito.");
+    });
+
     test("Suporte REF: Não deve puxar árvore elétrica por frase ambígua", () => {
         const prompt = "Modo refrigeração: compressor nao liga direito, leite nao baixa e pressao de succao baixa";
         const analysis = analyzeSupportCase(prompt, "REF", { refrigerant: "R-404A" });
@@ -193,6 +394,16 @@ export const runSystemDiagnostics = () => {
         assert(Boolean(analysis.electrical?.family.includes("CLP Panasonic")), `Família deveria indicar CLP Panasonic. Recebido: ${analysis.electrical?.family}`);
         assert(Boolean(analysis.electrical?.reference.includes("TRIFÁSICO 380V")), `Referência PDF 380V esperada. Recebido: ${analysis.electrical?.reference}`);
         assert(Boolean(analysis.electrical?.action.includes("A1/A2")), `Ação deveria pedir A1/A2. Recebido: ${analysis.electrical?.action}`);
+    });
+
+    test("Suporte: busca elétrica sem acentos deve continuar puxando o esquema", () => {
+        const analysis = analyzeSupportCase(
+            "a contatora nao fecha e o disjuntor motor esta desarmando",
+            "ELEC",
+            {}
+        );
+        assert(analysis.electrical?.symptom === "contatora não fecha", `Busca sem acentos perdeu o sintoma. Recebido: ${analysis.electrical?.symptom}`);
+        assert(Boolean(analysis.electrical?.action.includes("A1/A2")), `Busca sem acentos deve manter a rota de esquema. Recebido: ${analysis.electrical?.action}`);
     });
 
     test("Suporte: Agitador em tanque 10 mil deve puxar esquema CLP Panasonic", () => {

@@ -151,7 +151,7 @@ Este bloco define o escopo exato e as regras de diagnóstico exclusivas para sis
 - Sintoma: Compressor parte e desarma logo em seguida.
   Categoria: Desarme por Alta Pressão (condensador obstruído, ventilador parado), Desarme por Baixa Pressão (vazamento de fluido, recolhimento), sobrecarga elétrica (corrente alta).
 - Sintoma: Retorno de líquido para o compressor.
-  Categoria: Falha no agitador (leite não troca calor, evaporador inunda), válvula de expansão desregulada/superaquecimento incorreto.
+  Categoria: Válvula de expansão alimentando demais, bulbo/equalizador incorreto, baixa carga térmica ou controle inadequado. Agitador parado reduz a troca térmica e pode contribuir, mas não prova retorno de líquido sozinho.
 
 [CAMADA 6: FUNDAMENTOS DO CICLO DE REFRIGERAÇÃO E PRÁTICA DE CAMPO (A CAMADA DE REALIDADE)]
 Este bloco traduz a teoria do ciclo frigorífico para a prática bruta de campo, focando na análise fria do ciclo e nas armadilhas de diagnóstico.
@@ -164,7 +164,7 @@ Este bloco traduz a teoria do ciclo frigorífico para a prática bruta de campo,
 
 2. A OBRIGATORIEDADE DA COMPRESSÃO SECA:
 - O ciclo real deve garantir a "compressão seca" (apenas vapor chegando ao compressor).
-- Retorno de líquido destrói os flappers (palhetas) e a biela do compressor. Danos mecânicos irreversíveis.
+- Retorno de líquido pode danificar palhetas, biela e lubrificação do compressor. Confirme Sup.Aque total, ruído, gelo e condição do óleo antes de concluir dano mecânico.
 
 3. MATEMÁTICA DO SH E SC (CRÍTICOS PARA DIAGNÓSTICO):
 - Superaquecimento (SH - Superheat) em campo: 7 a 12 K:

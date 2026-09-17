@@ -1,6 +1,8 @@
 import { SupportDiagnosticContext, SupportMode } from '../types';
+import { getTypicalPressureWindow, SupportedRefrigerant } from '../data/refrigeration_support_reference';
 
 type LevelStatus = 'baixo' | 'ideal' | 'alto';
+type EvidenceClass = 'limite oficial' | 'faixa típica' | 'hipótese diagnóstica' | 'dentro da faixa típica';
 
 export interface ShScDiagnostic {
     shKelvin?: number;
@@ -26,10 +28,39 @@ export interface ElectricalDecision {
     decisionTree: string[];
 }
 
+export interface RefrigerationPlausibility {
+    refrigerant?: SupportedRefrigerant;
+    suctionPsig?: number;
+    dischargePsig?: number;
+    ambientC?: number;
+    compressionRatio?: number;
+    dischargeTemperatureC?: number;
+    condenserTdK?: number;
+    startsPerHour?: number;
+    voltageImbalancePercent?: number;
+    evidenceClass: EvidenceClass;
+    isOutlier: boolean;
+    hypothesis: string;
+    questions: string[];
+    action: string;
+    guardrails: string[];
+    facts: string[];
+}
+
 export interface SupportCaseAnalysis {
     shSc?: ShScDiagnostic;
+    refrigeration?: RefrigerationPlausibility;
     electrical?: ElectricalDecision;
 }
+
+export const hasHealthyRefrigerationMeasurements = (analysis: SupportCaseAnalysis) => Boolean(
+    analysis.shSc?.shStatus === 'ideal' &&
+    analysis.shSc?.scStatus === 'ideal' &&
+    analysis.refrigeration?.evidenceClass === 'dentro da faixa típica' &&
+    analysis.refrigeration.suctionPsig !== undefined &&
+    analysis.refrigeration.dischargePsig !== undefined &&
+    analysis.refrigeration.ambientC !== undefined
+);
 
 const normalize = (value: string) =>
     value
@@ -107,10 +138,10 @@ const readScKelvin = (text: string) =>
         /\bsubresfriamento\s*(?:=|:|-|de|em|com|esta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i
     ]);
 
-const detectRefrigerant = (prompt: string, context: SupportDiagnosticContext) => {
+const detectRefrigerant = (prompt: string, context: SupportDiagnosticContext): SupportedRefrigerant | undefined => {
     const combined = normalize([prompt, context.refrigerant].filter(Boolean).join(' '));
-    if (combined.includes('404')) return 'R404A';
-    if (combined.includes('22')) return 'R22';
+    if (combined.includes('404')) return 'R-404A';
+    if (/\br\s*-?\s*22\b/.test(combined) || combined.includes('r22')) return 'R-22';
     return undefined;
 };
 
@@ -127,7 +158,7 @@ const buildShScDiagnostic = (prompt: string, context: SupportDiagnosticContext):
     const guardrails: string[] = [];
     const refrigerant = detectRefrigerant(prompt, context);
 
-    if (refrigerant === 'R404A') {
+    if (refrigerant === 'R-404A') {
         guardrails.push('R404A: usar dew/vapor para SH e bubble/líquido para SC.');
     }
     if (shKelvin !== undefined) facts.push(`SH detectado: ${formatNumber(shKelvin)} (${shStatus}).`);
@@ -184,12 +215,12 @@ const buildShScDiagnostic = (prompt: string, context: SupportDiagnosticContext):
         action = 'Confirme bolhas, vazamento e pressões antes de completar carga.';
     } else if (shStatus === 'ideal' && scStatus === 'ideal') {
         pattern = 'SH e SC na faixa ideal';
-        hypothesis = 'SH e SC estão em faixa de referência; a falha pode estar fora de carga de fluido, como troca térmica, comando, sensor ou condição operacional.';
+        hypothesis = 'SH e SC estão em faixa de referência e, isoladamente, não indicam falha nem justificam ajuste de carga ou da válvula de expansão.';
         questions = [
-            'Qual sintoma continua acontecendo mesmo com SH/SC dentro da faixa?',
+            'Existe algum sintoma real mesmo com SH/SC dentro da faixa?',
             'A temperatura do leite está caindo no tempo esperado?'
         ];
-        action = 'Não altere carga nem a válvula de expansão agora; procure causa em troca térmica, comando ou sensor.';
+        action = 'Não altere carga nem a válvula de expansão; confirme apenas se existe sintoma antes de abrir outra linha de diagnóstico.';
     }
 
     return {
@@ -204,6 +235,328 @@ const buildShScDiagnostic = (prompt: string, context: SupportDiagnosticContext):
         guardrails,
         facts
     };
+};
+
+const pressureToPsig = (rawValue?: string, rawUnit?: string): number | undefined => {
+    const value = parseNumber(rawValue);
+    if (value === undefined) return undefined;
+    return rawUnit?.toLowerCase().startsWith('bar') ? Number((value * 14.5038).toFixed(1)) : value;
+};
+
+const readPressureForSide = (text: string, side: 'suction' | 'discharge') => {
+    const label = side === 'suction'
+        ? '(?:pressao\\s+(?:de\\s+)?)?(?:succao|baixa)'
+        : '(?:pressao\\s+(?:de\\s+)?)?(?:descarga|alta)';
+    const value = '(-?\\d{1,4}(?:[.,]\\d{1,2})?)';
+    const unit = '(psig?|bar)';
+    const patterns = [
+        new RegExp(`\\b${label}\\b\\s*(?:=|:|de|em|esta|com)?\\s*${value}\\s*${unit}\\b`, 'i'),
+        new RegExp(`\\b${value}\\s*${unit}\\s*(?:na|de|em)?\\s*${label}\\b`, 'i')
+    ];
+
+    for (const pattern of patterns) {
+        const match = text.match(pattern);
+        const pressure = pressureToPsig(match?.[1], match?.[2]);
+        if (pressure !== undefined) return pressure;
+    }
+    return undefined;
+};
+
+const readLegacyContextPressure = (pressure?: string) => {
+    if (!pressure) return undefined;
+    const match = normalize(pressure).match(/^\s*(-?\d{1,4}(?:[.,]\d{1,2})?)\s*(psig?|bar)?\s*$/i);
+    return pressureToPsig(match?.[1], match?.[2] || 'psi');
+};
+
+const readAmbientC = (text: string) => readMeasurement(text, [
+    /\b(?:temperatura\s+)?ambiente\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,2}(?:[.,]\d{1,2})?)\s*(?:°?\s*c|graus?)\b/i,
+    /\bar\s+de\s+entrada\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,2}(?:[.,]\d{1,2})?)\s*(?:°?\s*c|graus?)\b/i
+]);
+
+const readDischargeTemperatureC = (text: string) => readMeasurement(text, [
+    /\btemperatura\s+(?:da\s+|de\s+)?descarga\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:°?\s*c|graus?)\b/i,
+    /\b(?:tubo|linha)\s+de\s+descarga\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:°?\s*c|graus?)\b/i
+]);
+
+const readCondenserTdK = (text: string) => readMeasurement(text, [
+    /\btd\s+(?:do\s+)?condensador\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
+    /\bdiferenca\s+de\s+temperatura\s+(?:do\s+)?condensador\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i
+]);
+
+const readStartsPerHour = (text: string) => readMeasurement(text, [
+    /\b(\d{1,3}(?:[.,]\d{1,2})?)\s*partidas?\s*(?:por\s+hora|\/\s*h|\/\s*hora)\b/i,
+    /\bpartidas?\s*(?:por\s+hora|\/\s*h|\/\s*hora)\s*(?:=|:|de|em|esta|com)?\s*(\d{1,3}(?:[.,]\d{1,2})?)\b/i
+]);
+
+const readVoltageImbalancePercent = (text: string) => readMeasurement(text, [
+    /\bdesequilibrio\s+(?:de\s+)?tensao\s*(?:=|:|de|em|esta|com)?\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*%/i,
+    /\bdesequilibrio\s+(?:entre\s+)?fases\s*(?:=|:|de|em|esta|com)?\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*%/i
+]);
+
+const readMilkEntryTemperatureC = (text: string) => readMeasurement(text, [
+    /\bleite\s+(?:entra|chega|entrando)\s*(?:no\s+tanque\s*)?(?:=|:|a|com|em)?\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*(?:°?\s*c|graus?)\b/i,
+    /\bentrada\s+(?:do\s+)?leite\s*(?:=|:|a|com|em)?\s*(\d{1,2}(?:[.,]\d{1,2})?)\s*(?:°?\s*c|graus?)\b/i
+]);
+
+const formatPsig = (value: number) => `${Number.isInteger(value) ? value.toFixed(0) : value.toFixed(1)} PSIG`;
+
+const buildRefrigerationPlausibility = (
+    prompt: string,
+    context: SupportDiagnosticContext,
+    mode: SupportMode
+): RefrigerationPlausibility | undefined => {
+    const text = normalize(prompt);
+    const refrigerant = detectRefrigerant(prompt, context);
+    const suctionPsig = readPressureForSide(text, 'suction') ?? readLegacyContextPressure(context.pressure);
+    const dischargePsig = readPressureForSide(text, 'discharge');
+    const ambientC = readAmbientC(text);
+    const dischargeTemperatureC = readDischargeTemperatureC(text);
+    const condenserTdK = readCondenserTdK(text);
+    const startsPerHour = readStartsPerHour(text);
+    const voltageImbalancePercent = readVoltageImbalancePercent(text);
+    const milkEntryTemperatureC = readMilkEntryTemperatureC(text);
+    const hasSoftStarter = includesAny(text, ['soft-starter', 'soft starter', 'softstarter', 'soft start']);
+    const hasPlatePrecooler = includesAny(text, ['pre-resfriador', 'preresfriador']) && text.includes('placa');
+    const agitatorStopped = text.includes('agitador') && includesAny(text, ['parado', 'nao gira', 'nao funciona', 'desligado', 'travado']);
+    const tankCapacityLiters = extractTankCapacityLiters(`${context.model || ''} ${prompt}`);
+    const hasExplicitMultipleUnits = /\b(?:[2-5]|dois|duas|tres|quatro|cinco)\s+(?:circuitos?|comp(?:ressores?)?)\b/.test(text);
+    const comparesTwoUnits = /\b(?:um|1)\s+(?:circuito|compressor)\b[\s\S]{0,160}\b(?:o\s+)?outro\b/.test(text) ||
+        (text.includes('circuito 1') && text.includes('circuito 2')) ||
+        (text.includes('compressor 1') && text.includes('compressor 2'));
+    const largeTankMentionsUnit = (tankCapacityLiters ?? 0) >= 18000 && includesAny(text, ['circuito', 'compressor']);
+    const hasMultipleCircuits = text.includes('multicircuito') || hasExplicitMultipleUnits || comparesTwoUnits || largeTankMentionsUnit;
+    const hasPressure = suctionPsig !== undefined || dischargePsig !== undefined;
+    const hasOperationalEvidence = dischargeTemperatureC !== undefined || condenserTdK !== undefined || startsPerHour !== undefined ||
+        voltageImbalancePercent !== undefined || (hasPlatePrecooler && milkEntryTemperatureC !== undefined) || agitatorStopped || hasMultipleCircuits;
+
+    if (!hasPressure && !hasOperationalEvidence) return undefined;
+    if (mode === 'ELEC' && !hasPressure && dischargeTemperatureC === undefined && condenserTdK === undefined && milkEntryTemperatureC === undefined) {
+        return undefined;
+    }
+
+    const facts: string[] = [];
+    const guardrails = [
+        'Faixas de pressão são referências típicas de triagem, não valores de projeto nem diagnóstico automático.',
+        'Antes de agir, confirmar fluido, unidade, circuito, ponto da tomada e sistema estabilizado.'
+    ];
+    if (suctionPsig !== undefined) facts.push(`Sucção informada: ${formatPsig(suctionPsig)}.`);
+    if (dischargePsig !== undefined) facts.push(`Descarga informada: ${formatPsig(dischargePsig)}.`);
+    if (ambientC !== undefined) facts.push(`Ar de entrada/ambiente informado: ${ambientC.toFixed(1)}°C.`);
+    if (dischargeTemperatureC !== undefined) facts.push(`Temperatura de descarga informada: ${dischargeTemperatureC.toFixed(1)}°C.`);
+    if (condenserTdK !== undefined) facts.push(`TD do condensador informado: ${condenserTdK.toFixed(1)}K.`);
+    if (startsPerHour !== undefined) facts.push(`Partidas informadas: ${startsPerHour.toFixed(1)} por hora${hasSoftStarter ? ' com soft-starter' : ''}.`);
+    if (voltageImbalancePercent !== undefined) facts.push(`Desequilíbrio de tensão informado: ${voltageImbalancePercent.toFixed(1)}%.`);
+    if (hasPlatePrecooler && milkEntryTemperatureC !== undefined) facts.push(`Leite entra a ${milkEntryTemperatureC.toFixed(1)}°C com pré-resfriador a placas instalado.`);
+    if (agitatorStopped) facts.push('Agitador informado como parado durante o resfriamento.');
+    if (hasMultipleCircuits) facts.push('Equipamento informado com múltiplos circuitos frigoríficos.');
+
+    const buildResult = (
+        evidenceClass: EvidenceClass,
+        isOutlier: boolean,
+        hypothesis: string,
+        questions: string[],
+        action: string,
+        compressionRatio?: number
+    ): RefrigerationPlausibility => ({
+        refrigerant,
+        suctionPsig,
+        dischargePsig,
+        ambientC,
+        compressionRatio,
+        dischargeTemperatureC,
+        condenserTdK,
+        startsPerHour,
+        voltageImbalancePercent,
+        evidenceClass,
+        isOutlier,
+        hypothesis,
+        questions,
+        action,
+        guardrails,
+        facts
+    });
+
+    if (dischargeTemperatureC !== undefined && dischargeTemperatureC > 130) {
+        guardrails.push('130°C é limite oficial de referência Maneurop MT/MTZ; confirmar modelo e ponto de medição, mas tratar a ultrapassagem como alerta firme.');
+        return buildResult(
+            'limite oficial',
+            true,
+            `A temperatura de descarga de ${dischargeTemperatureC.toFixed(1)}°C ultrapassa o limite de referência de 130°C para Maneurop MT/MTZ. É condição de proteção, não apenas faixa típica.`,
+            [
+                'A temperatura foi medida em qual ponto da linha e com qual instrumento?',
+                'Quais são as pressões de sucção/descarga e o Sup.Aque total na entrada do compressor?'
+            ],
+            'Interrompa a insistência de funcionamento e investigue alta taxa de compressão, sucção superaquecida, condensação e carga antes de religar.'
+        );
+    }
+
+    const startsLimit = hasSoftStarter ? 6 : 12;
+    if (startsPerHour !== undefined && startsPerHour > startsLimit) {
+        guardrails.push(`${startsLimit} partidas por hora é limite oficial de referência para esta condição Maneurop MT/MTZ.`);
+        return buildResult(
+            'limite oficial',
+            true,
+            `${startsPerHour.toFixed(0)} partidas por hora ultrapassam o limite de ${startsLimit}${hasSoftStarter ? ' com soft-starter' : ''}; a ciclagem ameaça lubrificação e resfriamento do motor.`,
+            [
+                'A contagem foi feita em uma hora completa e o compressor realmente possui soft-starter?',
+                'Qual controle está cortando e retomando: temperatura, baixa, alta ou proteção elétrica?'
+            ],
+            'Pare de repetir partidas e corrija diferencial, temporização ou proteção que está provocando a ciclagem.'
+        );
+    }
+
+    if (voltageImbalancePercent !== undefined && voltageImbalancePercent > 2) {
+        guardrails.push('2% é limite oficial de referência Danfoss para desequilíbrio entre fases.');
+        return buildResult(
+            'limite oficial',
+            true,
+            `O desequilíbrio de ${voltageImbalancePercent.toFixed(1)}% ultrapassa o limite de referência de 2% e pode elevar corrente/temperatura do compressor.`,
+            [
+                'Quais são as três tensões fase-fase medidas com o compressor em carga?',
+                'As correntes das três fases também estão desequilibradas?'
+            ],
+            'Não force o compressor; confirme a alimentação e corrija a origem do desequilíbrio antes de insistir na partida.'
+        );
+    }
+
+    if (condenserTdK !== undefined && condenserTdK > 20) {
+        guardrails.push('TD de 10K a 20K é faixa típica de triagem, não limite oficial do equipamento.');
+        return buildResult(
+            'faixa típica',
+            true,
+            `O TD de ${condenserTdK.toFixed(1)}K está acima da faixa típica de triagem. Isso pede confirmação da conta e investigação do lado de alta; não condena condensador nem carga sozinho.`,
+            [
+                'Confirma temperatura de condensação pela tabela correta e temperatura do ar entrando no condensador?',
+                'A serpentina, os ventiladores e a recirculação de ar foram verificados?'
+            ],
+            'Repita as duas temperaturas no mesmo circuito estabilizado e só então investigue fluxo de ar, sujeira e carga.'
+        );
+    }
+
+    if (hasPressure && !refrigerant) {
+        return buildResult(
+            'hipótese diagnóstica',
+            true,
+            'A pressão foi informada, mas não pode ser comparada com segurança sem confirmar o fluido refrigerante.',
+            [
+                'Qual é o fluido confirmado na placa: R-22 ou R-404A?',
+                'A leitura é de sucção ou descarga, em qual circuito e com o compressor estabilizado?'
+            ],
+            'Não ajuste carga nem válvula de expansão até confirmar fluido, lado medido e unidade.'
+        );
+    }
+
+    const window = refrigerant ? getTypicalPressureWindow(refrigerant, ambientC) : null;
+    if (hasPressure && !window) return undefined;
+
+    if (window) facts.push(`Janela típica de sucção para triagem (${window.evaporationC.min}°C a ${window.evaporationC.max}°C): ${window.suctionPsig.min} a ${window.suctionPsig.max} PSIG.`);
+    if (window?.dischargePsig && window.condensingC) {
+        facts.push(`Janela típica de descarga com ambiente de ${ambientC?.toFixed(1)}°C (${window.condensingC.min.toFixed(1)}°C a ${window.condensingC.max.toFixed(1)}°C de condensação): ${window.dischargePsig.min} a ${window.dischargePsig.max} PSIG.`);
+    }
+    if (refrigerant === 'R-404A') {
+        guardrails.push('R-404A: sucção/evaporação usa dew; descarga/linha líquida usa bubble quando aplicável.');
+    }
+
+    const suctionLow = window !== null && suctionPsig !== undefined && suctionPsig < window.suctionPsig.min;
+    const suctionVeryLow = window !== null && suctionPsig !== undefined && suctionPsig < window.suctionPsig.min * 0.7;
+    const suctionHigh = window !== null && suctionPsig !== undefined && suctionPsig > window.suctionPsig.max;
+    const dischargeLow = window !== null && dischargePsig !== undefined && window.dischargePsig !== undefined && dischargePsig < window.dischargePsig.min;
+    const dischargeHigh = window !== null && dischargePsig !== undefined && window.dischargePsig !== undefined && dischargePsig > window.dischargePsig.max;
+    const compressionRatio = suctionPsig !== undefined && dischargePsig !== undefined && suctionPsig > -14.6
+        ? Number(((dischargePsig + 14.7) / (suctionPsig + 14.7)).toFixed(2))
+        : undefined;
+    if (compressionRatio !== undefined) {
+        facts.push(`Taxa de compressão calculada com pressões absolutas: ${compressionRatio.toFixed(2)} (faixa típica de triagem: 3,2 a 5,5).`);
+    }
+    const ratioOutlier = compressionRatio !== undefined && (compressionRatio < 3.2 || compressionRatio > 5.5);
+    const isOutlier = suctionLow || suctionHigh || dischargeLow || dischargeHigh || ratioOutlier;
+
+    let hypothesis = 'As pressões estão dentro da janela típica de triagem, mas isso não comprova que o ciclo está normal; ainda é preciso cruzar temperaturas, Sup.Aque, Sub.Res e carga do tanque.';
+    let questions = [
+        'As leituras foram feitas no mesmo circuito, com o compressor e o agitador estabilizados?',
+        'Quais são o Sup.Aque, o Sub.Res e a temperatura atual do leite?'
+    ];
+    let action = 'Mantenha o diagnóstico por medições; não altere carga nem válvula de expansão por pressão isolada.';
+
+    if (suctionVeryLow && window) {
+        hypothesis = `A sucção de ${formatPsig(suctionPsig!)} está muito abaixo da janela típica de ${window.suctionPsig.min} a ${window.suctionPsig.max} PSIG para ${refrigerant}. Se a leitura for confirmada, priorize vazamento/carga insuficiente, flash gas ou restrição, sem escolher uma causa antes de cruzar o Sub.Res.`;
+        questions = [
+            'Confirma fluido, unidade, tomada de sucção, circuito e leitura com o compressor estabilizado?',
+            'Qual é o Sub.Res e há sinal de óleo/vazamento ou queda de temperatura no filtro secador/solenoide?'
+        ];
+        action = 'Não complete carga nem ajuste a válvula ainda; confirme a leitura e procure vazamento/restrição com medições cruzadas.';
+    } else if (suctionLow) {
+        hypothesis = 'A sucção está abaixo da faixa típica e exige investigar baixa carga térmica, carga insuficiente, flash gas ou restrição; a pressão isolada não separa essas causas.';
+    } else if (suctionHigh) {
+        hypothesis = 'A sucção está acima da faixa típica e exige investigar carga térmica alta, alimentação excessiva ou perda de capacidade do compressor; não condene o compressor sem comparar descarga, corrente e outro circuito.';
+    } else if (dischargeHigh) {
+        hypothesis = 'A descarga está acima da faixa típica para o ambiente informado; priorize fluxo de ar, sujeira, ventiladores e recirculação antes de avaliar excesso de fluido ou não condensáveis.';
+    } else if (dischargeLow) {
+        hypothesis = 'A descarga está abaixo da faixa típica para o ambiente informado; investigue carga térmica, carga de fluido, controle de condensação e capacidade de bombeamento.';
+    } else if (ratioOutlier && compressionRatio !== undefined) {
+        hypothesis = compressionRatio < 3.2
+            ? 'A taxa de compressão está baixa para a triagem. Compare corrente, capacidade e outro circuito antes de suspeitar perda de bombeamento do compressor.'
+            : 'A taxa de compressão está alta para a triagem. Procure descarga elevada, sucção baixa, restrição ou carga insuficiente antes de insistir na operação.';
+    }
+
+    if (dischargePsig !== undefined && ambientC === undefined) {
+        questions = [
+            'Qual é a temperatura do ar entrando no condensador?',
+            'A leitura de descarga é de qual circuito e foi feita com ventiladores e compressor estabilizados?'
+        ];
+        action = 'Não classifique a pressão de descarga sem medir o ar de entrada e conferir fluxo/recirculação no condensador.';
+    }
+
+    if (!isOutlier && hasPlatePrecooler && milkEntryTemperatureC !== undefined && milkEntryTemperatureC > 18) {
+        return buildResult(
+            'faixa típica',
+            true,
+            `Com pré-resfriador a placas instalado, leite entrando a ${milkEntryTemperatureC.toFixed(1)}°C está acima da referência de campo de 16°C a 18°C. Confirme condições antes de atribuir toda a demora ao circuito frigorífico.`,
+            [
+                'Qual é a temperatura da água na entrada e na saída do pré-resfriador?',
+                'A placa está limpa, com vazão correta e ligações em contracorrente?'
+            ],
+            'Verifique vazão, limpeza e sentido das conexões do pré-resfriador antes de alterar carga de fluido.',
+            compressionRatio
+        );
+    }
+
+    if (!isOutlier && agitatorStopped) {
+        return buildResult(
+            'hipótese diagnóstica',
+            true,
+            'Agitador parado aponta primeiro para perda de troca térmica, estratificação e congelamento localizado; não prova retorno de líquido automaticamente.',
+            [
+                'O agitador fica parado durante todo o ciclo ou apenas nos intervalos programados?',
+                'Existe crosta/gelo no fundo e a pá está coberta pelo volume de leite?'
+            ],
+            'Restabeleça a agitação correta e compare a queda de temperatura antes de mexer em carga ou válvula de expansão.',
+            compressionRatio
+        );
+    }
+
+    if (!isOutlier && hasMultipleCircuits) {
+        return buildResult(
+            'hipótese diagnóstica',
+            false,
+            'Em tanque multicircuito, uma leitura isolada não representa o conjunto; compare os circuitos sob a mesma carga para separar falha comum de falha individual.',
+            [
+                'Quais são sucção, descarga e corrente de cada circuito no mesmo momento?',
+                'Todos os compressores e ventiladores estão ativos no mesmo estágio do resfriamento?'
+            ],
+            'Registre as medidas lado a lado e investigue primeiro o circuito que divergir dos demais.',
+            compressionRatio
+        );
+    }
+
+    return buildResult(
+        isOutlier ? 'faixa típica' : 'dentro da faixa típica',
+        isOutlier,
+        hypothesis,
+        questions,
+        action,
+        compressionRatio
+    );
 };
 
 const detectVoltage = (combinedText: string) => {
@@ -523,11 +876,21 @@ export const analyzeSupportCase = (
     context: SupportDiagnosticContext
 ): SupportCaseAnalysis => ({
     shSc: buildShScDiagnostic(prompt, context),
+    refrigeration: buildRefrigerationPlausibility(prompt, context, mode),
     electrical: buildElectricalDecision(prompt, mode, context)
 });
 
 export const buildSupportAnalysisInstruction = (analysis: SupportCaseAnalysis) => {
     const blocks: string[] = [];
+
+    if (hasHealthyRefrigerationMeasurements(analysis)) {
+        blocks.push([
+            '[CONCLUSÃO COMBINADA DAS MEDIÇÕES]',
+            '- Pressões, Sup.Aque e Sub.Res estão dentro das faixas típicas informadas.',
+            '- O conjunto é compatível com operação normal e não indica falha frigorífica pelos dados fornecidos.',
+            '- Não inventar defeito nem orientar ajuste de carga ou válvula sem um sintoma real adicional.'
+        ].join('\n'));
+    }
 
     if (analysis.shSc) {
         blocks.push([
@@ -538,6 +901,19 @@ export const buildSupportAnalysisInstruction = (analysis: SupportCaseAnalysis) =
             `- Perguntas prioritárias: 1) ${analysis.shSc.questions[0]} 2) ${analysis.shSc.questions[1]}`,
             `- Ação imediata: ${analysis.shSc.action}`,
             ...analysis.shSc.guardrails.map(rule => `- Regra: ${rule}`)
+        ].join('\n'));
+    }
+
+    if (analysis.refrigeration) {
+        blocks.push([
+            '[PLAUSIBILIDADE FRIGORÍFICA LOCAL - RESULTADO DETERMINÍSTICO]',
+            ...analysis.refrigeration.facts.map(fact => `- ${fact}`),
+            `- Classe da evidência: ${analysis.refrigeration.evidenceClass}.`,
+            `- Leitura fora da faixa típica: ${analysis.refrigeration.isOutlier ? 'SIM' : 'NÃO'}.`,
+            `- Interpretação técnica: ${analysis.refrigeration.hypothesis}`,
+            `- Perguntas prioritárias: 1) ${analysis.refrigeration.questions[0]} 2) ${analysis.refrigeration.questions[1]}`,
+            `- Ação imediata: ${analysis.refrigeration.action}`,
+            ...analysis.refrigeration.guardrails.map(rule => `- Regra: ${rule}`)
         ].join('\n'));
     }
 

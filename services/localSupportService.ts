@@ -1,5 +1,5 @@
 import { SupportDiagnosticContext, SupportMode } from '../types';
-import { analyzeSupportCase, SupportCaseAnalysis } from './supportDiagnosticEngine';
+import { analyzeSupportCase, hasHealthyRefrigerationMeasurements, SupportCaseAnalysis } from './supportDiagnosticEngine';
 
 type OfflineRoute = 'general' | 'refrigeration' | 'electrical' | 'errors';
 
@@ -62,6 +62,11 @@ const sanitize = (value: string) =>
 const hasValue = (value?: string) => Boolean(value && value.trim());
 const includesAny = (value: string, keywords: string[]) =>
     keywords.some(keyword => value.includes(keyword));
+export const normalizeSupportFieldTerminology = (value: string) => value
+    .replace(/\bSH\b/gi, 'Sup.Aque')
+    .replace(/\bSC\b/gi, 'Sub.Res')
+    .replace(/\bVET\b|\bTXV\b/gi, 'válvula de expansão')
+    .replace(/\bválvula de expansão(?:\s*(?:ou|e|\/)\s*válvula de expansão)+/gi, 'válvula de expansão');
 
 const hasShScClue = (normalizedPrompt: string) =>
     includesAny(normalizedPrompt, ['superaquecimento', 'sh']) &&
@@ -91,8 +96,17 @@ const buildHypothesis = (route: OfflineRoute, prompt: string, context: SupportDi
     if (route === 'electrical' && analysis.electrical) {
         return analysis.electrical.hypothesis;
     }
+    if (route === 'refrigeration' && hasHealthyRefrigerationMeasurements(analysis)) {
+        return 'As pressões, o SH e o SC estão nas faixas típicas; o conjunto é compatível com operação normal e não indica falha frigorífica pelos dados informados.';
+    }
+    if (route === 'refrigeration' && analysis.refrigeration?.isOutlier) {
+        return analysis.refrigeration.hypothesis;
+    }
     if (route === 'refrigeration' && analysis.shSc) {
         return analysis.shSc.hypothesis;
+    }
+    if (route === 'refrigeration' && analysis.refrigeration) {
+        return analysis.refrigeration.hypothesis;
     }
 
     if (route === 'errors') {
@@ -135,8 +149,14 @@ const buildQuestions = (route: OfflineRoute, context: SupportDiagnosticContext, 
     if (route === 'electrical' && analysis.electrical) {
         return analysis.electrical.questions.slice(0, 2);
     }
+    if (route === 'refrigeration' && analysis.refrigeration?.isOutlier) {
+        return analysis.refrigeration.questions.slice(0, 2);
+    }
     if (route === 'refrigeration' && analysis.shSc) {
         return analysis.shSc.questions.slice(0, 2);
+    }
+    if (route === 'refrigeration' && analysis.refrigeration) {
+        return analysis.refrigeration.questions.slice(0, 2);
     }
 
     const pushIfMissing = (known: boolean, question: string) => {
@@ -194,8 +214,14 @@ const buildAction = (route: OfflineRoute, prompt: string, analysis: SupportCaseA
     if (route === 'electrical' && analysis.electrical) {
         return analysis.electrical.action;
     }
+    if (route === 'refrigeration' && analysis.refrigeration?.isOutlier) {
+        return analysis.refrigeration.action;
+    }
     if (route === 'refrigeration' && analysis.shSc) {
         return analysis.shSc.action;
+    }
+    if (route === 'refrigeration' && analysis.refrigeration) {
+        return analysis.refrigeration.action;
     }
 
     if (route === 'errors') {
@@ -243,13 +269,13 @@ export const localSupportService = {
         const text = [
             'Olá. Vou te ajudar com um diagnóstico rápido e direto.',
             '',
-            `**Hipótese Inicial:** ${hypothesis}`,
+            `**Hipótese Inicial:** ${normalizeSupportFieldTerminology(hypothesis)}`,
             '',
             '**Preciso confirmar:**',
-            `1. ${questions[0]}`,
-            `2. ${questions[1]}`,
+            `1. ${normalizeSupportFieldTerminology(questions[0])}`,
+            `2. ${normalizeSupportFieldTerminology(questions[1])}`,
             '',
-            `**Faça agora:** ${action}`,
+            `**Faça agora:** ${normalizeSupportFieldTerminology(action)}`,
             '',
             '**Modo consulta local:** assim que a conexão voltar, eu aprofundo com a IA completa.'
         ].join('\n');
