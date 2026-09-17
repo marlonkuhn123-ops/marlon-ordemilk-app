@@ -5,7 +5,12 @@ import { FAQ_DATABASE } from "../data/faq_data";
 import { KNOWLEDGE_BASE } from "../data/knowledge_base";
 import { ENV } from "../config/env";
 import { SupportDiagnosticContext } from "../types";
-import { analyzeSupportCase, buildSupportAnalysisInstruction } from "./supportDiagnosticEngine";
+import {
+  analyzeSupportCase,
+  buildRequiredSupportOpening,
+  buildSupportAnalysisInstruction,
+  prependRequiredSupportOpening
+} from "./supportDiagnosticEngine";
 import { getRefrigerationReferenceContext } from "../data/refrigeration_support_reference";
 import { normalizeSupportFieldTerminology } from "./localSupportService";
 
@@ -596,6 +601,15 @@ export const generateChatResponseStream = async (
 ): Promise<string> => {
   const userTurnCount = conversationUserTurnCount ?? history.filter(item => item.role === 'user').length;
   const isFirstReply = userTurnCount <= 1;
+  const latestUserText = [...history]
+    .reverse()
+    .find(item => item.role === 'user')
+    ?.parts.map(part => part.text).filter(Boolean).join(' ') || '';
+  const requiredOpening = buildRequiredSupportOpening(analyzeSupportCase(latestUserText, mode, diagnosticContext));
+  const renderSupportText = (text: string) => prependRequiredSupportOpening(
+    enforceFirstReplyContract(text, isFirstReply),
+    requiredOpening
+  );
   // 1a resposta no modelo rapido (3 Flash) para dar retorno imediato ao tecnico em campo;
   // continuacao no modelo profundo (3.1 Pro). Fallback usa sempre o outro dos dois.
   const primaryModel = isFirstReply ? DEFAULT_TEXT_MODEL : SUPPORT_PRIMARY_MODEL;
@@ -637,10 +651,10 @@ export const generateChatResponseStream = async (
         });
       }
 
-      if (onChunk) onChunk(fullText);
+      if (onChunk) onChunk(renderSupportText(fullText));
     }
 
-    const contractedText = enforceFirstReplyContract(fullText, isFirstReply);
+    const contractedText = renderSupportText(fullText);
     const finalText = ensureElectricalSchematicRoute(contractedText, fullConversationText, mode, diagnosticContext);
     if (!finalText.trim()) throw new Error(EMPTY_RESPONSE_ERROR);
 

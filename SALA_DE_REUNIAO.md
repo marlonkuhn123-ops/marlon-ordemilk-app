@@ -2136,3 +2136,23 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 
 - **ESTADO:** producao continua V73. Nada commitado desta correcao. Decisao do USER.
 
+### AMPLIACAO DOS EXTRATORES + DEPLOY AUTORIZADOS - USER/CODEX - 2026-09-17
+- **Autorizacao do USER:** "RESOLVA E FACA O DEPLOY".
+- **Pode editar agora?** SIM. Escopo restrito aos extratores locais de temperatura de descarga, pressao
+  de succao e partidas por hora, testes correspondentes, registro da sala e quatro selos da V74.
+- **Preservar:** limites e logica tecnica existentes, modelos Gemini, temperature, personalidade,
+  conhecimento, fluxo de suporte, layout e demais modulos.
+- **Aceite antes da publicacao:** 15/15 frases naturais reconhecidas; 4/4 controles sem falso alerta;
+  frase canonica dos 22 PSIG em 10/10; autotestes, lint, build e diff limpos.
+- **Publicacao autorizada:** apos os portoes locais, commit/push em `main`, deploy automatico do projeto
+  oficial `ordemilk-app` e verificacao da V74 em `https://ordemilk.vercel.app`.
+
+### PORTOES PRE-DEPLOY V74 - CODEX - 2026-09-17
+- **Cobertura crua:** 15/15 frases reconhecidas: temperatura de descarga 7/7, pressao de succao 5/5 e
+  partidas por hora 3/3. Inclui `esta em`, `esta a`, `marcou`, numero antes do termo, `libras`,
+  `liga N vezes por hora` e `N acionamentos em uma hora`.
+- **Falsos alertas:** 4/4 controles limpos: tanque sadio, agitador parado, eletrico puro e pergunta generica.
+- **Estabilidade:** frase canonica dos 22 PSIG = 10/10 com contestacao na primeira linha; saida crua conferida.
+- **Regressao:** lint/TypeScript OK; autoteste interno **44/44**; build OK; `git diff --check` OK.
+- **Pacote:** quatro selos alinhados em V74 e `ordemilk-tech-v74`; nenhuma chave Gemini encontrada no `dist`.
+- **Conclusao:** portoes atendidos. Commit e push para producao autorizados pelo USER.

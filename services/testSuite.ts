@@ -1,6 +1,11 @@
 
 import { logicService } from './logicService';
-import { analyzeSupportCase } from './supportDiagnosticEngine';
+import {
+    analyzeSupportCase,
+    buildRequiredSupportOpening,
+    buildSupportAnalysisInstruction,
+    prependRequiredSupportOpening
+} from './supportDiagnosticEngine';
 import { localSupportService, normalizeSupportFieldTerminology } from './localSupportService';
 import { Refrigerant } from '../types';
 import { KNOWLEDGE_BASE } from '../data/knowledge_base';
@@ -178,6 +183,29 @@ export const runSystemDiagnostics = () => {
         assert(!analysis.refrigeration?.hypothesis.includes("defeito confirmado"), "Faixa típica não pode fechar defeito automaticamente.");
     });
 
+    test("Suporte REF: contestação crítica deve permanecer na primeira linha em 10 de 10 respostas", () => {
+        const prompt = "Tanque 4000L R-404A, pressao de baixa 22 PSI, succao 12 graus, leite nao baixa de 8 graus.";
+        const context = { refrigerant: "R-404A", model: "4000L" };
+        const analysis = analyzeSupportCase(prompt, "REF", context);
+        const opening = buildRequiredSupportOpening(analysis);
+
+        assert(opening.includes("22 PSIG"), `Abertura deveria citar 22 PSIG. Recebido: ${opening}`);
+        assert(opening.includes("55 a 59 PSIG"), `Abertura deveria citar a janela 55 a 59 PSIG. Recebido: ${opening}`);
+        assert(opening.includes("muito abaixo"), `Abertura deveria contestar a leitura. Recebido: ${opening}`);
+        assert(buildSupportAnalysisInstruction(analysis).includes("a primeira linha deve anunciar"), "Prompt interno deveria reforçar a primeira linha obrigatória.");
+
+        Array.from({ length: 10 }, (_, index) => `Hipótese variável da IA na rodada ${index + 1}.`).forEach(modelText => {
+            const rendered = prependRequiredSupportOpening(modelText, opening);
+            assert(rendered.split('\n')[0] === opening, `Contestação não ficou na primeira linha. Recebido: ${rendered}`);
+        });
+
+        const alreadyPrefixed = prependRequiredSupportOpening(`${opening}\n\nResposta técnica.`, opening);
+        assert(alreadyPrefixed.split(opening).length === 2, "Abertura obrigatória não pode ser duplicada.");
+
+        const local = localSupportService.generateResponse(prompt, "REF", context).text;
+        assert(local.split('\n')[0] === opening, `Fallback local deveria abrir com a mesma contestação. Recebido: ${local}`);
+    });
+
     test("Suporte REF: janela típica R404A deve vir da tabela PT local", () => {
         const window = getTypicalPressureWindow('R-404A', 30);
         assert(window?.suctionPsig.min === 55 && window?.suctionPsig.max === 59, `Sucção típica R404A esperada 55-59. Recebido: ${JSON.stringify(window?.suctionPsig)}`);
@@ -249,6 +277,62 @@ export const runSystemDiagnostics = () => {
         assert(analysis.refrigeration?.isOutlier === true, "145C deveria gerar alerta firme.");
         assert(Boolean(analysis.refrigeration?.hypothesis.includes("ultrapassa")), `Deveria indicar ultrapassagem do limite. Recebido: ${analysis.refrigeration?.hypothesis}`);
         assert(Boolean(analysis.refrigeration?.action.includes("Interrompa")), `Ação deveria impedir insistência de funcionamento. Recebido: ${analysis.refrigeration?.action}`);
+    });
+
+    test("Suporte AUTO: deve reconhecer 15 de 15 formas naturais de informar medidas críticas", () => {
+        const dischargeTemperaturePrompts = [
+            "Temperatura de descarga em 145 C.",
+            "Linha de descarga em 145 graus.",
+            "A linha de descarga esta em 145 graus.",
+            "A linha de descarga esta a 145 C.",
+            "Medi 145 graus na linha de descarga.",
+            "Descarga 145 graus.",
+            "O tubo de descarga marcou 145 C."
+        ];
+        const suctionPressurePrompts = [
+            "R-404A, pressao de succao 22 PSI.",
+            "R-404A, baixa em 22 PSI.",
+            "A pressao de baixa esta em 22 PSI. R-404A.",
+            "R-404A, succao 22 libras.",
+            "Medi 22 PSI na succao do R-404A."
+        ];
+        const startsPerHourPrompts = [
+            "10 partidas por hora com soft-starter.",
+            "O compressor liga 10 vezes por hora, tem soft-starter.",
+            "Com soft-starter, contei 10 acionamentos em uma hora."
+        ];
+
+        dischargeTemperaturePrompts.forEach(prompt => {
+            const analysis = analyzeSupportCase(prompt, "AUTO", {});
+            assert(analysis.refrigeration?.dischargeTemperatureC === 145, `Não leu temperatura em: ${prompt}`);
+            assert(buildRequiredSupportOpening(analysis).startsWith("⚠️ LIMITE OFICIAL EXCEDIDO"), `Não abriu alerta oficial em: ${prompt}`);
+        });
+
+        suctionPressurePrompts.forEach(prompt => {
+            const analysis = analyzeSupportCase(prompt, "AUTO", {});
+            assert(analysis.refrigeration?.suctionPsig === 22, `Não leu pressão em: ${prompt}`);
+            assert(buildRequiredSupportOpening(analysis).includes("55 a 59 PSIG"), `Não contestou sucção em: ${prompt}`);
+        });
+
+        startsPerHourPrompts.forEach(prompt => {
+            const analysis = analyzeSupportCase(prompt, "AUTO", {});
+            assert(analysis.refrigeration?.startsPerHour === 10, `Não leu partidas em: ${prompt}`);
+            assert(buildRequiredSupportOpening(analysis).startsWith("⚠️ LIMITE OFICIAL EXCEDIDO"), `Não abriu alerta de partidas em: ${prompt}`);
+        });
+    });
+
+    test("Suporte AUTO: extratores ampliados não devem criar alerta nos quatro controles", () => {
+        const controls = [
+            { prompt: "R404A, succao 57 PSI, descarga 270 PSI, ambiente 30 C, superaquecimento 9 K, sub-resfriamento 6 K e leite a 4 C", mode: "AUTO" as const },
+            { prompt: "Agitador parado durante o resfriamento e leite congela no fundo", mode: "AUTO" as const },
+            { prompt: "Tanque 10000L 380V nao liga o agitador, saida YE apagada", mode: "ELEC" as const },
+            { prompt: "Como verificar se o tanque esta refrigerando corretamente?", mode: "AUTO" as const }
+        ];
+
+        controls.forEach(({ prompt, mode }) => {
+            const analysis = analyzeSupportCase(prompt, mode, {});
+            assert(buildRequiredSupportOpening(analysis) === "", `Controle gerou alerta indevido: ${prompt}`);
+        });
     });
 
     test("Suporte REF: TD de 24K deve pedir confirmação como faixa típica", () => {

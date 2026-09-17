@@ -68,6 +68,28 @@ const normalize = (value: string) =>
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase();
 
+export const buildRequiredSupportOpening = (analysis: SupportCaseAnalysis): string => {
+    const refrigeration = analysis.refrigeration;
+    if (!refrigeration?.isOutlier) return '';
+
+    if (refrigeration.evidenceClass === 'limite oficial') {
+        return `⚠️ LIMITE OFICIAL EXCEDIDO: ${refrigeration.hypothesis}`;
+    }
+
+    if (refrigeration.evidenceClass === 'faixa típica') {
+        return `⚠️ LEITURA FORA DA FAIXA TÍPICA: ${refrigeration.hypothesis}`;
+    }
+
+    return '';
+};
+
+export const prependRequiredSupportOpening = (text: string, requiredOpening: string): string => {
+    const body = text.trim();
+    if (!requiredOpening) return body;
+    if (body.startsWith(requiredOpening)) return body;
+    return body ? `${requiredOpening}\n\n${body}` : requiredOpening;
+};
+
 const hasValue = (value?: string) => Boolean(value && value.trim());
 const includesAny = (value: string, keywords: string[]) => keywords.some(keyword => value.includes(keyword));
 
@@ -248,10 +270,11 @@ const readPressureForSide = (text: string, side: 'suction' | 'discharge') => {
         ? '(?:pressao\\s+(?:de\\s+)?)?(?:succao|baixa)'
         : '(?:pressao\\s+(?:de\\s+)?)?(?:descarga|alta)';
     const value = '(-?\\d{1,4}(?:[.,]\\d{1,2})?)';
-    const unit = '(psig?|bar)';
+    const unit = '(psig?|bar|libras?)';
+    const link = '(?:(?:esta|estava|fica|ficou|chegou)\\s*(?:em|a|com)?|(?:=|:|de|em|a|com|marcou|deu))?';
     const patterns = [
-        new RegExp(`\\b${label}\\b\\s*(?:=|:|de|em|esta|com)?\\s*${value}\\s*${unit}\\b`, 'i'),
-        new RegExp(`\\b${value}\\s*${unit}\\s*(?:na|de|em)?\\s*${label}\\b`, 'i')
+        new RegExp(`\\b${label}\\b\\s*${link}\\s*${value}\\s*${unit}\\b`, 'i'),
+        new RegExp(`\\b${value}\\s*${unit}\\s*(?:na|no|da|do|de|em)?\\s*${label}\\b`, 'i')
     ];
 
     for (const pattern of patterns) {
@@ -273,10 +296,18 @@ const readAmbientC = (text: string) => readMeasurement(text, [
     /\bar\s+de\s+entrada\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,2}(?:[.,]\d{1,2})?)\s*(?:°?\s*c|graus?)\b/i
 ]);
 
-const readDischargeTemperatureC = (text: string) => readMeasurement(text, [
-    /\btemperatura\s+(?:da\s+|de\s+)?descarga\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:°?\s*c|graus?)\b/i,
-    /\b(?:tubo|linha)\s+de\s+descarga\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:°?\s*c|graus?)\b/i
-]);
+const readDischargeTemperatureC = (text: string) => {
+    const label = '(?:(?:temperatura\\s+(?:da\\s+|de\\s+)?)?descarga|(?:tubo|linha)\\s+de\\s+descarga)';
+    const reverseLabel = '(?:(?:tubo|linha)\\s+de\\s+descarga|temperatura\\s+(?:da\\s+|de\\s+)?descarga)';
+    const value = '(-?\\d{1,3}(?:[.,]\\d{1,2})?)';
+    const unit = '(?:°?\\s*c|graus?)';
+    const link = '(?:(?:esta|estava|fica|ficou|chegou)\\s*(?:em|a|com)?|(?:=|:|de|em|a|com|marcou|deu))?';
+
+    return readMeasurement(text, [
+        new RegExp(`\\b${label}\\b\\s*${link}\\s*${value}\\s*${unit}\\b`, 'i'),
+        new RegExp(`\\b${value}\\s*${unit}\\s*(?:na|no|da|do|de|em)?\\s*${reverseLabel}\\b`, 'i')
+    ]);
+};
 
 const readCondenserTdK = (text: string) => readMeasurement(text, [
     /\btd\s+(?:do\s+)?condensador\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
@@ -284,8 +315,9 @@ const readCondenserTdK = (text: string) => readMeasurement(text, [
 ]);
 
 const readStartsPerHour = (text: string) => readMeasurement(text, [
-    /\b(\d{1,3}(?:[.,]\d{1,2})?)\s*partidas?\s*(?:por\s+hora|\/\s*h|\/\s*hora)\b/i,
-    /\bpartidas?\s*(?:por\s+hora|\/\s*h|\/\s*hora)\s*(?:=|:|de|em|esta|com)?\s*(\d{1,3}(?:[.,]\d{1,2})?)\b/i
+    /\b(\d{1,3}(?:[.,]\d{1,2})?)\s*(?:partidas?|acionamentos?|ligamentos?)\s*(?:por\s+hora|\/\s*h|\/\s*hora|(?:na|em|durante)\s+(?:a\s+|uma\s+|ultima\s+)?hora)\b/i,
+    /\b(?:partidas?|acionamentos?|ligamentos?)\s*(?:por\s+hora|\/\s*h|\/\s*hora)\s*(?:(?:esta|estava|fica|ficou)\s*(?:em|a|com)?|(?:=|:|de|em|a|com|marcou|deu))?\s*(\d{1,3}(?:[.,]\d{1,2})?)\b/i,
+    /\b(?:o\s+)?compressor\s+(?:liga|parte|aciona|arranca|faz|fez|teve|registrou)\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*(?:vezes?|partidas?|acionamentos?|ligamentos?)\s*(?:por\s+hora|(?:na|em|durante)\s+(?:a\s+|uma\s+|ultima\s+)?hora)\b/i
 ]);
 
 const readVoltageImbalancePercent = (text: string) => readMeasurement(text, [
@@ -882,6 +914,7 @@ export const analyzeSupportCase = (
 
 export const buildSupportAnalysisInstruction = (analysis: SupportCaseAnalysis) => {
     const blocks: string[] = [];
+    const requiredOpening = buildRequiredSupportOpening(analysis);
 
     if (hasHealthyRefrigerationMeasurements(analysis)) {
         blocks.push([
@@ -907,6 +940,7 @@ export const buildSupportAnalysisInstruction = (analysis: SupportCaseAnalysis) =
     if (analysis.refrigeration) {
         blocks.push([
             '[PLAUSIBILIDADE FRIGORÍFICA LOCAL - RESULTADO DETERMINÍSTICO]',
+            ...(requiredOpening ? ['- Regra de saída: a primeira linha deve anunciar esta leitura fora da faixa antes da hipótese.'] : []),
             ...analysis.refrigeration.facts.map(fact => `- ${fact}`),
             `- Classe da evidência: ${analysis.refrigeration.evidenceClass}.`,
             `- Leitura fora da faixa típica: ${analysis.refrigeration.isOutlier ? 'SIM' : 'NÃO'}.`,

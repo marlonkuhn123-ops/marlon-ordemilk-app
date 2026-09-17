@@ -1,5 +1,11 @@
 import { SupportDiagnosticContext, SupportMode } from '../types';
-import { analyzeSupportCase, hasHealthyRefrigerationMeasurements, SupportCaseAnalysis } from './supportDiagnosticEngine';
+import {
+    analyzeSupportCase,
+    buildRequiredSupportOpening,
+    hasHealthyRefrigerationMeasurements,
+    prependRequiredSupportOpening,
+    SupportCaseAnalysis
+} from './supportDiagnosticEngine';
 
 type OfflineRoute = 'general' | 'refrigeration' | 'electrical' | 'errors';
 
@@ -266,7 +272,7 @@ export const localSupportService = {
         const questions = buildQuestions(route, context, prompt, analysis);
         const action = buildAction(route, prompt, analysis);
 
-        const text = [
+        const body = [
             'Olá. Vou te ajudar com um diagnóstico rápido e direto.',
             '',
             `**Hipótese Inicial:** ${normalizeSupportFieldTerminology(hypothesis)}`,
@@ -279,6 +285,10 @@ export const localSupportService = {
             '',
             '**Modo consulta local:** assim que a conexão voltar, eu aprofundo com a IA completa.'
         ].join('\n');
+        const text = normalizeSupportFieldTerminology(prependRequiredSupportOpening(
+            body,
+            buildRequiredSupportOpening(analysis)
+        ));
 
         return { route, text };
     }
