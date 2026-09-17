@@ -2047,3 +2047,92 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   criterio de aceite = contestar em pelo menos 9 de 10 rodadas com a MESMA frase. A Claude remede a taxa.
   Decisao do USER.
 
+### CORRECAO POS-V73 AUTORIZADA - CONTESTACAO DETERMINISTICA - CODEX - 2026-09-17
+- **Autorizacao recebida:** o USER encaminhou o achado critico e a recomendacao para a Codex ajustar.
+- **Pode editar agora?** SIM, somente para garantir que uma leitura marcada pelo motor como fora da faixa
+  apareca obrigatoriamente na primeira linha da resposta, antes da hipotese.
+- **Estrategia:** a abertura sera composta pelo motor local e aplicada no stream/final pelo app. Assim, a
+  contestacao nao dependera da variacao probabilistica do Gemini. O prompt continuara recebendo a mesma
+  ancora tecnica para manter o restante da resposta coerente.
+- **Arquivos alvo:** `services/supportDiagnosticEngine.ts`, `services/geminiService.ts`,
+  `services/localSupportService.ts`, `services/testSuite.ts` e este registro.
+- **Criterio local:** mesma frase canonica repetida 10 vezes, 10 primeiras linhas contestando 22 PSIG.
+- **Criterio ao vivo:** Claude mede novamente a mesma frase; minimo 9/10.
+- **Commit/deploy:** NAO autorizados nesta etapa. Producao permanece V73 durante a correcao e a revisao.
+
+### RESULTADO LOCAL DA CORRECAO POS-V73 - CODEX - 2026-09-17
+- **Escopo mantido:** somente a contestacao obrigatoria de leitura frigorifica marcada pelo motor como
+  `faixa tipica` ou `limite oficial`. Nenhuma mudanca em modelo, temperature, base tecnica, layout, senha,
+  versao visual ou service worker.
+- **Garantia aplicada:** o motor local monta a abertura critica e o app a coloca antes da resposta do
+  Gemini tanto durante o stream quanto no texto final. O fallback local usa a mesma abertura. Assim, a
+  primeira linha nao depende mais de o modelo decidir repetir ou omitir a analise recebida.
+- **Frase canonica repetida 10 vezes:** 10/10 primeiras linhas foram exatamente a contestacao de
+  `22 PSIG` como muito abaixo da janela tipica de `55 a 59 PSIG` para R-404A. A saida bruta das dez
+  repeticoes foi conferida, inclusive simulando o modelo tentando abrir direto pelo superaquecimento.
+- **Regressao local:** lint/TypeScript OK; autoteste interno **42/42**; build OK; `git diff --check` limpo.
+  O pacote gerado contem a nova regra e nenhuma chave Gemini. O alerta de chave ausente no build local
+  permanece apenas como aviso de credencial e nao invalida a compilacao.
+- **Arquivos alterados:** `services/supportDiagnosticEngine.ts`, `services/geminiService.ts`,
+  `services/localSupportService.ts`, `services/testSuite.ts` e este registro.
+- **Estado:** nenhum commit, push ou deploy. Producao continua V73. A Claude deve reconferir em producao
+  somente depois de uma publicacao autorizada, repetindo a mesma frase 10 vezes; aceite minimo = 9/10.
+### REVISAO CLAUDE DA CORRECAO POS-V73 - 2026-09-17
+- **Objeto:** correcao da Codex (nao commitada) que monta a abertura no app em vez de depender do modelo.
+- **VEREDITO: A CORRECAO FUNCIONA. MAS ENCONTREI UM PROBLEMA MAIOR E ANTERIOR A ELA. NAO PUBLICAR AINDA.**
+
+- **1) O QUE FOI CORRIGIDO: APROVADO, MEDIDO.**
+  Criterio de aceite combinado era 9/10. Medi 10 repeticoes da MESMA frase canonica em build local com a
+  chave de producao: **10/10** com o aviso ANTES da hipotese, zero duplicacao. Conferi a saida bruta, nao
+  so o veredito do script. Antes da correcao, a medicao em producao dava 1/5.
+  A estrategia da Codex esta certa: a abertura e montada pelo motor e aplicada pelo app no stream e no
+  texto final, entao nao depende mais do sorteio do modelo.
+  Portoes conferidos, 7 de 7 corretos: avisa nos 3 casos que devem avisar e NAO avisa em tanque sadio,
+  agitador parado, eletrico puro e pergunta generica. Confirmado tambem ao vivo: tanque sadio e pergunta
+  eletrica passaram sem aviso indevido. Autoteste interno 42/42, lint e build OK.
+
+- **2) PROBLEMA MAIOR: O RECONHECIMENTO DA MEDIDA E FRAGIL A FORMA DA FRASE.**
+  A garantia deterministica so vale quando o motor CONSEGUE LER o numero na frase. Testei variacoes naturais
+  da mesma informacao, todas em modo AUTO e contexto vazio (como o tecnico realmente usa):
+  | Detector | Frases que funcionam |
+  |----------|----------------------|
+  | Temperatura de descarga (limite oficial 130 C) | **2 de 7** |
+  | Pressao de succao (faixa tipica) | **3 de 5** |
+  | Partidas por hora (limite oficial 6) | **1 de 3** |
+  Exemplos que NAO sao reconhecidos:
+  - "A linha de descarga esta em 145 graus."  (funciona: "linha de descarga em 145 graus")
+  - "A linha de descarga esta a 145 C."
+  - "Medi 145 graus na linha de descarga."
+  - "descarga 145 graus"
+  - "A pressao de baixa esta em 22 PSI. R-404A."
+  - "R-404A, succao 22 libras."
+  - "O compressor liga 10 vezes por hora, tem soft-starter."
+  Foi assim que apareceu: no meu teste ao vivo de regressao, o caso de descarga a 145 C NAO gerou o aviso.
+  Investiguei achando que era o modo AUTO; nao era. A frase que eu usei na revisao estatica era
+  "linha de descarga em 145 graus" e a que usei ao vivo era "a linha de descarga esta em 145 graus".
+  So muda o "esta".
+
+  ISSO NAO E CULPA DA CORRECAO. E anterior a ela, e da mesma familia do gatilho de multicircuito que eu ja
+  tinha reportado e a Codex ja corrigiu. O padrao se repete: a LOGICA esta certa, o RECONHECIMENTO e estreito.
+
+  Consequencia em campo: o tecnico escreve do jeito dele, o motor nao le o numero, e a garantia
+  deterministica simplesmente nao acontece. Pior no caso da descarga, que e LIMITE OFICIAL de seguranca do
+  compressor: 5 de 7 formas naturais passam batido.
+
+- **3) RECOMENDACAO.**
+  Nao publicar so a correcao da abertura. Ela resolve o sintoma que eu reportei mas deixa o buraco maior.
+  Sugiro a Codex ampliar os extratores de medida antes de publicar, cobrindo pelo menos: verbo entre o termo
+  e o numero ("esta em", "esta a", "marcou", "deu"), numero antes do termo ("145 graus na descarga"),
+  unidade por extenso ("libras"), e o par termo+numero sem preposicao ("descarga 145 graus").
+  CRITERIO DE ACEITE que proponho: 13 de 15 das frases da tabela acima, sem criar falso positivo nos 4 casos
+  que hoje corretamente NAO avisam (tanque sadio, agitador, eletrico, generico).
+  A Claude remede as 15 frases e reconfere os 4 controles.
+
+- **4) LICAO DE METODO (repetida hoje, registro para as duas):** meu proprio script deu 0/10 numa medicao em
+  que a correcao estava funcionando perfeitamente; ele lia como "primeira linha" um resto da mensagem do
+  tecnico. So apareceu porque fui olhar o texto cru. E nesta rodada o problema real so apareceu porque
+  variei a frase. Conclusao: para criterio critico, repetir a MESMA frase N vezes E variar a forma da frase.
+  Uma coisa mede estabilidade, a outra mede cobertura. As duas sao necessarias.
+
+- **ESTADO:** producao continua V73. Nada commitado desta correcao. Decisao do USER.
+
