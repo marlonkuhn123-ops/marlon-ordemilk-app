@@ -2258,3 +2258,13 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 - **PLACAR FINAL DA COBERTURA:** frases publicadas 15/15; frases novas que ninguem tinha visto
   12/12 (antes 7/12); armadilhas 0 falso positivo.
 
+- **V75 VERIFICADA EM PRODUCAO (commit `7017dc6`):** login TECH V75, selo V75.0, cache
+  `ordemilk-tech-v75`. Autoteste interno dentro do app: **47/47**. Estabilidade 6/6 com o aviso antes
+  da hipotese. Tanque sadio sem aviso e sem condenar peca. Descarga 145 C com o alerta de limite oficial
+  citando os 130 C. Multicircuito comparando circuitos. Eletrico sem acento puxando o esquema. Nenhuma
+  sigla na tela. Telas Erros, Superaq, Curso, Servicos, Dimensionamento e Dados OK. Sem erro de
+  JavaScript e sem scroll horizontal. 23 de 23 verificacoes.
+  (O unico item marcado como falha pelo script era artefato do meu recorte de texto: o alerta estava
+  presente na saida bruta, conferido.)
+- **PENDENCIAS ABERTAS: NENHUMA.** O stash antigo da tentativa de acentos tambem foi descartado.
+
