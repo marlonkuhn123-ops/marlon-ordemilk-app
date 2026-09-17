@@ -1794,3 +1794,141 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 - **STATUS:** Claude aguardando a Codex registrar nesta SALA o resultado do patch e dos testes. Nenhuma
   revisao comeca antes disso. Nenhum deploy sem autorizacao do USER.
 
+### RESULTADO CODEX - PATCH LOCAL DE REFRIGERACAO PRONTO PARA REVISAO CLAUDE - 2026-09-17T08:55:27-03:00
+- **Estado:** implementacao local concluida no checkout canonico `C:\Users\Ordemilk\Desktop\marlon-ordemilk-app-clean`,
+  branch `main`, a partir do HEAD `f719d7e`. Nenhum commit, push ou deploy foi feito.
+- **Escopo preservado:** persona, modelos Gemini, cadencia, interface, autenticacao, calculadora, API e service
+  worker nao foram alterados. As mudancas ficaram no cerebro tecnico e no fallback do Suporte.
+
+- **Arquivos alterados pela Codex:**
+  - `constants.ts`
+  - `data/faq_data.ts`
+  - `data/knowledge_base.ts`
+  - `data/refrigeration_support_reference.ts` (novo)
+  - `services/geminiService.ts`
+  - `services/localSupportService.ts`
+  - `services/supportDiagnosticEngine.ts`
+  - `services/testSuite.ts`
+
+- **Implementacao feita:**
+  1. Referencia frigorifica compacta com tres classes distintas: `LIMITE OFICIAL`, `FAIXA TIPICA` e
+     `HIPOTESE DIAGNOSTICA`.
+  2. Janelas de pressao calculadas pela PT table local: R-404A usa dew na succao e bubble na descarga;
+     R-22 usa curva unica. A descarga considera ar de entrada +10 K a +15 K.
+  3. Parser deterministico para succao/descarga em PSI, PSIG e bar, ambiente, temperatura de descarga,
+     TD do condensador, partidas por hora, soft-starter, desequilibrio entre fases e pre-resfriador.
+  4. Caso `22 PSI no R-404A` e contestado como muito abaixo da janela tipica, com confirmacao obrigatoria
+     e bloqueio de completar carga/ajustar valvula antes das medicoes cruzadas.
+  5. Caso sadio `57/270 PSIG, 30 C, Sup.Aque 9 K, Sub.Res 6 K, leite 4 C` recebe conclusao explicita de
+     conjunto compativel com operacao normal e sem indicio de falha frigorifica.
+  6. Tanque multicircuito compara circuitos sob a mesma carga; pre-resfriador e investigado antes da carga;
+     agitador parado indica primeiro perda de troca/estratificacao, nunca retorno automatico.
+  7. Limites Danfoss/Maneurop (130 C, 2%, 12 partidas/h ou 6 com soft-starter) geram alerta firme. TD 24 K
+     permanece faixa tipica que pede confirmacao e nao condena componente.
+  8. Corrigidos quatro conflitos antigos: Sub.Res baixo, bolhas no visor, oleo MT/MTZ e pump-down/agitador.
+  9. Saida ao tecnico normaliza `SH/SC/VET/TXV` para `Sup.Aque/Sub.Res/valvula de expansao`, inclusive na
+     resposta online. Busca sem acentos continua funcionando.
+
+- **Validacoes executadas pela Codex:**
+  - `npm.cmd run lint` / `tsc --noEmit`: OK.
+  - `runSystemDiagnostics`: **41/41** (baseline anterior: 18/18).
+  - Matriz frigorifica/eletrica independente: **22/22**.
+  - Complemento foto sem texto, audio sem texto e fallback 503/429/rede/timeout: **3/3** usando as funcoes
+    reais de montagem de payload e a rota de contingencia.
+  - Total da matriz de campo: **25/25**.
+  - `npm.cmd run build`: OK, `dist/index.html + dist/index.js`, bundle 766,0 KB.
+  - `git diff --check`: OK.
+  - Preview local `http://127.0.0.1:4173`: HTTP 200; SHA-256 do `index.js` servido identico ao build local.
+
+- **Custo medido:**
+  - Contagem estatica reproduzida pela Codex: 89.287 -> 100.154 caracteres de strings (`+10.867`). O numero
+    absoluto difere levemente do baseline Claude por metodo de AST, mas a comparacao usa o mesmo metodo nos
+    dois lados. A maior parte do crescimento esta em ramos deterministas do codigo e nao vai toda ao prompt.
+  - Crescimento real aproximado por chamada: REF generico `+363 tokens`; R-404A/22 PSI `+730`; caso sadio
+    completo `+817`; ELEC puro `+0`; ELEC com indicio frigorifico `+363`.
+
+- **Limitacoes declaradas:**
+  - O checkout local nao possui `GEMINI_API_KEY`; o aviso de chave ausente apareceu no build, mas a compilacao
+    terminou com sucesso. Nenhuma chave paga foi copiada ou exposta.
+  - Nao houve chamada real ao Gemini nesta etapa. O navegador integrado da sessao estava indisponivel, por
+    isso nao foi reivindicado teste visual. A Claude deve cumprir a bateria propria ao vivo/local prevista no
+    protocolo antes de homologar.
+
+- **STATUS PARA HANDOFF:** patch local pronto. Claude autorizada a iniciar agora a revisao independente,
+  lendo o diff linha por linha e executando sua bateria propria. Commit e deploy continuam proibidos ate nova
+  autorizacao explicita do USER.
+### PARECER DA REVISAO INDEPENDENTE - CLAUDE - 2026-09-17
+- **Objeto:** patch da Codex (nao commitado) sobre o cerebro de refrigeracao do suporte.
+- **Metodo:** conforme o protocolo pre-registrado. Diff lido linha a linha; motor deterministico exercitado
+  caso a caso; bateria propria AO VIVO com chamadas reais de IA contra build local com a chave de producao
+  (chave puxada de forma transitoria e apagada ao fim; bundle local voltou ao placeholder).
+- **VEREDITO: APROVADO COM 1 CORRECAO OBRIGATORIA E 1 AJUSTE MENOR.**
+
+- **O QUE PASSOU:**
+  | Criterio pre-registrado | Resultado |
+  |-------------------------|-----------|
+  | A - contestar "22 PSI no R-404A" | PASSOU (3 repeticoes ao vivo, 3 contestacoes) |
+  | B - tanque sadio nao pode ser condenado | PASSOU (nao condenou nada em nenhuma rodada) |
+  | C - limite oficial x faixa tipica com redacao diferente | PASSOU |
+  | D - sem regressao (siglas, acentos, termos de busca, modelo, 2 perguntas) | PASSOU |
+  | E - custo por mensagem | PASSOU, melhor que o pedido |
+  | F - casos novos da matriz | PASSOU em 3 de 4 (falha no multicircuito) |
+  - Lint OK, build OK, autoteste interno subiu de 18/18 para **41/41** (a Codex escreveu 23 testes novos).
+  - Arrays de termos de busca NAO foram acentuados. Confirmado ao vivo: "a contatora nao fecha e o disjuntor
+    motor esta desarmando" continua puxando o esquema.
+  - Nenhuma sigla SH/SC/VET/TXV chega a tela. O normalizador novo (`normalizeSupportFieldTerminology`)
+    converte antes de exibir, inclusive no fallback offline. Verificado.
+
+- **CUSTO POR MENSAGEM (criterio E) - medido comparando HEAD x patch:**
+  | Caso | Antes | Depois |
+  |------|-------|--------|
+  | Pergunta eletrica | 1.972 chars | 1.972 chars (ZERO a mais) |
+  | Pergunta generica sem numero | 0 | 0 (ZERO a mais) |
+  | Refrigeracao com numeros | 0 | ~2.700 chars (~730-780 tokens) |
+  O bloco novo e injetado por gatilho, nao em toda mensagem. O compromisso de "bloco compacto" foi cumprido
+  com folga: quem nao fala de refrigeracao com numero nao paga nada.
+
+- **CONVERGENCIA INDEPENDENTE (vale registrar):** a janela de pressao que a Codex implementou em
+  `data/refrigeration_support_reference.ts` bate EXATAMENTE com a tabela da pesquisa da Claude
+  (R-404A 55-59 PSIG; alta 220-251 / 251-284 / 284-321 a 25/30/35 C; R-22 43-47 PSIG; alta 182-208 /
+  208-236 / 236-267). Duas implementacoes independentes chegaram aos mesmos numeros a partir da PT table
+  do app. Isso aumenta bastante a confianca no numero.
+
+- **CORRECAO OBRIGATORIA 1 - deteccao de multicircuito estreita (criterio F).**
+  A logica de multicircuito existe e esta boa QUANDO dispara, mas o gatilho pega pouco. Testadas 7 frases
+  naturais, 4 NAO dispararam:
+  | Frase do tecnico | Detectou? |
+  |------------------|-----------|
+  | "Tanque 20000L com 4 compressores, o circuito 2 nao gela igual aos outros." | NAO |
+  | "Tanque 20000L, um compressor gela e o outro nao." | NAO |
+  | "Tanque 20000L de 4 compressores, so um circuito esta gelando." | NAO |
+  | "Dois circuitos, um gela e o outro nao." | NAO |
+  | "Tanque multicircuito, o circuito 2 nao gela." | SIM |
+  | "Tanque com 4 circuitos, um deles nao gela." | SIM |
+  | "No circuito 1 a pressao esta boa mas no circuito 2 esta baixa." | SIM |
+  Causa: em `services/supportDiagnosticEngine.ts` o gatilho exige a palavra "multicircuito", ou o padrao
+  "N circuitos" em DIGITO, ou "circuito 1" E "circuito 2" juntos. Nao considera "N compressores", nao
+  considera numero por extenso ("dois"), e nao usa a CAPACIDADE que o app ja tem no contexto - tanque de
+  20000L sempre tem mais de um circuito.
+  Impacto em campo: o tecnico fala do jeito natural ("4 compressores, o circuito 2 nao gela") e perde toda a
+  orientacao de comparar circuitos, que foi justamente o melhor ponto tecnico levantado pela Codex.
+  Sugestao: incluir "N compressores", numeros por extenso, e inferir multicircuito pela capacidade do modelo.
+
+- **AJUSTE MENOR 2 - normalizador gera frase redundante.**
+  `normalizeSupportFieldTerminology('SH alto, SC baixo: confira VET ou TXV.')` devolve
+  "...confira válvula de expansão ou válvula de expansão." Quando as duas siglas aparecem na mesma frase, o
+  texto fica repetido. Cosmetico, baixa frequencia, mas visivel para o tecnico.
+
+- **OBSERVACAO (nao e defeito, nao bloqueia):** a contestacao da leitura implausivel as vezes aparece na
+  ultima linha ("Faca agora") em vez de vir na hipotese inicial. Nas 3 rodadas o conteudo estava sempre
+  presente; so a posicao variou. Se a Codex quiser, vale pedir que a implausibilidade venha antes da
+  hipotese, porque e a informacao que muda a conduta do tecnico.
+
+- **NAO ENCONTREI:** nenhuma alteracao de persona, modelo Gemini, interface, autenticacao, API ou service
+  worker. Nenhum numero de fonte secundaria usado como alerta firme. Nenhuma faixa tipica redigida como
+  condenacao. Calculadora Superaq intacta.
+
+- **RECOMENDACAO AO USER:** aprovar o patch apos a correcao 1. O ajuste 2 pode ir junto. Sugiro que a Codex
+  corrija, rode de novo os 41 testes e registre aqui; a Claude reconfere so os dois pontos e ai sim vale
+  autorizar commit e deploy. Continua valendo: nada commitado e nada publicado ate a sua autorizacao.
+
