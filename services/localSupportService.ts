@@ -68,11 +68,43 @@ const sanitize = (value: string) =>
 const hasValue = (value?: string) => Boolean(value && value.trim());
 const includesAny = (value: string, keywords: string[]) =>
     keywords.some(keyword => value.includes(keyword));
-export const normalizeSupportFieldTerminology = (value: string) => value
-    .replace(/\bSH\b/gi, 'Sup.Aque')
-    .replace(/\bSC\b/gi, 'Sub.Res')
-    .replace(/\bVET\b|\bTXV\b/gi, 'válvula de expansão')
-    .replace(/\bválvula de expansão(?:\s*(?:ou|e|\/)\s*válvula de expansão)+/gi, 'válvula de expansão');
+// "VET"/"TXV" sao masculinos na fala do tecnico, mas "valvula de expansao" e feminino.
+// Sem esta troca sai "o valvula de expansao". Acontece ANTES de expandir a sigla.
+const ARTICLE_AGREEMENT: Array<[string, string]> = [
+    ['o', 'a'], ['do', 'da'], ['ao', 'à'], ['no', 'na'], ['pelo', 'pela'],
+    ['num', 'numa'], ['um', 'uma'], ['este', 'esta'], ['esse', 'essa'],
+    ['aquele', 'aquela'], ['deste', 'desta'], ['desse', 'dessa'],
+    ['neste', 'nesta'], ['nesse', 'nessa'], ['outro', 'outra'], ['mesmo', 'mesma']
+];
+
+const matchCase = (original: string, replacement: string) =>
+    original[0] === original[0].toUpperCase()
+        ? replacement[0].toUpperCase() + replacement.slice(1)
+        : replacement;
+
+export const normalizeSupportFieldTerminology = (value: string) => {
+    let out = value
+        .replace(/\bSH\b/gi, 'Sup.Aque')
+        .replace(/\bSC\b/gi, 'Sub.Res');
+
+    for (const [masc, fem] of ARTICLE_AGREEMENT) {
+        out = out.replace(
+            new RegExp(`\\b(${masc})(\\s+)(?=(?:VET|TXV)\\b)`, 'gi'),
+            (_match, article: string, space: string) => matchCase(article, fem) + space
+        );
+    }
+
+    out = out.replace(/\bVET\b|\bTXV\b/gi, 'válvula de expansão');
+
+    // Evita "valvula de expansao e a valvula de expansao" / "..., valvula de expansao e filtro".
+    const term = 'v[áa]lvula de expans[ãa]o';
+    out = out.replace(
+        new RegExp(`(${term})(?:\\s*(?:,|\\be\\b|\\bou\\b|\\/)\\s*(?:(?:o|a|os|as|do|da|no|na)\\s+)?${term})+`, 'gi'),
+        (_match, first: string) => first
+    );
+
+    return out;
+};
 
 const hasShScClue = (normalizedPrompt: string) =>
     includesAny(normalizedPrompt, ['superaquecimento', 'sh']) &&

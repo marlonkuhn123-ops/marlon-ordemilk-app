@@ -259,6 +259,11 @@ const buildShScDiagnostic = (prompt: string, context: SupportDiagnosticContext):
     };
 };
 
+// Ligacao entre o termo e o numero. Cobre o portugues de campo: "esta em", "esta a",
+// "caiu pra", "marcando", "deu", "ta com", alem das formas curtas (= : de em a com).
+const MEASUREMENT_LINK =
+    '(?:(?:esta|estava|ta|tava|fica|ficou|chegou|caiu|baixou|subiu|marcou|marcando|indicando|deu|dando|registrou|bateu)\\s*(?:em|a|com|pra|para|no|na)?|(?:=|:|de|em|a|com|pra|para))?';
+
 const pressureToPsig = (rawValue?: string, rawUnit?: string): number | undefined => {
     const value = parseNumber(rawValue);
     if (value === undefined) return undefined;
@@ -271,7 +276,7 @@ const readPressureForSide = (text: string, side: 'suction' | 'discharge') => {
         : '(?:pressao\\s+(?:de\\s+)?)?(?:descarga|alta)';
     const value = '(-?\\d{1,4}(?:[.,]\\d{1,2})?)';
     const unit = '(psig?|bar|libras?)';
-    const link = '(?:(?:esta|estava|fica|ficou|chegou)\\s*(?:em|a|com)?|(?:=|:|de|em|a|com|marcou|deu))?';
+    const link = MEASUREMENT_LINK;
     const patterns = [
         new RegExp(`\\b${label}\\b\\s*${link}\\s*${value}\\s*${unit}\\b`, 'i'),
         new RegExp(`\\b${value}\\s*${unit}\\s*(?:na|no|da|do|de|em)?\\s*${label}\\b`, 'i')
@@ -298,15 +303,25 @@ const readAmbientC = (text: string) => readMeasurement(text, [
 
 const readDischargeTemperatureC = (text: string) => {
     const label = '(?:(?:temperatura\\s+(?:da\\s+|de\\s+)?)?descarga|(?:tubo|linha)\\s+de\\s+descarga)';
-    const reverseLabel = '(?:(?:tubo|linha)\\s+de\\s+descarga|temperatura\\s+(?:da\\s+|de\\s+)?descarga)';
+    // Na ordem invertida ("149 graus na descarga") o termo pode vir sozinho.
+    const reverseLabel = '(?:(?:tubo|linha)\\s+(?:de\\s+)?descarga|temperatura\\s+(?:da\\s+|de\\s+)?descarga|descarga)';
     const value = '(-?\\d{1,3}(?:[.,]\\d{1,2})?)';
-    const unit = '(?:°?\\s*c|graus?)';
-    const link = '(?:(?:esta|estava|fica|ficou|chegou)\\s*(?:em|a|com)?|(?:=|:|de|em|a|com|marcou|deu))?';
+    const unit = '(?:°?\\s*c|graus?)(?:\\s*celsius)?';
+    const link = MEASUREMENT_LINK;
 
-    return readMeasurement(text, [
+    const patterns = [
         new RegExp(`\\b${label}\\b\\s*${link}\\s*${value}\\s*${unit}\\b`, 'i'),
-        new RegExp(`\\b${value}\\s*${unit}\\s*(?:na|no|da|do|de|em)?\\s*${reverseLabel}\\b`, 'i')
-    ]);
+        new RegExp(`\\b${value}\\s*${unit}\\s*(?:na|no|da|do|de|em)\\s*${reverseLabel}\\b`, 'i')
+    ];
+
+    // Numero SEM unidade ("tirei 149 na descarga") so e aceito quando a frase deixa claro
+    // que a medida e de TEMPERATURA. Sem essa trava, "149 na descarga" poderia ser
+    // pressao de descarga em PSI e viraria um alarme falso de limite de 130 °C.
+    if (/\btermometro\b|\btermometria\b|\btemperatura\b|\bgraus?\b|°/i.test(text)) {
+        patterns.push(new RegExp(`\\b${value}\\s*(?:na|no|da|do|de|em)\\s*${reverseLabel}\\b`, 'i'));
+    }
+
+    return readMeasurement(text, patterns);
 };
 
 const readCondenserTdK = (text: string) => readMeasurement(text, [
@@ -314,10 +329,19 @@ const readCondenserTdK = (text: string) => readMeasurement(text, [
     /\bdiferenca\s+de\s+temperatura\s+(?:do\s+)?condensador\s*(?:=|:|de|em|esta|com)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i
 ]);
 
+// "por hora" em todas as formas de campo: por hora, /h, na hora, em uma hora, na ultima hora.
+const PER_HOUR = '(?:por\\s+hora|\\/\\s*h(?:ora)?|(?:na|em|durante|numa)\\s+(?:a\\s+|uma\\s+|ultima\\s+)?hora)';
+// "partidas", "acionamentos", "ligamentos" e tambem "vezes" (so vale com o qualificador de hora junto).
+const START_NOUN = '(?:partidas?|acionamentos?|ligamentos?|vezes?)';
+
 const readStartsPerHour = (text: string) => readMeasurement(text, [
-    /\b(\d{1,3}(?:[.,]\d{1,2})?)\s*(?:partidas?|acionamentos?|ligamentos?)\s*(?:por\s+hora|\/\s*h|\/\s*hora|(?:na|em|durante)\s+(?:a\s+|uma\s+|ultima\s+)?hora)\b/i,
-    /\b(?:partidas?|acionamentos?|ligamentos?)\s*(?:por\s+hora|\/\s*h|\/\s*hora)\s*(?:(?:esta|estava|fica|ficou)\s*(?:em|a|com)?|(?:=|:|de|em|a|com|marcou|deu))?\s*(\d{1,3}(?:[.,]\d{1,2})?)\b/i,
-    /\b(?:o\s+)?compressor\s+(?:liga|parte|aciona|arranca|faz|fez|teve|registrou)\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*(?:vezes?|partidas?|acionamentos?|ligamentos?)\s*(?:por\s+hora|(?:na|em|durante)\s+(?:a\s+|uma\s+|ultima\s+)?hora)\b/i
+    new RegExp(`\\b(\\d{1,3}(?:[.,]\\d{1,2})?)\\s*${START_NOUN}\\s*${PER_HOUR}\\b`, 'i'),
+    new RegExp(`\\b${START_NOUN}\\s*${PER_HOUR}\\s*${MEASUREMENT_LINK}\\s*(\\d{1,3}(?:[.,]\\d{1,2})?)\\b`, 'i'),
+    new RegExp(`\\b(?:o\\s+)?compressor\\s+(?:liga|parte|aciona|arranca|faz|fez|teve|registrou)\\s*(\\d{1,3}(?:[.,]\\d{1,2})?)\\s*${START_NOUN}\\s*${PER_HOUR}\\b`, 'i'),
+    // "liga e desliga 9 vezes na hora", "ciclando 12 vezes por hora" - sem citar o compressor
+    new RegExp(`\\b(?:liga\\s+e\\s+desliga|desliga\\s+e\\s+liga|ciclando|ciclou|cicla|liga|parte|aciona)\\s*(\\d{1,3}(?:[.,]\\d{1,2})?)\\s*${START_NOUN}\\s*${PER_HOUR}\\b`, 'i'),
+    // "contei 20 partidas por hora", "deu 14 partidas em uma hora"
+    new RegExp(`\\b(?:contei|contou|deu|deram|foram|tiveram|registrou)\\s*(\\d{1,3}(?:[.,]\\d{1,2})?)\\s*${START_NOUN}\\s*${PER_HOUR}\\b`, 'i')
 ]);
 
 const readVoltageImbalancePercent = (text: string) => readMeasurement(text, [

@@ -521,5 +521,63 @@ export const runSystemDiagnostics = () => {
         assert(!result.text.includes("_Modo consulta local"), `Fallback não deve exibir markdown cru. Recebido: ${result.text}`);
     });
 
+    // --- LINGUAGEM DE CAMPO (frases reais que falhavam antes da revisão de 17/09) ---
+    test("Suporte AUTO: deve ler a medida escrita do jeito do técnico", () => {
+        const frases = [
+            "o cabecote ta com 152 graus na descarga",
+            "tirei 149 na descarga com o termometro",
+            "descarga marcou 138C hoje de manha",
+            "a temperatura da descarga deu 160 graus",
+            "linha de descarga 141 graus celsius",
+            "a baixa caiu pra 15 psig, fluido r404a",
+            "manometro de baixa marcando 12 psi r404a",
+            "pressao de succao 18 psi no r22",
+            "succao esta com 20 libras, r-22",
+            "liga e desliga 9 vezes na hora, tem soft-starter",
+            "o compressor deu 14 partidas em uma hora com soft starter",
+            "contei 20 partidas por hora"
+        ];
+
+        frases.forEach(frase => {
+            const abertura = buildRequiredSupportOpening(analyzeSupportCase(frase, "AUTO", {}));
+            assert(abertura.length > 0, `Medida fora da faixa não reconhecida em: "${frase}"`);
+        });
+    });
+
+    test("Suporte AUTO: número solto não pode virar alarme falso", () => {
+        const frases = [
+            "descarga em 85 graus, tudo normal",
+            "pressao de succao 57 psig no r404a",
+            "o compressor deu 3 partidas por hora",
+            "liga 4 vezes por hora com soft-starter",
+            "a temperatura do leite esta em 145 graus",
+            "o tanque tem 145 litros de leite",
+            "fiz 3 visitas na hora do almoco",
+            "esperei 2 horas e o leite chegou a 4 graus",
+            "o leite entra a 30 graus e a descarga esta normal"
+        ];
+
+        frases.forEach(frase => {
+            const abertura = buildRequiredSupportOpening(analyzeSupportCase(frase, "AUTO", {}));
+            assert(abertura.length === 0, `Alerta indevido em: "${frase}" -> ${abertura}`);
+        });
+    });
+
+    test("Suporte: termo por extenso com concordância correta e sem repetição", () => {
+        const casos: Array<[string, string]> = [
+            ["O VET esta travado.", "A válvula de expansão esta travado."],
+            ["Ajuste o VET conforme o SH.", "Ajuste a válvula de expansão conforme o Sup.Aque."],
+            ["O problema esta no VET.", "O problema esta na válvula de expansão."],
+            ["Feche um pouco o TXV.", "Feche um pouco a válvula de expansão."],
+            ["Troque a VET e o TXV.", "Troque a válvula de expansão."],
+            ["Verifique TXV, VET e filtro.", "Verifique válvula de expansão e filtro."]
+        ];
+
+        casos.forEach(([entrada, esperado]) => {
+            const saida = normalizeSupportFieldTerminology(entrada);
+            assert(saida === esperado, `Entrada: "${entrada}" | Esperado: "${esperado}" | Recebido: "${saida}"`);
+        });
+    });
+
     return report;
 };

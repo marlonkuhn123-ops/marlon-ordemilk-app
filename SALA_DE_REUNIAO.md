@@ -2217,3 +2217,44 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 - **HISTORICO DO ITEM PRINCIPAL:** V72 aceitava "22 PSI no R-404A" sem questionar. V73 contestava em 1 de 5.
   V74 contesta em 6 de 6, sempre antes da hipotese. Objetivo do trabalho atingido.
 
+### V75 - CLAUDE FECHA AS DUAS PENDENCIAS - 2026-09-17
+- **Ordem do USER:** resolver o que faltava. Feito pela Claude, nao pela Codex.
+
+- **PENDENCIA 1 RESOLVIDA - concordancia e repeticao no normalizador.**
+  Antes: "O VET esta travado." -> "O válvula de expansão esta travado." (artigo errado)
+  e "Troque a VET e o TXV." -> "...válvula de expansão e o válvula de expansão." (repetido).
+  Agora a troca de artigo acontece ANTES de expandir a sigla, com tabela de concordancia
+  (o->a, do->da, ao->à, no->na, pelo->pela, um->uma, este->esta, esse->essa, etc), preservando
+  maiuscula. E a deduplicacao passou a cobrir conector com artigo e virgula em lista.
+  | Entrada | Saida agora |
+  |---------|-------------|
+  | "O VET esta travado." | "A válvula de expansão esta travado." |
+  | "O problema esta no VET." | "O problema esta na válvula de expansão." |
+  | "Feche um pouco o TXV." | "Feche um pouco a válvula de expansão." |
+  | "Troque a VET e o TXV." | "Troque a válvula de expansão." |
+  | "Verifique TXV, VET e filtro." | "Verifique válvula de expansão e filtro." |
+
+- **PENDENCIA 2 RESOLVIDA - cobertura de linguagem de campo: 12/12 nas frases novas.**
+  As 5 que falhavam agora funcionam. Mudancas em `services/supportDiagnosticEngine.ts`:
+  1. `MEASUREMENT_LINK` compartilhado, cobrindo o portugues falado: "ta com", "caiu pra",
+     "marcando", "indicando", "baixou", "subiu", "bateu", "dando", alem das formas curtas.
+  2. Na ordem invertida a descarga pode vir sozinha ("149 graus na descarga"), nao so
+     "linha/tubo/temperatura de descarga". Unidade aceita "graus celsius" por extenso.
+  3. Partidas por hora: `PER_HOUR` cobre "na hora", "numa hora", "/h"; `START_NOUN` inclui
+     "vezes"; e entraram padroes para "liga e desliga N vezes na hora" e "contei N partidas".
+  4. **Trava de seguranca:** numero SEM unidade ("tirei 149 na descarga") so e aceito quando a
+     frase tem pista de temperatura (termometro/temperatura/graus/°). Sem isso, "149 na descarga"
+     poderia ser pressao de descarga em PSI e viraria alarme falso de limite de 130 C.
+
+- **NENHUM FALSO POSITIVO.** 21 armadilhas e controles, zero alarme indevido, incluindo
+  "a temperatura do leite esta em 145 graus", "o tanque tem 145 litros de leite",
+  "fiz 3 visitas na hora do almoco" e "o leite entra a 30 graus e a descarga esta normal".
+
+- **TRAVADO NO AUTOTESTE:** 3 testes novos guardam isso para sempre (linguagem de campo,
+  numero solto que nao pode virar alarme, e concordancia do termo por extenso).
+  Autoteste interno: **44/44 -> 47/47**. Lint OK, build OK.
+  As 15 frases da lista publicada continuam 15/15, sem regressao.
+
+- **PLACAR FINAL DA COBERTURA:** frases publicadas 15/15; frases novas que ninguem tinha visto
+  12/12 (antes 7/12); armadilhas 0 falso positivo.
+
