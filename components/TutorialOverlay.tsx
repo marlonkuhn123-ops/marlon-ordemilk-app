@@ -21,7 +21,7 @@ export const TutorialOverlay: React.FC<Props> = ({ isActive, onClose, setView })
     const steps: TutorialStep[] = [
         {
             targetView: ViewState.DIAGNOSTIC,
-            title: "BEM-VINDO AO ORDEMILK TECH V75",
+            title: "BEM-VINDO AO ORDEMILK TECH V76",
             icon: "fa-solid fa-handshake",
             content: (
                 <>
@@ -48,7 +48,7 @@ export const TutorialOverlay: React.FC<Props> = ({ isActive, onClose, setView })
             content: (
                 <>
                     <p>Apareceu um código estranho no painel (E04, E05)?</p>
-                    <p className="mt-2">Digite o código aqui e saiba na hora a causa e a solução, seja para controladores Full Gauge ou Soft-Starters WEG.</p>
+                    <p className="mt-2">Digite o código aqui e saiba na hora a causa e a solução, seja para controladores Full Gauge ou soft-starters Danfoss.</p>
                 </>
             )
         },
@@ -80,7 +80,7 @@ export const TutorialOverlay: React.FC<Props> = ({ isActive, onClose, setView })
             icon: "fa-solid fa-check-double",
             content: (
                 <>
-                    <p>Você está pronto para usar o <strong>Ordemilk Tech V75</strong>.</p>
+                    <p>Você está pronto para usar o <strong>Ordemilk Tech V76</strong>.</p>
                     <p className="mt-2">Se tiver dúvida, volte aqui no ícone de ajuda (?) no topo da tela.</p>
                     <p className="mt-2 font-bold text-emerald-400">Bom trabalho, parceiro!</p>
                 </>

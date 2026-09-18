@@ -1,7 +1,7 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-17 (CLAUDE)
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-18 (CLAUDE)
 
 ---
 
@@ -9,29 +9,30 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Data** | 2026-09-17 |
-| **Versao em producao** | **V75** |
-| **Commit publicado** | `7017dc6` |
+| **Data** | 2026-09-18 |
+| **Versao em producao** | **V76** |
+| **Commit publicado** | (ver historico abaixo, V76) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **47/47** (botao de status dentro do app) |
-| **Verificacao em producao** | 23/23 em 2026-09-17 (CLAUDE) |
-| **Pendencias abertas** | **NENHUMA** |
+| **Verificacao em producao** | V76 conferida em 2026-09-18 (CLAUDE) |
+| **Pendencias abertas** | Modelo do soft-starter Danfoss (aguarda USER) |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
-**Ultima atualizacao (o que mudou na V75):**
-Fechadas as duas pendencias que sobraram da V74.
-1. Termos por extenso com concordancia correta e sem repetir: "O VET esta travado" agora vira
-   "A valvula de expansao esta travado", e "Troque a VET e o TXV" vira "Troque a valvula de expansao".
-2. Cobertura da linguagem de campo no reconhecimento de medidas: 12/12 em frases novas (antes 7/12),
-   aceitando "ta com", "caiu pra", "marcando", "liga e desliga N vezes na hora", numero antes do termo
-   e "graus celsius" por extenso. Com trava: numero sem unidade so e aceito se houver pista de
-   temperatura, para "149 na descarga" nao ser confundido com pressao em PSI.
-Zero falso positivo em 21 armadilhas. As tres correcoes ficaram travadas por teste permanente.
+**Ultima atualizacao (o que mudou na V76):**
+Correcao de fato informada pelo USER: a Ordemilk usa soft-starter **DANFOSS**, nao WEG.
+O app ensinava errado em dois lugares:
+1. `components/TutorialOverlay.tsx` - o tutorial dizia "Soft-Starters WEG" para o tecnico.
+2. `data/electrical_data.ts` - a base eletrica que a IA le dizia "Tanque 20000L: Soft Starter WEG SSW-05".
+Os dois agora dizem Danfoss. O MODELO Danfoss nao foi preenchido: o catalogo de pecas (`bom_database.ts`)
+nao tem nenhum soft-starter cadastrado, entao nao ha fonte para o numero do modelo. Pendente com o USER.
+Nota tecnica: o limite de 6 partidas/hora com soft-starter vem do manual do COMPRESSOR Maneurop, nao da
+marca do soft-starter, entao continua valendo.
 
 **Historico curto de versoes:**
 | Versao | Data | O que entrou |
 |--------|------|--------------|
+| V76 | 2026-09-18 | Soft-starter corrigido de WEG para Danfoss (CLAUDE) |
 | V75 | 2026-09-17 | Linguagem de campo + concordancia dos termos (CLAUDE) |
 | V74 | 2026-09-17 | Alerta deterministico montado pelo app + extratores ampliados (CODEX) |
 | V73 | 2026-09-17 | Referencia frigorifica e plausibilidade de leitura (CODEX + pesquisa CLAUDE) |

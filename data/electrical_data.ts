@@ -37,7 +37,7 @@ export const ELECTRICAL_DATABASE = `
 
 4. TANQUE 20000L (4 UNIDADES REMOTAS - TRIFÁSICO 220V):
    - Disjuntor Geral: 200A.
-   - Partida Compressores: Soft Starter WEG SSW-05.
+   - Partida Compressores: Soft Starter Danfoss.
    - Aquecedor de Carter: AC-230V, 27W.
    - Proteção: Relé de Falta de Fase (RFF) e DPS (Dispositivos de Surto).
    - Cabos: Entrada 70mm HEPR. Distribuição interna 10mm. Comando 1mm.
