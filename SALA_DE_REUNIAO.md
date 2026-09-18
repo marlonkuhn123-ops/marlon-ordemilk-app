@@ -10,16 +10,23 @@
 | Campo | Valor |
 |-------|-------|
 | **Data** | 2026-09-18 |
-| **Versao em producao** | **V76** |
-| **Commit publicado** | (ver historico abaixo, V76) |
+| **Versao em producao** | **V77** |
+| **Commit publicado** | (ver historico abaixo, V77) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **47/47** (botao de status dentro do app) |
-| **Verificacao em producao** | V76 conferida em 2026-09-18 (CLAUDE) |
+| **Verificacao em producao** | V77 conferida em 2026-09-18 (CLAUDE) |
 | **Pendencias abertas** | Modelo do soft-starter Danfoss (aguarda USER) |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
-**Ultima atualizacao (o que mudou na V76):**
+**Ultima atualizacao (o que mudou na V77):**
+A pedido do USER, removida a palavra "Web" do rotulo de fonte da calculadora Superaq.
+Antes aparecia "Danfoss Ref Tools Web API, ..."; agora aparece "Danfoss Ref Tools, ...".
+So o rotulo mudou (`data/pt_tables.ts`, constante `PT_TABLE_SOURCE`); a tabela e o calculo sao os mesmos.
+O `c.web` em `services/geminiService.ts` e nome de campo da API do Gemini, nao aparece na tela, e NAO
+deve ser alterado.
+
+**Mudanca anterior (V76):**
 Correcao de fato informada pelo USER: a Ordemilk usa soft-starter **DANFOSS**, nao WEG.
 O app ensinava errado em dois lugares:
 1. `components/TutorialOverlay.tsx` - o tutorial dizia "Soft-Starters WEG" para o tecnico.
@@ -32,6 +39,7 @@ marca do soft-starter, entao continua valendo.
 **Historico curto de versoes:**
 | Versao | Data | O que entrou |
 |--------|------|--------------|
+| V77 | 2026-09-18 | Removida a palavra "Web" da fonte da calculadora (CLAUDE) |
 | V76 | 2026-09-18 | Soft-starter corrigido de WEG para Danfoss (CLAUDE) |
 | V75 | 2026-09-17 | Linguagem de campo + concordancia dos termos (CLAUDE) |
 | V74 | 2026-09-17 | Alerta deterministico montado pelo app + extratores ampliados (CODEX) |

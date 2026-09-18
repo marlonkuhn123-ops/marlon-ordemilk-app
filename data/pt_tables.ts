@@ -3,7 +3,7 @@ export type PtCurveTable = Record<number, number>;
 export type PtTables = Record<string, Partial<Record<PtCurveKey, PtCurveTable>>>;
 
 export const PT_TABLE_SOURCE =
-    'Danfoss Ref Tools Web API, celsius, PSI gauge/manifold, dry gauge, altitude 0m';
+    'Danfoss Ref Tools, celsius, PSI gauge/manifold, dry gauge, altitude 0m';
 
 export const PT_TABLES: PtTables = {
     'R-22': {
