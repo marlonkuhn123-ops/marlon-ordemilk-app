@@ -16,7 +16,7 @@
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **47/47** (botao de status dentro do app) |
 | **Verificacao em producao** | V78 conferida em 2026-09-21 (CLAUDE) |
-| **Pendencias abertas** | Modelo do soft-starter Danfoss (aguarda USER) |
+| **Pendencias abertas** | 4 bugs de "resultado velho na tela" (ver entrada de 21/09) + modelo do soft-starter Danfoss |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
 **Ultima atualizacao (o que mudou na V78) - BUG REPORTADO PELO USER:**
@@ -2344,3 +2344,49 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   presente na saida bruta, conferido.)
 - **PENDENCIAS ABERTAS: NENHUMA.** O stash antigo da tentativa de acentos tambem foi descartado.
 
+
+### PENTE FINO DE BUGS - CLAUDE - 2026-09-21
+- **Pedido do USER:** depois do bug do campo de temperatura, varrer o app atras de bugs da mesma familia.
+- **Metodo:** (1) busca estatica pelo padrao que causou o bug da temperatura; (2) varredura ao vivo em
+  producao V78 digitando em TODOS os campos de TODAS as telas e conferindo se o texto permanece;
+  (3) teste do ciclo "gerar resultado -> mudar o dado de entrada -> o resultado acompanha?".
+
+- **O QUE ESTA SAUDAVEL (testado, sem problema):**
+  - Todos os campos de texto e numero aceitam digitacao completa: login, dados base do suporte, erros,
+    superaq, servicos, dimensionamento e catalogo. Nenhum campo corta caractere ou some.
+  - Digitacao rapida sem pausa mantem tudo. Apagar tudo e redigitar funciona.
+  - O rascunho da mensagem e os dados base sobrevivem a troca de tela.
+  - Na Superaq, os valores digitados sobrevivem a troca de fluido, e o resultado LIMPA quando os dados
+    mudam (foi o fix v66 da Codex; continua valendo).
+  - Nenhum componente definido dentro de outro, nenhuma `key` instavel, nenhum erro de JavaScript.
+
+- **4 BUGS CONFIRMADOS, TODOS DA MESMA FAMILIA:**
+  "o resultado antigo continua na tela depois que o dado de entrada muda."
+  E exatamente a familia do bug da calculadora que a Codex corrigiu na v66 com
+  `useEffect(() => setResult(''), [fluid, press, temp, mode])`. As outras 4 telas nunca receberam isso.
+
+  | # | Tela | O que acontece | Risco para o tecnico |
+  |---|------|----------------|----------------------|
+  | 1 | Dados Tecnicos (`components/Tool_6_Catalog.tsx`) | Troca o modelo no seletor e a lista de pecas do modelo ANTERIOR continua na tela. Pior: o TITULO do quadro ja atualiza para o modelo novo. | Pede a peca errada. O titulo mente. |
+  | 2 | Dimensionamento (`components/Tool_4_Sizing.tsx`) | Calcula com 4000 L, troca para 12000 L e o memorial continua mostrando 33.654 kcal/h e 15,0 HP. | Dimensiona o equipamento errado. |
+  | 3 | Erros (`components/Tool_2_Errors.tsx`) | Analisa o E1, troca o codigo para E5 e o diagnostico do E1 continua na tela. | Segue o procedimento de conserto errado. |
+  | 4 | Servicos (`components/Tool_5_Report.tsx`) | Gera o laudo da FAZENDA PRIMEIRA, troca o nome para FAZENDA SEGUNDA e o laudo da primeira continua na tela. | Entrega laudo com o nome do cliente errado. |
+
+  Todos reproduzidos ao vivo em producao V78, nao sao leitura de codigo.
+
+- **OBSERVACAO DE PROJETO ANTES DE CORRIGIR (decisao do USER):**
+  Nao da para aplicar a mesma receita nos 4 sem pensar:
+  - Telas 1 e 2 (catalogo e dimensionamento) calculam LOCALMENTE, refazer e instantaneo e nao custa nada.
+    Nelas, limpar o resultado na hora, igual a calculadora, e a solucao certa.
+  - Telas 3 e 4 (erros e laudo) dependem de CHAMADA DE IA. Limpar a cada tecla digitada faria o tecnico
+    perder um laudo pronto e gastar credito de novo so por corrigir uma letra do nome do cliente.
+    Para essas duas, o melhor e manter o texto na tela mas marcar visivelmente como desatualizado,
+    com um aviso do tipo "os dados mudaram, gere novamente", em vez de apagar.
+
+- **ERRO DE METODO QUE EU COMETI E CORRIGI (registro honesto):** minha primeira varredura acusou um
+  falso bug no catalogo. O clique em "Dados" pegava o chip DADOS da tela de Suporte em vez do item do
+  menu Mais, entao eu estava testando a tela errada. Refiz a navegacao clicando no item do popup e ai
+  sim o bug real apareceu. Licao: quando o mesmo texto existe em dois lugares da tela, o teste precisa
+  dizer qual dos dois.
+
+- **ESTADO:** nada foi alterado no app por esta varredura. Producao continua V78. Decisao do USER.
