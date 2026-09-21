@@ -1,7 +1,7 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-18 (CLAUDE)
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-21 (CLAUDE)
 
 ---
 
@@ -9,17 +9,42 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Data** | 2026-09-18 |
-| **Versao em producao** | **V77** |
-| **Commit publicado** | (ver historico abaixo, V77) |
+| **Data** | 2026-09-21 |
+| **Versao em producao** | **V78** |
+| **Commit publicado** | (ver historico abaixo, V78) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **47/47** (botao de status dentro do app) |
-| **Verificacao em producao** | V77 conferida em 2026-09-18 (CLAUDE) |
+| **Verificacao em producao** | V78 conferida em 2026-09-21 (CLAUDE) |
 | **Pendencias abertas** | Modelo do soft-starter Danfoss (aguarda USER) |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
-**Ultima atualizacao (o que mudou na V77):**
+**Ultima atualizacao (o que mudou na V78) - BUG REPORTADO PELO USER:**
+SINTOMA: no painel DADOS BASE, o campo de temperatura nao aceitava dois digitos. Ao digitar o "1"
+de "10", o campo sumia da tela e o "0" nao entrava.
+
+CAUSA RAIZ (achada antes de qualquer alteracao, e reproduzida ao vivo em producao V77):
+O efeito em `components/Tool_1_Assistant.tsx` fechava o painel assim que os 4 campos ficassem
+preenchidos:
+    if (isComplete && !wasDiagnosticContextCompleteRef.current) setIsDiagnosticContextCollapsed(true);
+E `isDiagnosticContextComplete` considera "preenchido" QUALQUER caractere. A temperatura e o 4o e
+ultimo campo, entao o primeiro digite ja completava 4/4, o painel fechava no meio da digitacao e o
+input desmontava levando o foco junto.
+PROVA: com os outros 3 campos preenchidos, digitar "1" fechou o painel e o valor ficou "1".
+CONTRAPROVA: preenchendo a temperatura SOZINHA, sem completar 4/4, "10" entrou normalmente.
+ALCANCE: valia para qualquer campo de texto preenchido por ultimo, nao so a temperatura. O modelo
+tambem parava no primeiro caractere quando era o ultimo a ser preenchido.
+
+CORRECAO: o painel nao fecha mais enquanto o cursor estiver dentro de um campo de TEXTO dele. O
+fechamento automatico passou para o `onBlur` do painel, quando o foco sai de vez. Seletores
+(tensao e fluido) continuam fechando na hora, como antes, porque resolvem em um toque so.
+
+VALIDADO EM BUILD LOCAL COM CHAVE REAL: temperatura aceita "10" e tambem "-12,5"; modelo aceita
+"30000" como ultimo campo; o painel fecha ao tocar na caixa de mensagem; escolher o fluido por
+ultimo continua fechando o painel na hora; a IA segue respondendo com os dados preenchidos.
+Autoteste interno 47/47, lint e build OK.
+
+**Mudanca anterior (V77):**
 A pedido do USER, removida a palavra "Web" do rotulo de fonte da calculadora Superaq.
 Antes aparecia "Danfoss Ref Tools Web API, ..."; agora aparece "Danfoss Ref Tools, ...".
 So o rotulo mudou (`data/pt_tables.ts`, constante `PT_TABLE_SOURCE`); a tabela e o calculo sao os mesmos.
@@ -39,6 +64,7 @@ marca do soft-starter, entao continua valendo.
 **Historico curto de versoes:**
 | Versao | Data | O que entrou |
 |--------|------|--------------|
+| V78 | 2026-09-21 | Corrige campo de temperatura que nao aceitava 2 digitos (CLAUDE) |
 | V77 | 2026-09-18 | Removida a palavra "Web" da fonte da calculadora (CLAUDE) |
 | V76 | 2026-09-18 | Soft-starter corrigido de WEG para Danfoss (CLAUDE) |
 | V75 | 2026-09-17 | Linguagem de campo + concordancia dos termos (CLAUDE) |

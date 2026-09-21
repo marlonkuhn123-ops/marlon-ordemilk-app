@@ -612,6 +612,18 @@ export const Tool_Assistant: React.FC = () => {
     const [isRecording, setIsRecording] = useState(false);
     const [recordSeconds, setRecordSeconds] = useState(0);
     const wasDiagnosticContextCompleteRef = useRef(isDiagnosticContextComplete(restoredSnapshot?.diagnosticContext));
+    const diagnosticPanelRef = useRef<HTMLDivElement | null>(null);
+
+    // O painel de Dados Base fecha sozinho quando os 4 campos ficam preenchidos. Só que
+    // "preenchido" era qualquer caractere: ao digitar o "1" de "10" no último campo que
+    // faltava, o painel fechava no meio da digitação e o técnico não conseguia escrever o
+    // segundo dígito. Enquanto o cursor estiver dentro de um campo de texto do painel não
+    // fechamos nada; o fechamento passa a acontecer quando o foco sai do painel.
+    const isTypingInsideDiagnosticPanel = () => {
+        const active = typeof document === 'undefined' ? null : document.activeElement;
+        if (!active || !diagnosticPanelRef.current?.contains(active)) return false;
+        return active.tagName === 'INPUT' || active.tagName === 'TEXTAREA';
+    };
     const conversationStarted = hasStartedConversation(messages);
 
     // Leitura em voz (some se o celular nao tiver voz pt-BR) e callbacks estáveis para os
@@ -707,7 +719,7 @@ export const Tool_Assistant: React.FC = () => {
 
     useEffect(() => {
         const isComplete = isDiagnosticContextComplete(diagnosticContext);
-        if (isComplete && !wasDiagnosticContextCompleteRef.current) {
+        if (isComplete && !wasDiagnosticContextCompleteRef.current && !isTypingInsideDiagnosticPanel()) {
             setIsDiagnosticContextCollapsed(true);
         }
         if (!isComplete && !conversationStarted) {
@@ -1161,7 +1173,15 @@ export const Tool_Assistant: React.FC = () => {
                 </div>
 
                 {!isDiagnosticContextCollapsed && (
-                    <div className="mx-2.5 mb-2 rounded-[16px] border border-[#28405b]/70 bg-[#617287]/72 p-2.5 shadow-inner shadow-[#2d3f55]/20">
+                    <div
+                        ref={diagnosticPanelRef}
+                        onBlur={(event) => {
+                            const indoPara = event.relatedTarget as Node | null;
+                            if (indoPara && diagnosticPanelRef.current?.contains(indoPara)) return;
+                            if (isDiagnosticContextComplete(diagnosticContext)) setIsDiagnosticContextCollapsed(true);
+                        }}
+                        className="mx-2.5 mb-2 rounded-[16px] border border-[#28405b]/70 bg-[#617287]/72 p-2.5 shadow-inner shadow-[#2d3f55]/20"
+                    >
                         <div className="mb-2 flex items-center justify-between gap-2">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#ffd400]">Dados Base</span>
                             <button
