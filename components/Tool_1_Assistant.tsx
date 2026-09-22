@@ -21,6 +21,7 @@ const MODE_NAMES: Record<SupportMode, string> = {
 const FLUID_OPTIONS = [
     { value: '', label: 'Flui' },
     { value: Refrigerant.R404A, label: Refrigerant.R404A },
+    { value: Refrigerant.R407C, label: Refrigerant.R407C },
     { value: Refrigerant.R22, label: Refrigerant.R22 }
 ];
 

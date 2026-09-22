@@ -48,8 +48,13 @@ export const CALCULATOR_REFERENCE_RANGES: Record<CalcMode, { min: number; max: n
     'Sub-resfriamento': { min: 4, max: 8, label: 'Faixa ideal: 4.0K a 8.0K' }
 };
 
+// Fluido de mistura (zeotropico) tem duas curvas: dew e bubble. Vale para R-404A e R-407C.
+// Em vez de citar o fluido na mao, olhamos se a tabela dele tem as duas curvas.
+const temCurvasDeGlide = (fluid: Refrigerant) =>
+    Boolean(PT_TABLES[fluid]?.dew && PT_TABLES[fluid]?.bubble);
+
 const getCurveKeyForMode = (fluid: Refrigerant, mode: CalcMode): PtCurveKey => {
-    if (fluid === Refrigerant.R404A) {
+    if (temCurvasDeGlide(fluid)) {
         return mode === 'Superaquecimento' ? 'dew' : 'bubble';
     }
 
@@ -57,12 +62,14 @@ const getCurveKeyForMode = (fluid: Refrigerant, mode: CalcMode): PtCurveKey => {
 };
 
 const getCurveLabel = (fluid: Refrigerant, curveKey: PtCurveKey): string => {
-    if (fluid === Refrigerant.R404A && curveKey === 'dew') {
-        return 'R404A dew/vapor - correto para Sup.Aque';
+    const nome = fluid.replace('-', '');
+
+    if (curveKey === 'dew') {
+        return `${nome} dew/vapor - correto para Sup.Aque`;
     }
 
-    if (fluid === Refrigerant.R404A && curveKey === 'bubble') {
-        return 'R404A bubble/líquido - correto para Sub.Res';
+    if (curveKey === 'bubble') {
+        return `${nome} bubble/líquido - correto para Sub.Res`;
     }
 
     return `${fluid} saturação única`;

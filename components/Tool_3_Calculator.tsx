@@ -60,6 +60,7 @@ export const Tool_Calculator: React.FC = () => {
                 <Select label="Fluido Refrigerante" value={fluid} onChange={e => setFluid(e.target.value as Refrigerant)}>
                     <option value={Refrigerant.R22}>R-22</option>
                     <option value={Refrigerant.R404A}>R-404A</option>
+                    <option value={Refrigerant.R407C}>R-407C</option>
                 </Select>
                 
                 <div className="flex gap-2">
@@ -77,7 +78,7 @@ export const Tool_Calculator: React.FC = () => {
                     <span>
                         {mode === 'Superaquecimento'
                             ? "SUP.AQUE: use pressão baixa em PSIG. Para ajuste da válvula de expansão, prefira medir na saída do evaporador/bulbo; perto do compressor vira superaquecimento total."
-                            : "SUB.RES: use pressão alta em PSIG. Em R404A o app usa bubble/líquido. Considere o ponto medido: saída do condensador ou antes da válvula de expansão."}
+                            : "SUB.RES: use pressão alta em PSIG. Em R404A e R407C o app usa bubble/líquido. Considere o ponto medido: saída do condensador ou antes da válvula de expansão."}
                     </span>
                 </div>
 

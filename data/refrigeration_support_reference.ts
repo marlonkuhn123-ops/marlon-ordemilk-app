@@ -1,6 +1,6 @@
 import { PT_TABLES, PtCurveKey } from './pt_tables';
 
-export type SupportedRefrigerant = 'R-22' | 'R-404A';
+export type SupportedRefrigerant = 'R-22' | 'R-404A' | 'R-407C';
 
 export interface TypicalPressureWindow {
     refrigerant: SupportedRefrigerant;
@@ -15,7 +15,10 @@ const TYPICAL_EVAPORATION_C = { min: -7, max: -5 };
 const TYPICAL_CONDENSING_APPROACH_K = { min: 10, max: 15 };
 
 const curveFor = (refrigerant: SupportedRefrigerant, side: 'suction' | 'discharge'): PtCurveKey => {
-    if (refrigerant === 'R-404A') return side === 'suction' ? 'dew' : 'bubble';
+    // Zeotropicos (R-404A e R-407C) tem duas curvas: succao usa dew, descarga/liquido usa bubble.
+    if (PT_TABLES[refrigerant]?.dew && PT_TABLES[refrigerant]?.bubble) {
+        return side === 'suction' ? 'dew' : 'bubble';
+    }
     return 'single';
 };
 
@@ -101,7 +104,7 @@ export const REFRIGERATION_SUPPORT_REFERENCE_CONTEXT = `
 
 [REFERÊNCIA FRIGORÍFICA ESTRUTURADA - TANQUES ORDEMILK]
 EVIDÊNCIA: LIMITE OFICIAL gera alerta firme somente com modelo/ponto/condição compatíveis; FAIXA TÍPICA pede confirmação e nunca condena componente; HIPÓTESE DIAGNÓSTICA sempre exige próximo teste.
-LIMITES: Maneurop MT/MTZ = 12 partidas/h (6 com soft-starter), descarga máxima 130°C e desequilíbrio entre fases máximo 2%. R-404A é carregado em fase líquida; usar dew no Sup.Aque e bubble no Sub.Res. Óleo: MT mineral 160P; MTZ poliéster 175PZ, sempre confirmando placa/modelo.
+LIMITES: Maneurop MT/MTZ = 12 partidas/h (6 com soft-starter), descarga máxima 130°C e desequilíbrio entre fases máximo 2%. R-404A e R-407C são carregados em fase líquida; usar dew no Sup.Aque e bubble no Sub.Res. O R-407C tem glide grande (cerca de 6 K), então usar a curva errada erra a conta em vários kelvin. Óleo: MT mineral 160P; MTZ poliéster 175PZ, sempre confirmando placa/modelo.
 TRIAGEM: sob carga estabilizada, evaporação -7°C a -5°C e condensação aproximadamente 10K a 15K acima do ar de entrada são referências, não projeto. Sup.Aque 7K a 12K é na saída do evaporador/bulbo; na entrada do compressor é outra medição. Taxa de compressão 3,2 a 5,5 é apenas triagem com pressões absolutas.
 TANQUE PRIMEIRO: confirme modelo/capacidade, volume, temperaturas inicial/atual, tempo, ambiente, agitador, pré-resfriador e circuitos ativos. Em tanque multicircuito, compare circuitos sob a mesma carga. Bolhas no visor não provam falta de fluido. Agitador parado causa primeiro perda de troca, estratificação e congelamento localizado, não retorno automático. Combine descarga, taxa de compressão, corrente, Sup.Aque e Sub.Res antes de condenar compressor.
 `;

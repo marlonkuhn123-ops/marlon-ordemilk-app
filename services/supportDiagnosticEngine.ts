@@ -145,7 +145,7 @@ const readShKelvin = (text: string) =>
         /\bsh\b(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
         /\bsuper\s*aquecimento\b(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
         /\bsuperaquecimento\b(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(?:(?!\bsc\b|\bsub\s*-?\s*resfriamento\b|\bsubresfriamento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
-        /\bsh\s*(?:=|:|-)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
+        /\bsh\s*(?:=|:|-|de|em|com|esta|ta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
         /\bsuper\s*aquecimento\s*(?:=|:|-|de|em|com|esta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
         /\bsuperaquecimento\s*(?:=|:|-|de|em|com|esta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i
     ]);
@@ -155,7 +155,7 @@ const readScKelvin = (text: string) =>
         /\bsc\b(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
         /\bsub\s*-?\s*resfriamento\b(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
         /\bsubresfriamento\b(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(?:(?!\bsh\b|\bsuper\s*aquecimento\b|\bsuperaquecimento\b)[^\n])*?=\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*k\b/i,
-        /\bsc\s*(?:=|:|-)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
+        /\bsc\s*(?:=|:|-|de|em|com|esta|ta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
         /\bsub\s*-?\s*resfriamento\s*(?:=|:|-|de|em|com|esta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i,
         /\bsubresfriamento\s*(?:=|:|-|de|em|com|esta)?\s*(-?\d{1,3}(?:[.,]\d{1,2})?)\s*(?:k|kelvin)?\b/i
     ]);
@@ -163,6 +163,7 @@ const readScKelvin = (text: string) =>
 const detectRefrigerant = (prompt: string, context: SupportDiagnosticContext): SupportedRefrigerant | undefined => {
     const combined = normalize([prompt, context.refrigerant].filter(Boolean).join(' '));
     if (combined.includes('404')) return 'R-404A';
+    if (combined.includes('407')) return 'R-407C';
     if (/\br\s*-?\s*22\b/.test(combined) || combined.includes('r22')) return 'R-22';
     return undefined;
 };
@@ -182,6 +183,9 @@ const buildShScDiagnostic = (prompt: string, context: SupportDiagnosticContext):
 
     if (refrigerant === 'R-404A') {
         guardrails.push('R404A: usar dew/vapor para SH e bubble/líquido para SC.');
+    }
+    if (refrigerant === 'R-407C') {
+        guardrails.push('R407C tem glide grande (cerca de 6 K): usar dew/vapor para SH e bubble/líquido para SC, senão a conta erra vários kelvin.');
     }
     if (shKelvin !== undefined) facts.push(`SH detectado: ${formatNumber(shKelvin)} (${shStatus}).`);
     if (scKelvin !== undefined) facts.push(`SC detectado: ${formatNumber(scKelvin)} (${scStatus}).`);

@@ -33,7 +33,8 @@ export type CalcMode = 'Superaquecimento' | 'Sub-resfriamento';
 
 export enum Refrigerant {
     R22 = 'R-22',
-    R404A = 'R-404A'
+    R404A = 'R-404A',
+    R407C = 'R-407C'
 }
 
 export interface GlobalPreFillData {

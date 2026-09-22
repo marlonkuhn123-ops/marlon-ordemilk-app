@@ -579,5 +579,56 @@ export const runSystemDiagnostics = () => {
         });
     });
 
+    // --- R-407C (fluido novo, glide grande) ---
+    test("Calculadora: R-407C deve usar dew no Sup.Aque e bubble no Sub.Res", () => {
+        const dew = logicService.getSaturationTemp(Refrigerant.R407C, 40, "Superaquecimento");
+        const bubble = logicService.getSaturationTemp(Refrigerant.R407C, 40, "Sub-resfriamento");
+        assert(dew !== null && bubble !== null, "R-407C deveria ter as duas curvas na tabela PT.");
+        assert(dew !== bubble, "R-407C tem glide: dew e bubble não podem dar a mesma temperatura.");
+        assert((dew as number) > (bubble as number), `Em R-407C o dew fica acima do bubble. dew=${dew} bubble=${bubble}`);
+
+        const glide = (dew as number) - (bubble as number);
+        assert(glide > 3 && glide < 9, `Glide do R-407C fora do esperado (3K a 9K). Recebido: ${glide.toFixed(1)}K`);
+    });
+
+    test("Calculadora: R-407C confere com o Danfoss Ref Tools", () => {
+        // Referência do Danfoss Ref Tools: 40,08 PSIG na curva dew = -5,55 °C.
+        const dew = logicService.getSaturationTemp(Refrigerant.R407C, 40.08, "Superaquecimento");
+        assert(dew !== null && Math.abs((dew as number) + 5.55) < 0.3, `R-407C dew a 40,08 PSIG deveria ficar perto de -5,55 °C. Recebido: ${dew}`);
+
+        // Ebulição a 0 PSIG (bubble) = -43,63 °C no Danfoss.
+        const bubble0 = logicService.getSaturationTemp(Refrigerant.R407C, 0, "Sub-resfriamento");
+        assert(bubble0 !== null && Math.abs((bubble0 as number) + 43.63) < 0.3, `R-407C bubble a 0 PSIG deveria ficar perto de -43,63 °C. Recebido: ${bubble0}`);
+    });
+
+    test("Calculadora: R-407C deve rotular a curva usada", () => {
+        const sup = logicService.getCalculatorAudit(Refrigerant.R407C, "40", "2", "Superaquecimento");
+        assert(sup.curveLabel.includes("dew"), `Sup.Aque do R-407C deveria citar dew. Recebido: ${sup.curveLabel}`);
+        assert(sup.resultLabel.startsWith("Sup.Aque ="), `Linha de cálculo incorreta. Recebido: ${sup.resultLabel}`);
+
+        const sub = logicService.getCalculatorAudit(Refrigerant.R407C, "250", "35", "Sub-resfriamento");
+        assert(sub.curveLabel.includes("bubble"), `Sub.Res do R-407C deveria citar bubble. Recebido: ${sub.curveLabel}`);
+    });
+
+    test("Calculadora: R-407C fora da faixa da tabela deve avisar, não inventar", () => {
+        const fora = logicService.getCalculatorAudit(Refrigerant.R407C, "460", "60", "Superaquecimento");
+        assert(fora.ready === false, "460 PSIG está fora da tabela do R-407C e deveria sinalizar.");
+        assert(Boolean(fora.warning && fora.warning.includes("fora da faixa")), `Deveria avisar pressão fora da faixa. Recebido: ${fora.warning}`);
+    });
+
+    test("Suporte: deve reconhecer R-407C e avisar do glide", () => {
+        const analysis = analyzeSupportCase("R407C com SH de 15K e SC de 3K", "REF", { refrigerant: "R-407C" });
+        const guardas = (analysis.shSc?.guardrails || []).join(" ");
+        assert(guardas.includes("R407C"), `Deveria citar o R407C nas regras. Recebido: ${guardas}`);
+        assert(guardas.toLowerCase().includes("glide"), `Deveria avisar do glide do R407C. Recebido: ${guardas}`);
+    });
+
+    test("Suporte: janela típica de pressão também vale para R-407C", () => {
+        const janela = getTypicalPressureWindow("R-407C", 30);
+        assert(janela !== null, "R-407C deveria ter janela típica calculada pela tabela PT.");
+        assert((janela as any).suctionPsig.min > 30 && (janela as any).suctionPsig.max < 50,
+            `Sucção típica do R-407C esperada entre 30 e 50 PSIG. Recebido: ${JSON.stringify((janela as any).suctionPsig)}`);
+    });
+
     return report;
 };

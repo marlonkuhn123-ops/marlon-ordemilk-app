@@ -1,7 +1,7 @@
 # SALA DE REUNIAO - CONTROLE DE ESTADO E BLOQUEIO
 *Nenhuma inteligencia artificial (Gemini ou Codex) deve comecar uma tarefa estrutural sem ler, registrar a intencao e ter o status "SIM" para edicao na secao abaixo.*
 
-**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-21 (CLAUDE)
+**Ultima Atualizacao do Protocolo/Worktree:** 2026-09-22 (CLAUDE)
 
 ---
 
@@ -9,17 +9,49 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Data** | 2026-09-21 |
-| **Versao em producao** | **V78** |
-| **Commit publicado** | (ver historico abaixo, V78) |
+| **Data** | 2026-09-22 |
+| **Versao em producao** | **V79** |
+| **Commit publicado** | (ver historico abaixo, V79) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
-| **Autoteste interno** | **47/47** (botao de status dentro do app) |
-| **Verificacao em producao** | V78 conferida em 2026-09-21 (CLAUDE) |
+| **Autoteste interno** | **53/53** (botao de status dentro do app) |
+| **Verificacao em producao** | V79 conferida em 2026-09-22 (CLAUDE) |
 | **Pendencias abertas** | 4 bugs de "resultado velho na tela" (ver entrada de 21/09) + modelo do soft-starter Danfoss |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
-**Ultima atualizacao (o que mudou na V78) - BUG REPORTADO PELO USER:**
+**Ultima atualizacao (o que mudou na V79) - R-407C NA CALCULADORA:**
+Pedido do USER: incluir o fluido R-407C no Sup.Aque/Sub.Res, com a regua do Danfoss Ref Tools.
+
+O R-407C e zeotropico com GLIDE GRANDE (6,6 K a 20 PSIG; 3,8 K a 400 PSIG). Muito maior que o do
+R-404A, que e desprezivel. Por isso a curva certa importa muito mais aqui: usar a errada erra a conta
+em varios kelvin. O app usa dew no Sup.Aque (succao) e bubble no Sub.Res (linha de liquido).
+
+FONTE E VALIDACAO (tabela nao foi chutada):
+- Tabela de saturacao com bubble e dew em PSIG, passo de 1 F, de -40 F a 150 F.
+- Conferida contra o proprio print do Danfoss Ref Tools que o USER mandou:
+  40,08 PSIG na curva dew -> Danfoss -5,55 C, app -5,6 C. Erro de 0,05 K.
+  Ebulicao a 0 PSIG -> Danfoss -43,63 C, app -43,6 C. Erro de 0,03 K.
+- Conferida contra fabricante independente: 40 F dew = 63,2 PSIG, igual a tabela gerada.
+- Curvas conferidas como sempre crescentes e com glide caindo conforme a pressao sobe, que e o
+  comportamento correto do R-407C.
+
+ONDE ENTROU: enum de fluidos, tabela PT, escolha de curva na calculadora, opcao na tela Superaq,
+opcao nos DADOS BASE do suporte, tipo e curva da referencia de suporte, e deteccao do fluido no motor
+(agora reconhece "407" e avisa do glide).
+
+A escolha de curva deixou de citar o fluido na mao: agora o codigo olha se a tabela daquele fluido tem
+dew e bubble. Assim, incluir um proximo fluido de mistura nao exige mexer nessa logica.
+
+FORA DA FAIXA: a tabela cobre dew ate 400 PSIG e bubble ate 430 PSIG. Acima disso o app avisa
+"pressao fora da faixa" em vez de extrapolar, que e o certo.
+
+BRINDE: os padroes de leitura de SH/SC do motor so aceitavam "=", ":" e "-". Agora aceitam tambem
+"de", "em", "com", "esta" e "ta", igual as formas por extenso. Antes, "SH de 15K" nao era lido.
+
+Autoteste interno 47/47 -> 53/53, com 6 testes novos travando o R-407C. Lint e build OK.
+R-22 e R-404A conferidos sem regressao.
+
+**Mudanca anterior (V78) - BUG REPORTADO PELO USER:**
 SINTOMA: no painel DADOS BASE, o campo de temperatura nao aceitava dois digitos. Ao digitar o "1"
 de "10", o campo sumia da tela e o "0" nao entrava.
 
@@ -64,6 +96,7 @@ marca do soft-starter, entao continua valendo.
 **Historico curto de versoes:**
 | Versao | Data | O que entrou |
 |--------|------|--------------|
+| V79 | 2026-09-22 | Fluido R-407C na calculadora, com dew/bubble e regua Danfoss (CLAUDE) |
 | V78 | 2026-09-21 | Corrige campo de temperatura que nao aceitava 2 digitos (CLAUDE) |
 | V77 | 2026-09-18 | Removida a palavra "Web" da fonte da calculadora (CLAUDE) |
 | V76 | 2026-09-18 | Soft-starter corrigido de WEG para Danfoss (CLAUDE) |
