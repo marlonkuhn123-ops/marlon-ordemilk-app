@@ -9,17 +9,53 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Data** | 2026-09-22 |
-| **Versao em producao** | **V79** |
-| **Commit publicado** | (ver historico abaixo, V79) |
+| **Data** | 2026-09-23 |
+| **Versao em producao** | **V80** |
+| **Commit publicado** | (ver historico abaixo, V80) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
-| **Autoteste interno** | **53/53** (botao de status dentro do app) |
-| **Verificacao em producao** | V79 conferida em 2026-09-22 (CLAUDE) |
-| **Pendencias abertas** | PLANO da conduta do Superaq aguardando decisao do USER (23/09) + 4 bugs de "resultado velho na tela" (21/09) + modelo do soft-starter Danfoss |
+| **Autoteste interno** | **56/56** (botao de status dentro do app) |
+| **Verificacao em producao** | V80 conferida em 2026-09-23 (CLAUDE) |
+| **Pendencias abertas** | 4 bugs de "resultado velho na tela" (21/09) + modelo do soft-starter Danfoss |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
-**Ultima atualizacao (o que mudou na V79) - R-407C NA CALCULADORA:**
+**Ultima atualizacao (o que mudou na V80) - CONDUTA DO SUPERAQ MAIS COMPLETA:**
+Pedido do USER: "o app diga o que fazer se estiver fora do padrao, nos 3 fluidos. Hoje responde vago
+demais." Eu apresentei um plano de reestruturar a conduta em 4 blocos e o USER CORRIGIU:
+"nao, vc nao esta entendendo. So preciso que complemente o que ja escreve, aumente mais o texto".
+Ou seja: mesmo lugar, mesmo formato, texto maior e mais completo. Foi isso que foi feito.
+
+Os 6 textos de conduta em `services/logicService.ts` foram reescritos, saindo de 120 a 250
+caracteres para 650 a 1200 caracteres cada. Agora cada um diz a ordem do que fazer e traz numero:
+- Sup.Aque baixo: comeca pelo bulbo (preso, limpo, isolado), confere agitador, fecha a valvula
+  1/4 de volta por vez esperando 10 a 15 min, e manda DESLIGAR se a succao estiver suando ou com
+  gelo ate o compressor.
+- Sup.Aque alto: manda medir o sub-resfriamento para separar falta de fluido de restricao, e diz
+  onde olhar em cada caso (oleo nas conexoes e visor num; filtro secador, solenoide e tela da
+  valvula no outro).
+- Sub.Res baixo: procurar vazamento antes de completar, conferir restricao antes do ponto medido,
+  completar aos poucos acompanhando as duas medidas.
+- Sub.Res alto: antes de retirar fluido, lavar condensador, conferir ventiladores e recirculacao de
+  ar, e descartar ar no sistema por vacuo mal feito.
+- Os dois casos IDEAL agora explicam que so um valor bom nao libera o equipamento.
+
+NOVO: toda conduta termina com a observacao DO FLUIDO usado, que antes nao existia:
+- R-22: curva unica, pode completar a carga, oleo mineral no compressor MT, nao misturar.
+- R-404A: sempre em fase liquida, e oleo poliester no MTZ absorve umidade (nao deixar circuito aberto).
+- R-407C: sempre em fase liquida e, depois de vazamento, NAO completar a carga. Recolher e recarregar
+  com fluido virgem, porque o que vazou muda a composicao. Mais o lembrete do glide de ~6 K.
+
+Nao mexeu em: persona, prompt, modelos, tabela PT, faixas ideais (7-12 K e 4-8 K), interface.
+Custo zero: e tudo texto local, nenhuma chamada de IA a mais.
+Autoteste interno 53/53 -> 56/56, com 18 combinacoes (3 fluidos x 2 modos x 3 classificacoes)
+verificadas automaticamente: tamanho minimo, cita o fluido, nenhuma sigla SH/SC/VET/TXV, e os passos
+concretos presentes ("quarto de volta", "10 a 15 minutos", "bulbo", "desligue").
+
+OBS sobre o plano de 23/09 registrado logo abaixo: a parte de reestruturar em 4 blocos, faixas de
+severidade e campo opcional NAO foi executada, por decisao do USER. Fica registrada como ideia
+para o futuro, se um dia ele quiser.
+
+**Mudanca anterior (V79) - R-407C NA CALCULADORA:**
 Pedido do USER: incluir o fluido R-407C no Sup.Aque/Sub.Res, com a regua do Danfoss Ref Tools.
 
 O R-407C e zeotropico com GLIDE GRANDE (6,6 K a 20 PSIG; 3,8 K a 400 PSIG). Muito maior que o do
@@ -96,6 +132,7 @@ marca do soft-starter, entao continua valendo.
 **Historico curto de versoes:**
 | Versao | Data | O que entrou |
 |--------|------|--------------|
+| V80 | 2026-09-23 | Conduta do Superaq mais completa e com observacao por fluido (CLAUDE) |
 | V79 | 2026-09-22 | Fluido R-407C na calculadora, com dew/bubble e regua Danfoss (CLAUDE) |
 | V78 | 2026-09-21 | Corrige campo de temperatura que nao aceitava 2 digitos (CLAUDE) |
 | V77 | 2026-09-18 | Removida a palavra "Web" da fonte da calculadora (CLAUDE) |

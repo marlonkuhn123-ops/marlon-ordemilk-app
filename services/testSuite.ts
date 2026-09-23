@@ -630,5 +630,55 @@ export const runSystemDiagnostics = () => {
             `Sucção típica do R-407C esperada entre 30 e 50 PSIG. Recebido: ${JSON.stringify((janela as any).suctionPsig)}`);
     });
 
+    // --- CONDUTA DO SUPERAQ (texto que o tecnico le quando esta fora do padrao) ---
+    test("Superaq: a conduta deve ser completa nos 3 fluidos e nas 3 classificações", () => {
+        const casos: Array<[Refrigerant, "Superaquecimento" | "Sub-resfriamento", string, string]> = [
+            [Refrigerant.R22, "Superaquecimento", "68", "8"],      // baixo
+            [Refrigerant.R22, "Superaquecimento", "68", "14"],     // ideal
+            [Refrigerant.R22, "Superaquecimento", "68", "30"],     // alto
+            [Refrigerant.R22, "Sub-resfriamento", "250", "45"],    // baixo
+            [Refrigerant.R22, "Sub-resfriamento", "250", "41"],    // ideal
+            [Refrigerant.R22, "Sub-resfriamento", "250", "35"],    // alto
+            [Refrigerant.R404A, "Superaquecimento", "50", "-7"],
+            [Refrigerant.R404A, "Superaquecimento", "50", "0"],
+            [Refrigerant.R404A, "Superaquecimento", "50", "10"],
+            [Refrigerant.R404A, "Sub-resfriamento", "250", "38"],
+            [Refrigerant.R404A, "Sub-resfriamento", "250", "34"],
+            [Refrigerant.R404A, "Sub-resfriamento", "250", "28"],
+            [Refrigerant.R407C, "Superaquecimento", "40", "-3"],
+            [Refrigerant.R407C, "Superaquecimento", "40", "4"],
+            [Refrigerant.R407C, "Superaquecimento", "40", "20"],
+            [Refrigerant.R407C, "Sub-resfriamento", "250", "40"],
+            [Refrigerant.R407C, "Sub-resfriamento", "250", "36"],
+            [Refrigerant.R407C, "Sub-resfriamento", "250", "28"]
+        ];
+
+        casos.forEach(([fluid, mode, press, temp]) => {
+            const conduta = logicService.getCalculatorAudit(fluid, press, temp, mode).actionLabel;
+            const onde = `${fluid} / ${mode} / ${press} PSIG / ${temp} C`;
+
+            assert(conduta.length > 400, `Conduta curta demais em ${onde} (${conduta.length} chars).`);
+            assert(conduta.includes(fluid), `Conduta não citou o fluido em ${onde}.`);
+            assert(!/\bSH\b|\bSC\b|\bVET\b|\bTXV\b/.test(conduta), `Conduta usou sigla proibida em ${onde}.`);
+        });
+    });
+
+    test("Superaq: conduta do R-407C deve proibir completar carga após vazamento", () => {
+        const conduta = logicService.getCalculatorAudit(Refrigerant.R407C, "40", "20", "Superaquecimento").actionLabel;
+        assert(conduta.includes("NÃO complete a carga"), `R-407C precisa avisar para não completar a carga. Recebido: ${conduta}`);
+        assert(conduta.includes("fluido virgem"), "R-407C precisa mandar recarregar com fluido virgem.");
+        assert(conduta.includes("fase líquida"), "R-407C precisa mandar carregar em fase líquida.");
+    });
+
+    test("Superaq: conduta deve dar passo concreto, não só 'verifique'", () => {
+        const alto = logicService.getCalculatorAudit(Refrigerant.R404A, "50", "10", "Superaquecimento").actionLabel;
+        assert(alto.includes("quarto de volta"), "Conduta deveria dizer quanto girar a válvula de expansão.");
+        assert(alto.includes("10 a 15 minutos"), "Conduta deveria dizer quanto tempo esperar entre ajustes.");
+
+        const baixo = logicService.getCalculatorAudit(Refrigerant.R404A, "50", "-7", "Superaquecimento").actionLabel;
+        assert(baixo.includes("bulbo"), "Com superaquecimento baixo, a conduta deveria começar pelo bulbo.");
+        assert(baixo.includes("desligue"), "Com risco de golpe de líquido, a conduta deveria mandar desligar.");
+    });
+
     return report;
 };

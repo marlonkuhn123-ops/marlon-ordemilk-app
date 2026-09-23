@@ -108,26 +108,45 @@ const classifyCalculation = (resultKelvin: number, mode: CalcMode): 'BAIXO' | 'I
     return 'IDEAL';
 };
 
-// Texto curto e direto: o que fazer para corrigir. Sem SH/SC (tecnicos confundem as siglas)
-// e sem delongas - so o essencial para agir com seguranca.
-const getRecommendedAction = (mode: CalcMode, classification: 'BAIXO' | 'IDEAL' | 'ALTO'): string => {
+// Conduta completa: o que fazer, em que ordem e com que numero. Sem SH/SC (tecnicos confundem
+// as siglas) e sempre terminando com a observacao do fluido usado, porque a acao muda entre
+// R-22, R-404A e R-407C.
+const getFluidNote = (fluid: Refrigerant): string => {
+    if (fluid === Refrigerant.R407C) {
+        return ' No R-407C carregue sempre em fase líquida e, se houve vazamento, NÃO complete a carga: o que vazou muda a composição da mistura. Recolha o que restou e carregue tudo de novo com fluido virgem. Lembre também que este fluido tem glide de cerca de 6 K, então medir na curva errada erra a conta em vários kelvin.';
+    }
+
+    if (fluid === Refrigerant.R404A) {
+        return ' No R-404A carregue sempre em fase líquida: tirar da garrafa em vapor separa a mistura e falseia as pressões depois. Se o compressor for da família MTZ, o óleo é poliéster e absorve umidade rápido, então não deixe o circuito aberto.';
+    }
+
+    return ' No R-22 a leitura usa uma curva única de saturação e a carga pode ser completada normalmente. Se o compressor for da família MT, o óleo é mineral: não misture com poliéster em nenhuma hipótese.';
+};
+
+const getRecommendedAction = (
+    mode: CalcMode,
+    classification: 'BAIXO' | 'IDEAL' | 'ALTO',
+    fluid: Refrigerant
+): string => {
+    const fluidNote = getFluidNote(fluid);
+
     if (mode === 'Superaquecimento') {
         if (classification === 'BAIXO') {
-            return 'Risco de líquido voltar pro compressor. Verifique se a válvula de expansão está muito aberta ou o bulbo solto antes de fechar/ajustar.';
+            return 'Superaquecimento baixo significa líquido voltando para o compressor, e isso quebra compressor. Comece pelo bulbo da válvula de expansão: ele precisa estar bem preso na saída do evaporador, com contato limpo e isolado. Bulbo solto, sujo ou sem isolamento é a causa mais comum, porque faz a válvula abrir mais do que devia. Confirme também se o agitador está rodando, já que sem agitação a troca de calor cai e o evaporador não consegue evaporar todo o líquido. Se o bulbo e a agitação estiverem corretos, feche a válvula de expansão um quarto de volta por vez e espere de 10 a 15 minutos antes de medir de novo, nunca mais de meia volta sem reavaliar. Se a linha de sucção estiver suando ou com gelo até o compressor, desligue e não insista com ele rodando, para não dar golpe de líquido.' + fluidNote;
         }
         if (classification === 'ALTO') {
-            return 'Evaporador recebendo pouco líquido. Se o Sub.Res também estiver baixo: verifique vazamento ou falta de gás antes de abrir a válvula de expansão. Se o Sub.Res estiver normal ou alto: verifique o filtro secador entupido ou a válvula de expansão fechada demais.';
+            return 'Superaquecimento alto significa evaporador recebendo pouco líquido, com o compressor trabalhando quente. O próximo passo é medir o sub-resfriamento, porque é ele que separa as duas causas possíveis. Se o sub-resfriamento também estiver baixo, o problema é falta de fluido: procure vazamento antes de completar a carga, olhando manchas de óleo nas conexões, nas soldas, no evaporador e no condensador, e veja se o visor de líquido apresenta bolhas constantes. Se o sub-resfriamento estiver normal ou alto, o problema é restrição e não falta de gás: sinta a diferença de temperatura entre a entrada e a saída do filtro secador, confira a válvula solenoide e veja se a válvula de expansão não está fechada demais ou com a tela de entrada entupida. Só abra a válvula de expansão depois de descartar vazamento e restrição, um quarto de volta por vez, esperando de 10 a 15 minutos entre cada ajuste.' + fluidNote;
         }
-        return 'Está no ideal. Não mexa na válvula só por este dado — confira também o Sub.Res e as pressões.';
+        return 'Está dentro da faixa ideal, então não mexa na válvula de expansão por causa deste número. Antes de dar o equipamento como bom, feche o conjunto: meça também o sub-resfriamento, olhe o visor de líquido, confira a pressão de alta com o condensador limpo e os ventiladores girando, e acompanhe se o leite está descendo de temperatura no tempo esperado. Um superaquecimento bom com sub-resfriamento ruim ainda é sistema com problema, e o contrário também vale.' + fluidNote;
     }
 
     if (classification === 'BAIXO') {
-        return 'Sem reserva de líquido. Verifique vazamento ou falta de gás antes de completar a carga.';
+        return 'Sub-resfriamento baixo significa que não há reserva de líquido chegando na válvula de expansão, e provavelmente está passando gás junto com o líquido. Antes de completar carga, procure vazamento: manchas de óleo nas conexões, soldas, evaporador e condensador, e visor de líquido com bolhas constantes. Confirme também se não existe restrição antes do ponto de medição, porque queda de pressão na linha de líquido ou no filtro secador derruba o sub-resfriamento mesmo sem faltar fluido. Se confirmar que falta fluido, complete aos poucos e acompanhe o sub-resfriamento e o superaquecimento juntos, não apenas a pressão do manômetro. Valor muito baixo, perto de zero, trate como urgente: o compressor está sem coluna de líquido garantida.' + fluidNote;
     }
     if (classification === 'ALTO') {
-        return 'Pode ter excesso de gás. Verifique se o condensador está limpo e o ventilador funcionando antes de retirar gás.';
+        return 'Sub-resfriamento alto significa líquido demais acumulado no condensador, o que empurra a pressão de alta para cima e força o compressor. Antes de retirar fluido, verifique tudo que rejeita calor: lave a colmeia do condensador se houver poeira, barro ou teia, confirme se todos os ventiladores estão girando na rotação e no sentido corretos, e veja se não há recirculação de ar quente ou obstrução perto do equipamento. Confirme também se não entrou ar no sistema em alguma intervenção feita sem vácuo adequado, porque gás não condensável eleva a pressão de alta do mesmo jeito e é confundido com excesso de carga. Só retire fluido depois de descartar condensador sujo, ventilador fraco e ar no sistema, e retire pouco de cada vez acompanhando a pressão de alta e o superaquecimento.' + fluidNote;
     }
-    return 'Está no ideal. Não adicione nem retire gás só por este dado — confira também o Sup.Aque e o visor.';
+    return 'Está dentro da faixa ideal, então não adicione nem retire fluido por causa deste número. Para fechar o diagnóstico, meça também o superaquecimento, confira o visor de líquido, a temperatura atual do leite e o tempo que o tanque está levando para resfriar. Sub-resfriamento bom com superaquecimento alto ainda indica restrição no caminho do líquido, e vale investigar o filtro secador e a válvula de expansão antes de liberar o equipamento.' + fluidNote;
 };
 
 const getSaturationLookup = (fluid: Refrigerant, pressure: number, mode: CalcMode): PtLookupResult => {
@@ -266,7 +285,7 @@ export const logicService = {
             ? tempMeasured - lookup.satTemp
             : lookup.satTemp - tempMeasured).toFixed(1));
         const classification = classifyCalculation(resultKelvin, mode);
-        const actionLabel = getRecommendedAction(mode, classification);
+        const actionLabel = getRecommendedAction(mode, classification, fluid);
         const resultLabel = mode === 'Superaquecimento'
             ? `${modeShortLabel} = ${formatTemperature(tempMeasured)} - ${formatSubtractedTemperature(lookup.satTemp)} = ${formatKelvin(resultKelvin)}`
             : `${modeShortLabel} = ${formatTemperature(lookup.satTemp)} - ${formatSubtractedTemperature(tempMeasured)} = ${formatKelvin(resultKelvin)}`;
