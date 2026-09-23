@@ -16,7 +16,7 @@
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **53/53** (botao de status dentro do app) |
 | **Verificacao em producao** | V79 conferida em 2026-09-22 (CLAUDE) |
-| **Pendencias abertas** | 4 bugs de "resultado velho na tela" (ver entrada de 21/09) + modelo do soft-starter Danfoss |
+| **Pendencias abertas** | PLANO da conduta do Superaq aguardando decisao do USER (23/09) + 4 bugs de "resultado velho na tela" (21/09) + modelo do soft-starter Danfoss |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
 **Ultima atualizacao (o que mudou na V79) - R-407C NA CALCULADORA:**
@@ -2423,3 +2423,99 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   dizer qual dos dois.
 
 - **ESTADO:** nada foi alterado no app por esta varredura. Producao continua V78. Decisao do USER.
+
+### PLANO - CONDUTA ESPECIFICA NO SUPERAQ (NAO EXECUTADO) - CLAUDE - 2026-09-23
+- **Pedido do USER:** "na parte de superaquecimento e subresfriamento, o app diga o que fazer se estiver
+  fora do padrao, nos 3 fluidos. Hoje ela responde vago demais. Antes de mudar, crie um plano."
+- **Estado:** SO PLANEJAMENTO. Nenhuma linha de codigo alterada. Producao continua V79.
+
+- **1) O QUE EXISTE HOJE (o problema, com o texto real):**
+  Toda a conduta do Superaq sai de UMA funcao, `getRecommendedAction(mode, classification)` em
+  `services/logicService.ts`. Sao apenas 6 frases para cobrir TUDO:
+  | Modo | Classe | Texto que o tecnico le hoje |
+  |------|--------|------------------------------|
+  | Sup.Aque | BAIXO | "Risco de liquido voltar pro compressor. Verifique se a valvula de expansao esta muito aberta ou o bulbo solto antes de fechar/ajustar." |
+  | Sup.Aque | ALTO | "Evaporador recebendo pouco liquido. Se o Sub.Res tambem estiver baixo: verifique vazamento... Se o Sub.Res estiver normal ou alto: verifique o filtro secador entupido..." |
+  | Sup.Aque | IDEAL | "Esta no ideal. Nao mexa na valvula so por este dado." |
+  | Sub.Res | BAIXO | "Sem reserva de liquido. Verifique vazamento ou falta de gas antes de completar a carga." |
+  | Sub.Res | ALTO | "Pode ter excesso de gas. Verifique se o condensador esta limpo e o ventilador funcionando antes de retirar gas." |
+  | Sub.Res | IDEAL | "Esta no ideal. Nao adicione nem retire gas so por este dado." |
+
+  **POR QUE E VAGO (4 causas concretas):**
+  a) Nao olha o TAMANHO do desvio. Sup.Aque de 13 K e de 30 K recebem exatamente o mesmo texto,
+     sendo que 13 K e ajuste fino e 30 K e sistema quase sem fluido.
+  b) Nao olha o FLUIDO. R-22, R-404A e R-407C recebem o mesmo texto, mas a acao correta e diferente
+     (ver item 3). Hoje o app nem menciona o fluido na conduta.
+  c) So diz "verifique", nunca diz COMO nem EM QUE ORDEM, e nao da numero nenhum
+     (quanto girar a valvula, quanto tempo esperar, o que olhar primeiro).
+  d) Nao diz o que NAO fazer. O unico "nao" existente esta preso dentro de uma frase longa.
+
+- **2) FORMATO PROPOSTO: 4 BLOCOS FIXOS, SEMPRE NA MESMA ORDEM.**
+  Em vez de uma frase solta, a conduta passa a ter sempre estes 4 blocos curtos:
+  ```
+  CONDUTA - Sup.Aque 22 K (muito acima do ideal de 7 a 12 K)
+  1. CONFIRME ANTES DE MEXER: fluido R-407C na curva dew, bulbo preso e isolado na saida do
+     evaporador, agitador rodando e sistema estabilizado.
+  2. SEPARE A CAUSA: meca o Sub.Res agora. Baixo = falta de fluido ou vazamento.
+     Normal ou alto = restricao (filtro secador, solenoide ou valvula fechada demais).
+  3. FACA: se for falta de fluido, procure vazamento antes de completar (oleo nas conexoes,
+     bolhas no visor). Se for restricao, meca a diferenca de temperatura entre entrada e saida
+     do filtro secador.
+  4. NAO FACA: nao abra a valvula de expansao antes de confirmar a carga.
+  ```
+  O bloco 1 mata o problema de agir em cima de leitura errada. O bloco 2 e o que hoje falta: dizer
+  COMO separar duas causas parecidas. O bloco 4 e o guardrail explicito.
+
+- **3) O QUE MUDA POR FLUIDO (esta e a parte que hoje nao existe):**
+  | | R-22 | R-404A | R-407C |
+  |---|---|---|---|
+  | Curva | unica | dew/bubble (glide ~0,3 K, na pratica indiferente) | dew/bubble, **glide ~6 K**: curva errada erra a conta em varios kelvin |
+  | Como carregar | pode completar | **sempre em fase liquida** | **sempre em fase liquida** |
+  | Depois de vazamento | pode completar a carga | pode completar a carga | **NAO COMPLETA.** Recolher e carregar tudo de novo com fluido virgem: o que vazou muda a composicao da mistura (fracionamento) |
+  | Oleo | mineral 160P (compressor MT) | poliester 175PZ (compressor MTZ) | poliester |
+  A linha do R-407C sobre nao completar carga e a mais importante: e um erro caro e comum, e hoje o
+  app nao avisa nada disso.
+
+- **4) FAIXAS DE SEVERIDADE PROPOSTAS (triagem, nao valor de projeto):**
+  | Medida | Critico | Baixo | IDEAL | Alto | Muito alto |
+  |--------|---------|-------|-------|------|------------|
+  | Sup.Aque | abaixo de 2 K (risco de golpe de liquido: parar) | 2 a 7 K | 7 a 12 K | 12 a 18 K | acima de 18 K |
+  | Sub.Res | abaixo de 1 K (sem coluna de liquido) | 1 a 4 K | 4 a 8 K | 8 a 12 K | acima de 12 K |
+  As faixas IDEAIS (7-12 e 4-8) NAO mudam: ja estao validadas e aprovadas. O que entra e a divisao
+  do que esta fora, para a conduta poder ser diferente entre "ajuste fino" e "sistema em risco".
+
+- **5) NUMEROS CONCRETOS QUE ENTRAM NA CONDUTA (com fonte):**
+  - Ajuste da valvula de expansao: **1/4 de volta por vez, esperar de 10 a 15 minutos** antes de medir
+    de novo. Nunca mais que meia volta sem reavaliar. Conferir o sentido no fabricante da valvula.
+  - Sup.Aque abaixo de 2 K: **nao insistir com o compressor rodando** (risco de golpe de liquido).
+  - R-407C com vazamento: recolher e recarregar com fluido virgem, sem completar.
+
+- **6) ONDE MEXE NO CODIGO (escopo fechado e pequeno):**
+  - `services/logicService.ts`: `getRecommendedAction` passa a receber tambem o FLUIDO e o VALOR
+    em kelvin, alem de modo e classificacao. E so essa funcao.
+  - `components/Tool_3_Calculator.tsx`: a conduta hoje e exibida em linha unica
+    (`{localAudit.actionLabel}`), entao as quebras de linha nao aparecem. Precisa de
+    `whitespace-pre-line` no bloco de conduta. Uma classe.
+  - **NAO MEXE EM:** persona, prompt, modelos Gemini, tabela PT, faixas ideais, senha, interface do
+    suporte, service worker.
+  - **CUSTO: ZERO.** Tudo e calculo local. Nenhuma chamada de IA a mais.
+
+- **7) COMO VAI SER TESTADO (aceite proposto):**
+  - 3 fluidos x 2 modos x 5 faixas = 30 combinacoes, todas com teste automatico verificando:
+    tem os 4 blocos; tem pelo menos uma acao concreta; tem a linha do que NAO fazer;
+    nao contem SH, SC, VET nem TXV; esta acentuado; cabe na tela do celular (limite de caracteres).
+  - Teste especifico: R-407C em caminho de falta de fluido TEM de dizer para nao completar a carga.
+  - Teste especifico: Sup.Aque abaixo de 2 K TEM de mandar parar, nao "verificar".
+  - Regressao: as faixas ideais continuam 7-12 K e 4-8 K, e os 53 testes atuais continuam passando.
+  - Depois, conferencia ao vivo em producao nos 3 fluidos.
+
+- **8) UMA DECISAO QUE E DO USER:**
+  Para a conduta ficar ainda mais certeira no Sup.Aque, o app precisaria saber o Sub.Res do mesmo
+  equipamento (e vice-versa). Hoje a calculadora faz um de cada vez. Duas opcoes:
+  (A) **Nao mexer na tela:** a conduta ensina o tecnico a medir o outro valor e como interpretar.
+      Zero mudanca de interface. **E a minha recomendacao para comecar.**
+  (B) **Campo opcional a mais** ("se ja mediu o outro, informe aqui"), e ai a conduta fecha o
+      diagnostico sozinha, sem o tecnico ter que cruzar de cabeca. Mexe na interface.
+  Comecar por (A) e, se o USER gostar, fazer (B) depois.
+
+- **PROXIMO PASSO:** aguardando o USER aprovar o plano. Nada sera alterado antes disso.
