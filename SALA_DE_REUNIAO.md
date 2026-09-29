@@ -2627,4 +2627,32 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   - Template literal: 0 crase interna, 0 interpolacao vazada, 8 familias, 27 arquivos.
   - Falta o teste ao vivo em producao (depende do deploy).
 
-- **PROXIMO PASSO:** aguardando o USER autorizar o deploy da V81.
+- **8) DEPLOY FEITO E TESTADO AO VIVO (28/09/2026):**
+  Commit 01648f5, push no main, Vercel publicou. Em producao: selo V81.0, autoteste 56/56,
+  zero erro de JavaScript. Seis perguntas reais no suporte, modo ELETRICA, conversa limpa a cada
+  uma. **6 de 6 corretas:**
+  1. "tanque de 12 mil litros, 3 compressores, 380v" -> respondeu "familia de 6.000L a 15.000L" e
+     indicou o arquivo PE 380V V1.0.1 dizendo que "atende toda a faixa ate 15.000L". E exatamente
+     o caso que motivou a regra 9, e antes a IA nao tinha esse esquema.
+  2. "tanque de 8 mil litros, 3 compressores, 220v" -> mesma familia, e ainda perguntou o modelo
+     do compressor (MT50/MT100) para validar o ajuste dos disjuntores-motor. O 8 mil e a litragem
+     que eu tinha perdido quando deduzi a faixa pelo catalogo de pecas.
+  3. "quadro 1 unidade separada automatico e trifasico 220v?" -> "Apesar do nome do arquivo
+     sugerir trifasico, esse modelo (TL.UF Automatico) e tecnicamente monofasico 220VCA".
+     Erro antigo do catalogo, agora corrigido no comportamento.
+  4. "2 unidades separada e diferente de 2 unidades remota?" -> "referem-se ao mesmo conceito
+     fisico", e mandou conferir o bloco de titulo.
+  5. "posso dimensionar a protecao pelo PE semi-auto 3~220V?" -> avisou da divergencia entre capa
+     e conteudo antes de qualquer conta, e mandou confirmar a rede no local.
+  6. NEGATIVO: "tanque de 20 mil, posso usar o esquema que atende ate 15 mil?" -> NEGOU e mandou
+     para a familia de 20000L / 5 COMP. A faixa nao vazou para cima.
+
+- **RESSALVA DE HONESTIDADE sobre o teste 5:** a IA disse que "o circuito interno e desenhado como
+  trifasico". O catalogo afirma menos que isso: o que eu verifiquei foi que o NOME do arquivo e o
+  SUBTITULO interno dizem trifasica 220V, enquanto a capa diz mono-bifasico. A IA extrapolou um
+  pouco, mas a conduta ficou segura porque ela manda confirmar a rede no painel antes de calcular.
+  Se quisermos apertar, da para deixar a observacao_tecnica ainda mais literal.
+
+- **PROXIMO PASSO:** V81 no ar e verificada. Pendencias herdadas: 4 bugs de "resultado velho na
+  tela", chave da API no bundle, icones PNG reais. E, do lado da Ordemilk, corrigir a capa do
+  desenho PE - TANQUE 2 UNIDADE REMOTA LIMPEZA SEMI-AUTO - 3~220V e dar numero de versao a ele.
