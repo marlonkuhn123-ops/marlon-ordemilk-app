@@ -2556,3 +2556,75 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   Comecar por (A) e, se o USER gostar, fazer (B) depois.
 
 - **PROXIMO PASSO:** aguardando o USER aprovar o plano. Nada sera alterado antes disso.
+
+---
+
+## 2026-09-28 - CLAUDE - V81.0 - CATALOGO DE ESQUEMAS ELETRICOS (9 PDFs NOVOS)
+
+- **DATA:** 28/09/2026 | **VERSAO:** V81.0 | **CACHE:** ordemilk-tech-v81
+- **ULTIMA ATUALIZACAO:** catalogacao dos 9 esquemas novos ("PE -") + correcao de 5 erros
+  antigos do catalogo.
+
+- **0) ERRO MEU, CORRIGIDO NA MESMA SESSAO (fica registrado de proposito):**
+  Eu havia concluido que os 9 PDFs eram "digitalizacoes raster, zero letras extraiveis", com base
+  num extrator caseiro em Node que so sabia inflar streams. ERRADO. Os PDFs sao vetoriais e
+  totalmente legiveis com `pdftotext -layout -enc UTF-8` (ja instalado na maquina, em
+  /mingw64/bin). So o QUADRO LIMPEZA COM REGUA ELETRONICA - QCLA3STRE e scan de verdade (7 bytes
+  de texto). **LICAO: antes de declarar um PDF ilegivel, tentar pdftotext.** Por causa desse erro
+  eu tinha classificado as familias pelo NOME do arquivo, e o nome mente (ver item 2).
+
+- **1) FAIXA DA FAMILIA DE 3 COMPRESSORES - AGORA COM PROVA NO DESENHO:**
+  O USER disse que "6 mil litros sao iguais os 10 mil 12 mil". Confirmado, e com um a mais:
+  a tabela de comprimento de cabos impressa no painel CIP de 3 compressores tem uma linha por
+  tanque: **6.000 / 8.000 / 10.000 / 12.000 / 15.000 LTS**. O 8 mil eu tinha perdido quando
+  deduzi a faixa so pelo catalogo de pecas.
+  A capa dos tres PDFs 6000L declara "3 UNIDADE REMOTA" e o desenho tem DM1/DM2/DM3.
+  Fica no catalogo o aviso de que o MODELO do compressor muda dentro da faixa
+  (MT50 no 6 mil, MT100 no 10 e 12 mil, MT125 no 15 mil), entao corrente de placa, ajuste de
+  disjuntor-motor e bitola NAO sao iguais em toda a faixa.
+  A versao MONOFASICA ficou restrita a 6000L (o desenho marca os 3 compressores como MT 50).
+
+- **2) O NOME DO ARQUIVO NAO E CONFIAVEL (nova regra 10):**
+  - TODOS os arquivos com "UNIDADE SEPARADA" no nome dizem "2 UNIDADE REMOTA" na capa.
+    Em Ordemilk as duas palavras sao a MESMA coisa. A regra 10 que eu tinha escrito antes dizia
+    o contrario ("nao sao sinonimos") - estava errada e foi substituida.
+  - "QUADRO COMANDO 1 UNIDADE SEPARADA 3~220V AUTOMATICO": o desenho diz **1~220 VCA
+    MONOFASICO**. O catalogo registrava "220 V Trifasico". Corrigido - esse era um erro que podia
+    fazer a IA orientar dimensionamento trifasico num painel monofasico.
+  - "PE - TANQUE 2 UNIDADE REMOTA LIMPEZA SEMI-AUTO - 3~220V": **contradicao dentro do proprio
+    desenho** - a capa diz "PAINEL MONO-BIFASICO 220V" e o subtitulo diz "TRIFASICA 220V".
+    Registrado como ATIVO COM RESSALVA, com instrucao de avisar o tecnico. E tambem o unico
+    arquivo da linha PE sem numero de versao no nome. **PENDENCIA PARA A ORDEMILK: revisar a capa
+    desse desenho.**
+
+- **3) ESQUEM_2 DEIXOU DE SER "ARQUIVO AMBIGUO":**
+  O catalogo dizia "nome generico, sem familia clara, confianca baixa". O desenho diz:
+  "QUADRO DE COMANDO 3 COMPRESSORES - LIMPEZA AUTOMATICA COM REGUA ELETRONICA - PARA ROBO LELY,
+  DELAVAL e GEA", V1.0, 10/2021, 1~220VCA, tanques de 6.000 a 15.000 LTS. E o lado CIP da familia
+  de 3 compressores. Agora esta ATIVO e com confianca alta.
+
+- **4) O QUE OS 9 ARQUIVOS NOVOS REALMENTE SAO (o USER estava certo):**
+  Nao eram familias novas. Sao atualizacoes de desenhos que ja existiam:
+  - PE 2 UNIDADES SEPARADA LIMPEZA SEMI-AUTO 3~380V **substitui** TANQUE 2 UNIDADE REMOTA
+    LIMPEZA SEMI 3_380V (que ja estava no projeto).
+  - PE 2 UNIDADE REMOTA SEM LIMPEZA 3~380V **substitui** TANQUE SEM LIMPEZA 2 UNIDADE REMOTA
+    3_380V (estava no catalogo como legado).
+  - Os 3 arquivos 6000L sao o PAINEL PRINCIPAL de uma familia que o projeto ja conhecia so pelo
+    lado CIP (ESQUEM_2 e PAINEL CIP 3 COMPRESSORES, ambos com a tabela 6.000-15.000 LTS).
+  Os antigos correspondentes foram marcados como HISTORICO / SUBSTITUIDO, nao apagados.
+
+- **5) ARQUIVOS:** os 9 PDFs foram copiados para `Subir_PDFs/` (16 -> 25). Nenhum arquivo antigo
+  foi sobrescrito. As duplicatas " (1)" do Downloads foram conferidas por md5 antes: identicas,
+  copiei so uma de cada.
+
+- **6) AINDA SEM SUBSTITUTO PE:** TANQUE 2 UNIDADES LIMPEZA AUTOMATICA 3_380V (2 compressores,
+  limpeza automatica, 380V, cobre MT22/MT28/MT36/MT40), tanque 3 unidades automatica 380V,
+  quadro 1 unidade, os paineis CIP e o QCLA3STRE.
+
+- **7) VERIFICACAO:**
+  - `npm run lint` (tsc --noEmit): limpo.
+  - `npm run build`: OK, dist/index.js 795.7kb, texto novo presente no bundle.
+  - Template literal: 0 crase interna, 0 interpolacao vazada, 8 familias, 27 arquivos.
+  - Falta o teste ao vivo em producao (depende do deploy).
+
+- **PROXIMO PASSO:** aguardando o USER autorizar o deploy da V81.

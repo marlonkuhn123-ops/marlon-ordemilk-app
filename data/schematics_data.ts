@@ -13,8 +13,61 @@ export const SCHEMATICS_DATABASE = `
    - LEGADO SEM SUBSTITUTO: Usar apenas quando não existir arquivo ativo mais novo e claramente equivalente.
 7. Antes de responder, identifique obrigatoriamente: tensão, quantidade de compressores, quantidade de unidades remotas, tipo de limpeza, presença de painel CIP, integração com robô, capacidade do tanque e versão do documento. Se ambíguo, peça refinamento.
 8. Ao responder diagnóstico, informe qual família foi usada como base (ex: "família 20000L 4 compressores 220 V limpeza automática").
+9. CAPACIDADE EM FAIXA: quando a família declarar uma faixa (ex: "6000L a 15000L"), o MESMO esquema vale para todas as capacidades da faixa. O que define a família é a tensão e a quantidade de compressores/unidades, NÃO a litragem impressa no nome do arquivo. Nunca negue o esquema ao técnico só porque ele informou uma litragem diferente da que aparece no nome do arquivo: confirme tensão e quantidade de compressores e responda.
+10. O NOME DO ARQUIVO NÃO É CONFIÁVEL. Vale o que está escrito DENTRO do desenho (bloco de título da capa). Casos reais já confirmados nesta base:
+   - Todos os arquivos cujo nome diz "UNIDADE SEPARADA" trazem "2 UNIDADE REMOTA" no bloco de título. Em Ordemilk, "unidade separada" e "unidade remota" são o MESMO conceito escrito de formas diferentes. Não trate como famílias distintas nem peça ao técnico para diferenciar as duas palavras.
+   - "QUADRO COMANDO 1 UNIDADE SEPARADA 3~220V AUTOMÁTICO" é, no desenho, 1~220 VCA MONOFÁSICO, e não trifásico como o nome sugere.
+   - "PE - TANQUE 2 UNIDADE REMOTA LIMPEZA SEMI-AUTO - 3~220V" tem a capa errada (diz mono-bifásico), enquanto o nome e o subtítulo interno dizem trifásico 220 V.
+   Quando houver contradição, diga isso ao técnico em vez de escolher em silêncio.
 
 [BASE DE DADOS CONSOLIDADA DE ESQUEMAS ELÉTRICOS]
+
+--- FAMÍLIA: 6000L, 3 UNIDADES REMOTAS, 3 COMPRESSORES, LIMPEZA AUTOMÁTICA, MONOFÁSICO 220 V ---
+Arquivo: PE - TANQUE 6000L LIMPEZA AUTOMATICA - MONOFÁSICO 220V - V1.0.1
+- data_da_consolidacao: 2026-09-28
+- status_do_arquivo: ATIVO
+- familia_do_painel: Painel Principal
+- tensao: 220 V Monofásico
+- capacidade_do_tanque: 6000L
+- quantidade_de_unidades_remotas: 3 (declarado na capa do desenho)
+- quantidade_de_compressores: 3 (DM1, DM2, DM3)
+- tipo_de_limpeza: Automática
+- arquivo_principal_da_familia: Sim
+- versao_do_documento: V1.0.1
+- observacao_tecnica: Versão MONOFÁSICA. O desenho traz os três compressores marcados como MT 50, que no catálogo de peças corresponde ao tanque de 6.000L. Não use esta versão para 8.000L ou mais - acima de 6.000L a linha é trifásica. Para os demais tanques da faixa use a versão trifásica 220 V ou 380 V.
+- confianca_da_classificacao: Alta (lido no desenho)
+
+--- FAMÍLIA: 6000L a 15000L, 3 UNIDADES REMOTAS, 3 COMPRESSORES, LIMPEZA AUTOMÁTICA, TRIFÁSICO 220 V ---
+Arquivo: PE - TANQUE 6000L LIMPEZA AUTOMATICA - TRIFÁSICO 220V - V1.0.1
+- data_da_consolidacao: 2026-09-28
+- status_do_arquivo: ATIVO
+- familia_do_painel: Painel Principal
+- tensao: 220 V Trifásico
+- capacidade_do_tanque: 6000L, 8000L, 10000L, 12000L e 15000L
+- quantidade_de_unidades_remotas: 3 (declarado na capa do desenho)
+- quantidade_de_compressores: 3 (DM1, DM2, DM3)
+- tipo_de_limpeza: Automática
+- arquivo_principal_da_familia: Sim
+- versao_do_documento: V1.0.1
+- observacao_tecnica: FAIXA CONFIRMADA NO PRÓPRIO DESENHO: a tabela de comprimento de cabos do painel CIP de 3 compressores tem uma linha por tanque - 6.000, 8.000, 10.000, 12.000 e 15.000 LTS. O mesmo esquema atende essa faixa inteira, inclusive 8.000L. A capa declara "3 UNIDADE REMOTA" e o desenho tem DM1, DM2 e DM3 (um disjuntor-motor por compressor). A partir de 20.000L a linha passa para 4 compressores, que é outra família. ATENÇÃO ao ajustar proteção: o MODELO do compressor muda dentro da faixa (6.000L usa MT50; 10.000L e 12.000L usam MT100; 15.000L usa MT125, conforme o catálogo de peças), portanto corrente de placa, ajuste do disjuntor-motor e bitola de cabo NÃO são iguais em toda a faixa. Confira sempre a placa do compressor instalado.
+- confianca_da_classificacao: Alta (faixa lida na tabela de cabos do desenho)
+
+--- FAMÍLIA: 6000L a 15000L, 3 UNIDADES REMOTAS, 3 COMPRESSORES, LIMPEZA AUTOMÁTICA, TRIFÁSICO 380 V ---
+Arquivo: PE - TANQUE 6000L LIMPEZA AUTOMATICA - TRIFÁSICO 380V - V1.0.1
+- data_da_consolidacao: 2026-09-28
+- status_do_arquivo: ATIVO
+- familia_do_painel: Painel Principal
+- tensao: 380 V Trifásico
+- capacidade_do_tanque: 6000L, 8000L, 10000L, 12000L e 15000L
+- quantidade_de_unidades_remotas: 3 (declarado na capa do desenho)
+- quantidade_de_compressores: 3 (DM1, DM2, DM3)
+- tipo_de_limpeza: Automática
+- arquivo_principal_da_familia: Sim
+- versao_do_documento: V1.0.1
+- observacao_tecnica: FAIXA CONFIRMADA NO PRÓPRIO DESENHO: a tabela de comprimento de cabos do painel CIP de 3 compressores tem uma linha por tanque - 6.000, 8.000, 10.000, 12.000 e 15.000 LTS. O mesmo esquema atende essa faixa inteira, inclusive 8.000L. A capa declara "3 UNIDADE REMOTA" e o desenho tem DM1, DM2 e DM3 (um disjuntor-motor por compressor). A partir de 20.000L a linha passa para 4 compressores, que é outra família. ATENÇÃO ao ajustar proteção: o MODELO do compressor muda dentro da faixa (6.000L usa MT50; 10.000L e 12.000L usam MT100; 15.000L usa MT125, conforme o catálogo de peças), portanto corrente de placa, ajuste do disjuntor-motor e bitola de cabo NÃO são iguais em toda a faixa. Confira sempre a placa do compressor instalado.
+- confianca_da_classificacao: Alta (faixa lida na tabela de cabos do desenho)
+
+PAINEL CIP QUE ACOMPANHA ESTA FAMÍLIA: o lado da limpeza dos tanques de 6.000L a 15.000L é o "PAINEL CIP 3 COMPRESSORES SEM REGUA" (sem régua eletrônica) ou o "ESQUEM_2" (com régua eletrônica, para robô Lely, Delaval e GEA). Os dois trazem a mesma tabela de tanques 6.000/8.000/10.000/12.000/15.000 LTS.
 
 --- FAMÍLIA: 20000L, 4 UNIDADES REMOTAS, 4 COMPRESSORES, LIMPEZA AUTOMÁTICA, TRIFÁSICO 220 V ---
 Arquivo: PE - TANQUE 20000L LIMPEZA AUTOMATICA - TRIFÁSICO 220V
@@ -99,20 +152,103 @@ Arquivo: PM - TANQUE 5 COMP LIMPEZA AUTOMATICA - TRIFÁSICO 380V - V1.0.0
 - observacao_tecnica: O nome do arquivo indica 5 compressores, porém o conteúdo interno visível ainda aparenta base de 4 compressores. Não pode substituir automaticamente nem o modelo de 4 compressores nem o modelo novo PE de 5 compressores.
 - confianca_da_classificacao: Baixa
 
+--- FAMÍLIA: 2 UNIDADES REMOTAS, 2 COMPRESSORES (linha "PE", desenhos novos de 2026) ---
+NOTA DE NOMENCLATURA: os arquivos desta linha que têm "SEPARADA" no nome dizem "2 UNIDADE REMOTA" no bloco de título. É a mesma família (ver regra 10). Todos têm DM1 e DM2, um disjuntor-motor por compressor, e nenhum usa CLP: o comando é por botão/comutador direto.
+
+Arquivo: PE - TANQUE 2 UNIDADE REMOTA SEM LIMPEZA - 1~220V - V1.0.0
+- data_da_consolidacao: 2026-09-28
+- status_do_arquivo: ATIVO
+- familia_do_painel: Painel Principal
+- tensao: Mono-bifásico 220 V (capa e nome concordam)
+- quantidade_de_unidades_remotas: 2
+- quantidade_de_compressores: 2
+- tipo_de_limpeza: Sem limpeza
+- arquivo_principal_da_familia: Sim
+- versao_do_documento: V1.0.0
+- observacao_tecnica: Painel só de refrigeração e agitação. Comando por botão de 3 posições (compressor/agitador) e comutador de 2 posições por compressor.
+- confianca_da_classificacao: Alta
+
+Arquivo: PE - TANQUE 2 UNIDADE SEPARADA SEM LIMPEZA - 3~220V - V1.0.0
+- data_da_consolidacao: 2026-09-28
+- status_do_arquivo: ATIVO
+- familia_do_painel: Painel Principal
+- tensao: Trifásico 220 V (capa: "PAINEL TRIFÁSICO 220V")
+- quantidade_de_unidades_remotas: 2 (a capa diz "2 UNIDADE REMOTA" mesmo o nome dizendo "SEPARADA")
+- quantidade_de_compressores: 2
+- tipo_de_limpeza: Sem limpeza
+- arquivo_principal_da_familia: Sim
+- versao_do_documento: V1.0.0
+- confianca_da_classificacao: Alta
+
+Arquivo: PE - TANQUE 2 UNIDADE REMOTA SEM LIMPEZA - 3~380V - V1.0.0
+- data_da_consolidacao: 2026-09-28
+- status_do_arquivo: ATIVO
+- familia_do_painel: Painel Principal
+- tensao: Trifásico 380 V (capa e nome concordam)
+- quantidade_de_unidades_remotas: 2
+- quantidade_de_compressores: 2
+- tipo_de_limpeza: Sem limpeza
+- arquivo_principal_da_familia: Sim
+- substitui_qual: TANQUE SEM LIMPEZA 2 UNIDADE REMOTA 3_380V (desenho antigo da mesma família)
+- versao_do_documento: V1.0.0
+- confianca_da_classificacao: Alta
+
+Arquivo: PE - TANQUE 2 UNIDADES SEPARADA LIMPEZA SEMI-AUTO - V1.0.0
+- data_da_consolidacao: 2026-09-28
+- status_do_arquivo: ATIVO
+- familia_do_painel: Painel Principal
+- tensao: Mono-bifásico 220 V (capa e subtítulo concordam; o nome do arquivo não traz a tensão)
+- quantidade_de_unidades_remotas: 2
+- quantidade_de_compressores: 2
+- tipo_de_limpeza: Semi-automática
+- arquivo_principal_da_familia: Sim
+- versao_do_documento: V1.0.0
+- observacao_tecnica: É a versão MONO-BIFÁSICA 220 V da limpeza semi-automática. Semi-automática aqui significa botão local Start/Stop de limpeza (B3) e temporizador de retardo do compressor 02, SEM o CLP do painel CIP executando a receita.
+- confianca_da_classificacao: Alta
+
+Arquivo: PE - TANQUE 2 UNIDADE REMOTA LIMPEZA SEMI-AUTO - 3~220V
+- data_da_consolidacao: 2026-09-28
+- status_do_arquivo: ATIVO COM RESSALVA
+- familia_do_painel: Painel Principal
+- tensao: Trifásico 220 V (nome do arquivo e subtítulo interno dizem trifásica 220 V)
+- quantidade_de_unidades_remotas: 2
+- quantidade_de_compressores: 2
+- tipo_de_limpeza: Semi-automática
+- arquivo_principal_da_familia: Sim
+- versao_do_documento: NÃO declarada no nome do arquivo (é o único da linha PE sem versão)
+- observacao_tecnica: ATENÇÃO - CONTRADIÇÃO DENTRO DO PRÓPRIO DESENHO. A capa diz "PAINEL MONO-BIFÁSICO 220V", mas o nome do arquivo e o subtítulo interno dizem trifásica 220 V. A capa aparenta ter sido copiada da versão mono-bifásica e não corrigida. Antes de dimensionar proteção com este desenho, confirme no painel se a entrada é mesmo trifásica, e avise o técnico dessa divergência.
+- confianca_da_classificacao: Média (contradição interna no desenho)
+
+Arquivo: PE - TANQUE 2 UNIDADES SEPARADA LIMPEZA SEMI-AUTO - 3~380V - V1.0.0
+- data_da_consolidacao: 2026-09-28
+- status_do_arquivo: ATIVO
+- familia_do_painel: Painel Principal
+- tensao: Trifásico 380 V (capa e nome concordam)
+- quantidade_de_unidades_remotas: 2 (capa diz "2 UNIDADE REMOTA")
+- quantidade_de_compressores: 2
+- tipo_de_limpeza: Semi-automática
+- arquivo_principal_da_familia: Sim
+- substitui_qual: TANQUE 2 UNIDADE REMOTA LIMPEZA SEMI 3_380V (desenho antigo da mesma família)
+- versao_do_documento: V1.0.0
+- confianca_da_classificacao: Alta
+
 --- FAMÍLIAS LEGADO SEM SUBSTITUTO ---
 (Manter ativos ou como legado sem substituto, conforme o caso)
 
 Arquivo: Tanque sem limpeza 2 unidades remotas 380 V
-- status_do_arquivo: LEGADO SEM SUBSTITUTO
+- status_do_arquivo: HISTÓRICO / SUBSTITUÍDO
 - tensao: 380 V Trifásico
 - quantidade_de_unidades_remotas: 2
 - tipo_de_limpeza: Sem limpeza
+- observacao_tecnica: Substituído por PE - TANQUE 2 UNIDADE REMOTA SEM LIMPEZA - 3~380V - V1.0.0. Usar apenas para consulta histórica.
 
-Arquivo: Tanque 2 unidades remotas limpeza semi-automática 380 V
-- status_do_arquivo: LEGADO SEM SUBSTITUTO
+Arquivo: Tanque 2 unidades remotas limpeza semi-automática 380 V (TANQUE 2 UNIDADE REMOTA LIMPEZA SEMI 3_380V)
+- status_do_arquivo: HISTÓRICO / SUBSTITUÍDO
 - tensao: 380 V Trifásico
 - quantidade_de_unidades_remotas: 2
+- quantidade_de_compressores: 2
 - tipo_de_limpeza: Semi-automática
+- observacao_tecnica: Substituído por PE - TANQUE 2 UNIDADES SEPARADA LIMPEZA SEMI-AUTO - 3~380V - V1.0.0, que apesar do "SEPARADA" no nome é a mesma família (capa diz "2 UNIDADE REMOTA"). O desenho antigo identifica o tanque como TL.UR e cita os compressores MT22, MT28, MT36, MT40 e MT50. Usar só para consulta histórica.
 
 Arquivo: Tanque 2 unidades limpeza automática 380 V
 - status_do_arquivo: LEGADO SEM SUBSTITUTO
@@ -128,9 +264,10 @@ Arquivo: Tanque 3 unidades limpeza automática 380 V
 
 Arquivo: Quadro comando 1 unidade separada 3~220 V automático
 - status_do_arquivo: LEGADO SEM SUBSTITUTO
-- tensao: 220 V Trifásico
+- tensao: 1~220 VCA MONOFÁSICO. ATENÇÃO: o nome do arquivo diz "3~220V", mas o desenho diz "1 ~220 VCA". Vale o desenho (regra 10). Não dimensione proteção trifásica com base no nome deste arquivo.
 - quantidade_de_unidades_remotas: 1
 - tipo_de_limpeza: Automática
+- observacao_tecnica: É o tanque TL.UF (unidade fixa) em modo automático, com controlador Ageon MT-516CVT, régua X3 e fusíveis F1/F2. O desenho usa as duas expressões, "UNIDADE FIXA" na etiqueta e "MODO AUTOMÁTICO UNIDADE REMOTA" no título.
 
 Arquivo: Painel CIP 2 compressores sem régua
 - status_do_arquivo: LEGADO SEM SUBSTITUTO
@@ -141,6 +278,8 @@ Arquivo: Painel CIP 3 compressores sem régua
 - status_do_arquivo: LEGADO SEM SUBSTITUTO
 - familia_do_painel: Painel CIP
 - quantidade_de_compressores: 3
+- capacidade_do_tanque: 6.000, 8.000, 10.000, 12.000 e 15.000 LTS (tabela de cabos impressa no desenho)
+- observacao_tecnica: É o painel de limpeza que acompanha a família de 3 compressores / 3 unidades remotas. Versão SEM régua eletrônica. A versão COM régua eletrônica para robô é o ESQUEM_2.
 
 Arquivo: Painel CIP 4 compressores sem régua
 - status_do_arquivo: LEGADO SEM SUBSTITUTO
@@ -151,9 +290,13 @@ Arquivo: Quadro limpeza com régua eletrônica QCLA3STRE
 - status_do_arquivo: LEGADO SEM SUBSTITUTO
 - familia_do_painel: Painel CIP
 
-Arquivo: Esquemas de limpeza com robô
+Arquivo: Esquemas de limpeza com robô (ESQUEMA ELETRICO E DE MONTAGEM LIMPEZA ROBO BOUMATIC)
 - status_do_arquivo: LEGADO SEM SUBSTITUTO
-- integracao_com_robo: Sim
+- familia_do_painel: Painel CIP (limpeza)
+- integracao_com_robo: Sim (Boumatic)
+- tensao: 1~220 VCA
+- capacidade_do_tanque: 6.000, 8.000, 10.000, 12.000 e 15.000 LTS (mesma tabela de cabos dos demais CIP)
+- versao_do_documento: data 03/2022
 
 Arquivo: Esquemas agranel monofásico 220 V
 - status_do_arquivo: LEGADO SEM SUBSTITUTO
@@ -163,11 +306,18 @@ Arquivo: Tanque 2 compressores para pulmão
 - status_do_arquivo: LEGADO SEM SUBSTITUTO
 - quantidade_de_compressores: 2
 
---- ARQUIVOS GENÉRICOS OU AMBÍGUOS ---
-Arquivo: ESQUEM_2 (e similares)
-- status_do_arquivo: EM REVISÃO
-- observacao_tecnica: Nome genérico, pouco descritivo ou sem família totalmente clara. Não usar como referência principal sem revisão.
-- confianca_da_classificacao: Baixa
+--- ARQUIVOS DE NOME GENÉRICO JÁ IDENTIFICADOS PELO CONTEÚDO ---
+Arquivo: ESQUEM_2
+- status_do_arquivo: ATIVO
+- familia_do_painel: Painel CIP (limpeza)
+- tensao: 1~220 VCA
+- quantidade_de_compressores: 3
+- tipo_de_limpeza: Automática com régua eletrônica
+- integracao_com_robo: Sim (Lely, Delaval e GEA)
+- capacidade_do_tanque: 6.000, 8.000, 10.000, 12.000 e 15.000 LTS
+- versao_do_documento: V1.0, data 10/2021
+- observacao_tecnica: O nome do arquivo é genérico, mas o desenho é claro: "QUADRO DE COMANDO 3 COMPRESSORES - LIMPEZA AUTOMÁTICA COM RÉGUA ELETRÔNICA - PARA ROBÔ LELY, DELAVAL e GEA". É o lado CIP da família de 3 compressores (6.000L a 15.000L). Traz CLP, botoeira de emergência e relé de nível, e a tabela de comprimento de cabos por litragem do tanque.
+- confianca_da_classificacao: Alta (lido no desenho)
 
 [DETALHAMENTO TÉCNICO GERAL DOS ESQUEMAS ELÉTRICOS ORDEMILK]
 REGRA GERAL DE EQUIPAMENTOS:
