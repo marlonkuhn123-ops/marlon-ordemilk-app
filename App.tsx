@@ -193,7 +193,7 @@ const AppContent: React.FC = () => {
 
     return (
         <div
-            className={`h-dvh w-full flex flex-col relative overflow-hidden text-[#ffffff] select-none ${
+            className={`h-full w-full flex flex-col relative overflow-hidden text-[#ffffff] select-none ${
                 isSupportView ? 'bg-gradient-to-b from-[#27384b] via-[#6f7f91] to-[#dfe5eb]' : 'bg-transparent'
             }`}
             onContextMenu={(e) => e.preventDefault()}

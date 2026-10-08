@@ -10,16 +10,31 @@
 | Campo | Valor |
 |-------|-------|
 | **Data** | 2026-10-08 |
-| **Versao em producao** | **V82** |
-| **Commit publicado** | (ver historico abaixo, V82) |
+| **Versao em producao** | **V83** |
+| **Commit publicado** | (ver historico abaixo, V83) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **56/56** (botao de status dentro do app) |
-| **Verificacao em producao** | V82 conferida ao vivo em 2026-10-08: desktop `#root`=1100px, celular `#root`=390px (intocado), selo V82.0, suporte 3-flash HTTP 200 (CLAUDE) |
+| **Verificacao em producao** | V83 publicada em 2026-10-08, conferindo ao vivo (CLAUDE) |
 | **Pendencias abertas** | 4 bugs de "resultado velho na tela" (21/09); modelo do soft-starter Danfoss; BUG NOVO (08/10): a "Rota do esquema" do agitador vaza para respostas de refrigeracao nas continuacoes (detalhe na entrada do fim da sala) |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
-**Ultima atualizacao (o que mudou na V82) - ENQUADRAMENTO EM DESKTOP/NOTEBOOK:**
+**Ultima atualizacao (o que mudou na V83) - DESKTOP MAIOR (ZOOM NITIDO), AJUSTE DO FEEDBACK:**
+O USER viu a V82 no PC e disse que "nao ficou muito bom" e que "as letras ficaram pequenas". A V82
+tinha so alargado a faixa (448 -> 1100px), mas manteve o texto no tamanho de celular, entao num
+monitor grande ficava largo e com letra pequena. A V83 corrige isso: a partir de 768px o app agora
+usa `zoom` do CSS (1.3) para deixar TUDO maior (texto, botoes, campos) de forma NITIDA - `zoom`
+reescreve no tamanho maior, nao e o `transform: scale()` por JavaScript que a CODEX tinha vetado por
+borrar; os cliques tambem continuam certos. A altura e compensada (`height: calc(100dvh / 1.3)`) para
+o app continuar cabendo exatamente na tela, sem cortar cabecalho nem navegacao. Largura alvo
+`min(860px, 72vw)` (visual ~1118px no monitor grande). Para o `zoom` conviver com a altura, os dois
+unicos `h-dvh` do app (`App.tsx` e `components/LoginScreen.tsx`) viraram `h-full`: no celular isso e
+IDENTICO (o `#root` ja e 100dvh, entao `h-full` = 100dvh), e no desktop deixa a altura ser a
+compensada. Testado em build local servido: 1920, 1366 e 768 sem overflow e com cabecalho visivel;
+celular 390 continua `#root`=390px, intocado. O valor do zoom (1.3) e um numero so - da para subir
+para 1.4/1.5 se o USER quiser ainda maior. Selos V82 -> V83.
+
+**Mudanca anterior (V82) - ENQUADRAMENTO EM DESKTOP/NOTEBOOK:**
 Pedido do USER: ao abrir num computador/notebook, o app devia "se enquadrar no tamanho da tela", sem
 mexer no celular (que ja esta certo). Implementada a QUARTA VIA acordada com a CODEX: responsividade
 por CSS puro, SEM escala por JavaScript e SEM refazer a navegacao. Uma unica adicao no `index.html`:
@@ -143,6 +158,7 @@ marca do soft-starter, entao continua valendo.
 **Historico curto de versoes:**
 | Versao | Data | O que entrou |
 |--------|------|--------------|
+| V83 | 2026-10-08 | Desktop MAIOR: zoom CSS nitido (1.3) + altura compensada, corrige "letras pequenas" da V82; celular intocado (CLAUDE) |
 | V82 | 2026-10-08 | Enquadramento desktop/notebook: faixa larga por CSS a partir de 768px, celular intocado (CLAUDE + parecer CODEX) |
 | V81 | 2026-09-28 | Catalogo de esquemas eletricos: 9 PDFs novos e correcoes do catalogo (CLAUDE) |
 | V80 | 2026-09-23 | Conduta do Superaq mais completa e com observacao por fluido (CLAUDE) |
@@ -2841,3 +2857,23 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 
 - **Estado:** somente teste e registro. Nenhuma alteracao de codigo foi feita por esta pauta (o
   trabalho de layout V82 registrado acima e outra coisa, e foi autorizado em separado).
+
+### 2026-10-08 - CLAUDE - V83 - AJUSTE DO FEEDBACK DO USER (DESKTOP MAIOR, ZOOM NITIDO)
+
+- **Feedback do USER sobre a V82:** "acho que nao ficou muito bom. olhe nem como as letras ficaram
+  pequenas." A V82 so alargou a faixa (448 -> 1100px) mas manteve o texto no tamanho de celular;
+  num monitor grande ficava largo e com letra pequena.
+- **O que a V83 faz:** a partir de 768px aplica `zoom: 1.3` no `#root` (texto, botoes e campos ficam
+  maiores de forma NITIDA; `zoom` reescreve no tamanho novo, nao borra como o `transform: scale()`
+  por JS que a CODEX vetou, e os cliques seguem alinhados). Largura alvo `min(860px, 72vw)`
+  (~1118px visual no monitor grande). Altura compensada `calc(100dvh / 1.3)` para caber exato.
+- **Unica mexida em componente:** os 2 `h-dvh` do app (`App.tsx` e `components/LoginScreen.tsx`)
+  viraram `h-full`. No celular e identico (`#root` ja e 100dvh, logo `h-full` = 100dvh); no desktop
+  deixa a altura seguir a compensada, sem o `dvh` (que ignora zoom) estourar e cortar o topo.
+- **Verificacao local (build servido em :8099):** 1920, 1366 e 768 sem overflow horizontal ou
+  vertical e com o cabecalho "Suporte direto" visivel; celular 390 com `#root`=390px (intocado).
+  Lint OK, build OK. Verificacao ao vivo registrada apos o deploy.
+- **Dial facil:** o zoom (1.3) e um numero so no `index.html`; da para subir a 1.4/1.5 se o USER
+  quiser ainda maior, ou descer. CODEX: se preferir outra largura alvo, e so dizer.
+- **Nota:** o bug da "Rota do esquema" do agitador (registrado acima) continua pendente, nao foi
+  tocado nesta rodada.

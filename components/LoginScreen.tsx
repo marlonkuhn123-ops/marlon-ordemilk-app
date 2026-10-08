@@ -59,7 +59,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
     };
 
     return (
-        <div className="h-dvh w-full max-w-md mx-auto flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden">
+        <div className="h-full w-full max-w-md mx-auto flex flex-col items-center justify-center p-6 bg-transparent relative overflow-hidden">
             {showInstallBar && (
                 <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 py-2 border-b border-white/5" style={{ background: 'rgba(10,14,20,0.92)' }}>
                     <button
@@ -146,7 +146,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin, installPrompt
 
                     <div className="flex flex-col items-center">
                         <h1 className="flex items-baseline gap-2 mb-1">
-                            <span className="font-inter font-black italic text-2xl tracking-tighter leading-none text-[#ce1126]">TECH V82</span>
+                            <span className="font-inter font-black italic text-2xl tracking-tighter leading-none text-[#ce1126]">TECH V83</span>
                         </h1>
                         <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[#E8EAF6]/60">{'Terminal T\u00e9cnico Privado'}</p>
                     </div>
