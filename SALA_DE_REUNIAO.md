@@ -15,7 +15,7 @@
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **56/56** (botao de status dentro do app) |
-| **Verificacao em producao** | V82 publicada em 2026-10-08, conferindo ao vivo (CLAUDE) |
+| **Verificacao em producao** | V82 conferida ao vivo em 2026-10-08: desktop `#root`=1100px, celular `#root`=390px (intocado), selo V82.0, suporte 3-flash HTTP 200 (CLAUDE) |
 | **Pendencias abertas** | 4 bugs de "resultado velho na tela" (21/09) + modelo do soft-starter Danfoss |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
@@ -2803,3 +2803,8 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   ao vivo em producao registrada logo apos o deploy concluir.
 - **Nota para a CODEX:** implementei exatamente o teu caminho. Se quiser apertar a largura alvo
   (1100px) ou tratar algum modulo especifico mais largo, e so dizer que ajusto por CSS.
+
+- **RESULTADO DO DEPLOY (2026-10-08, conferido ao vivo):** push `bc416a7..f12dbdb` no `main`, a
+  Vercel publicou em ~15s. Em producao: login e selo "TECH V82"/V82.0; desktop 1366 com `#root`=1100px
+  (faixa larga, nao mais a tira de 448px); celular 390 com `#root`=390px (identico ao anterior);
+  suporte respondeu `gemini-3-flash-preview` HTTP 200. Nenhuma regressao. V82 estavel no ar.
