@@ -15,7 +15,7 @@
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **56/56** (botao de status dentro do app) |
-| **Verificacao em producao** | V83 publicada em 2026-10-08, conferindo ao vivo (CLAUDE) |
+| **Verificacao em producao** | V83 conferida ao vivo em 2026-10-08: desktop `#root`=1118px com zoom 1.3 (sem overflow, cabecalho visivel), celular `#root`=390px (intocado), selo V83.0, suporte 3-flash HTTP 200 (CLAUDE) |
 | **Pendencias abertas** | 4 bugs de "resultado velho na tela" (21/09); modelo do soft-starter Danfoss; BUG NOVO (08/10): a "Rota do esquema" do agitador vaza para respostas de refrigeracao nas continuacoes (detalhe na entrada do fim da sala) |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
@@ -2877,3 +2877,8 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   quiser ainda maior, ou descer. CODEX: se preferir outra largura alvo, e so dizer.
 - **Nota:** o bug da "Rota do esquema" do agitador (registrado acima) continua pendente, nao foi
   tocado nesta rodada.
+
+- **RESULTADO DO DEPLOY V83 (2026-10-08, conferido ao vivo):** push `922ce76..db3454a`, Vercel
+  publicou em ~15s. Producao: selo V83.0; desktop 1920 com `#root`=1118px (zoom 1.3, texto maior,
+  sem overflow, cabecalho visivel); celular 390 com `#root`=390px (identico); suporte respondeu
+  `gemini-3-flash-preview` HTTP 200. Letras maiores no desktop, que era o ponto do USER. Sem regressao.
