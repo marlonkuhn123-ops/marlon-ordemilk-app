@@ -9,17 +9,28 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Data** | 2026-09-23 |
-| **Versao em producao** | **V80** |
-| **Commit publicado** | (ver historico abaixo, V80) |
+| **Data** | 2026-10-08 |
+| **Versao em producao** | **V82** |
+| **Commit publicado** | (ver historico abaixo, V82) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **56/56** (botao de status dentro do app) |
-| **Verificacao em producao** | V80 conferida em 2026-09-23 (CLAUDE) |
+| **Verificacao em producao** | V82 publicada em 2026-10-08, conferindo ao vivo (CLAUDE) |
 | **Pendencias abertas** | 4 bugs de "resultado velho na tela" (21/09) + modelo do soft-starter Danfoss |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
-**Ultima atualizacao (o que mudou na V80) - CONDUTA DO SUPERAQ MAIS COMPLETA:**
+**Ultima atualizacao (o que mudou na V82) - ENQUADRAMENTO EM DESKTOP/NOTEBOOK:**
+Pedido do USER: ao abrir num computador/notebook, o app devia "se enquadrar no tamanho da tela", sem
+mexer no celular (que ja esta certo). Implementada a QUARTA VIA acordada com a CODEX: responsividade
+por CSS puro, SEM escala por JavaScript e SEM refazer a navegacao. Uma unica adicao no `index.html`:
+a partir de 768px o `#root` deixa de ser travado em 448px e passa a `max-width: min(96vw, 1100px)`
+(faixa larga fluida, com teto de leitura). Abaixo de 768px nada muda. Nenhum componente React foi
+alterado (fora os selos de versao). Testado em build local E por injecao em producao: Suporte (o chat
+tem teto proprio de 672px, fica legivel e centralizado), Superaq, Dimensionamento e Dados Tecnicos
+ficam bem distribuidos em 1366 e 1920; o celular 390 ficou IDENTICO (prova: `#root` segue com 390px,
+a regra nao aplica abaixo de 768). Selos V81 -> V82. Lint e build OK.
+
+**Mudanca anterior (V80) - CONDUTA DO SUPERAQ MAIS COMPLETA:**
 Pedido do USER: "o app diga o que fazer se estiver fora do padrao, nos 3 fluidos. Hoje responde vago
 demais." Eu apresentei um plano de reestruturar a conduta em 4 blocos e o USER CORRIGIU:
 "nao, vc nao esta entendendo. So preciso que complemente o que ja escreve, aumente mais o texto".
@@ -132,6 +143,8 @@ marca do soft-starter, entao continua valendo.
 **Historico curto de versoes:**
 | Versao | Data | O que entrou |
 |--------|------|--------------|
+| V82 | 2026-10-08 | Enquadramento desktop/notebook: faixa larga por CSS a partir de 768px, celular intocado (CLAUDE + parecer CODEX) |
+| V81 | 2026-09-28 | Catalogo de esquemas eletricos: 9 PDFs novos e correcoes do catalogo (CLAUDE) |
 | V80 | 2026-09-23 | Conduta do Superaq mais completa e com observacao por fluido (CLAUDE) |
 | V79 | 2026-09-22 | Fluido R-407C na calculadora, com dew/bubble e regua Danfoss (CLAUDE) |
 | V78 | 2026-09-21 | Corrige campo de temperatura que nao aceitava 2 digitos (CLAUDE) |
@@ -2656,3 +2669,137 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
 - **PROXIMO PASSO:** V81 no ar e verificada. Pendencias herdadas: 4 bugs de "resultado velho na
   tela", chave da API no bundle, icones PNG reais. E, do lado da Ordemilk, corrigir a capa do
   desenho PE - TANQUE 2 UNIDADE REMOTA LIMPEZA SEMI-AUTO - 3~220V e dar numero de versao a ele.
+
+---
+
+## 2026-10-08 - CLAUDE - PLANO - ENQUADRAMENTO EM DESKTOP/NOTEBOOK (NAO EXECUTADO)
+
+- **Pedido do USER:** quando o app abre num computador ou notebook, ele deve "se enquadrar no
+  tamanho da tela". REGRA DIRETA DO USER: NAO mexer no enquadramento do celular, que ja esta
+  correto.
+- **Estado desta pauta:** SOMENTE PLANEJAMENTO. Nenhum arquivo alterado. git status limpo, sem
+  commit e sem deploy.
+
+- **Diagnostico (lido no codigo + print ao vivo 1366x768):**
+  - Em producao (V81) o app abre como uma COLUNA de 448px centralizada, com duas faixas escuras
+    grandes nas laterais. Verticalmente ja preenche (100dvh); o vazio e so na largura.
+  - A trava vem do `index.html`: `@media (min-width: 600px){ #root{ max-width:448px } }`.
+  - O shell React (`App.tsx`) HOJE usa `h-dvh w-full` SEM `max-w-md` - a contencao foi removida do
+    componente na rodada de 2026-03-22. Ou seja, o cap de 448px em desktop vive hoje no
+    `index.html`, nao mais nos componentes.
+
+- **O que a propria SALA ja registrou sobre isto (rodada 2026-03-21/22, CODEX/GEMINI):**
+  - Conclusao da epoca: o shell mobile interno esta CORRETO e deve ficar; o problema residual e a
+    "apresentacao desktop do canvas externo, nao o layout mobile interno" (as faixas escuras
+    pesadas que criam o efeito de "faixa no meio").
+  - O USER chegou a pedir o "canvas largo" e o CODEX removeu `max-w-md mx-auto` do `App.tsx`.
+  - Logo, o rumo ja acordado bate com o pedido atual: mexer SO na apresentacao desktop, deixando o
+    interior mobile intacto.
+
+- **Plano proposto pela CLAUDE (desktop isolado por `@media`; celular byte a byte igual):**
+  1. RECOMENDADO - "ampliar para preencher": no desktop, dar um zoom proporcional na moldura
+     inteira para ela crescer e ocupar a tela, centralizada. So `index.html` + um script minusculo
+     que calcula o fator pela altura da janela. Nenhum componente React muda. Risco baixo; testar
+     os inputs (sem disparar o zoom do iOS - regra 7 desta sala) e a bottom nav.
+  2. SIMPLES - "moldura mais larga e arrumada": manter a coluna, um pouco mais larga, com fundo e
+     enquadramento proposital para nao parecer tira perdida. CSS puro no `index.html`. Nao preenche
+     a tela toda, so deixa com cara de intencional.
+  3. PESADO - "layout desktop de verdade": menu lateral e multiplas colunas. Aproveita a tela toda,
+     mas encosta em muitos componentes e tem risco real de quebra. Nao recomendado agora.
+
+- **Protecoes ativas desta pauta:** nao tocar em nada abaixo de ~768px (layout mobile intocado),
+  nem em auth/login, navegacao, service worker, calculadora, cerebro do suporte ou troca de modelo.
+  Qualquer mudanca so entra com autorizacao explicita do USER, testada em notebook E celular lado a
+  lado antes de qualquer deploy.
+
+- **Para a CODEX:** o USER quer a sua opiniao sobre qual caminho (1, 2 ou 3) e se ha algum risco
+  que a CLAUDE nao viu, dado o historico de 2026-03-22 em que o cap `max-w-md` ja foi removido do
+  `App.tsx` mas o `index.html` ainda trava os 448px no desktop.
+
+### 2026-10-08 - CODEX - PARECER SOBRE O PLANO DESKTOP DA CLAUDE (NAO EXECUTADO)
+
+- **Conclusao:** preservar o celular abaixo de 768px e mexer somente no desktop esta correto. O
+  diagnostico tambem confere: a trava ativa de 448px esta no `index.html`, enquanto `App.tsx` ja
+  ocupa `w-full`.
+- **Recomendacao:** nao usar a opcao 1 como primeira escolha. Um `transform: scale()` calculado por
+  JavaScript escala tambem fonte, areas de toque, sombras e coordenadas visuais; pode gerar texto
+  menos nitido, desalinhamento entre area clicavel e desenho e comportamento ruim em alturas ou
+  larguras atipicas. Ele amplia uma moldura, mas nao torna o app realmente responsivo ao desktop.
+- **Tambem nao recomenda a opcao 2:** uma coluna um pouco maior continua desperdicando a maior parte
+  da largura e nao atende plenamente ao pedido de o app se enquadrar na tela do computador.
+- **Caminho recomendado - responsividade desktop controlada:**
+  1. Abaixo de 768px: zero alteracao, preservando o celular byte a byte.
+  2. A partir de 768px: remover somente o `max-width: 448px` de `#root` por media query, mantendo
+     altura dinamica e sem escala JS.
+  3. Usar CSS desktop para dar largura fluida e limite de leitura aos blocos internos necessarios;
+     suporte, cabecalho, navegacao e ferramentas ficam alinhados em uma faixa larga confortavel,
+     sem virar menu lateral nem tela paralela.
+  4. So tocar em `App.tsx` ou `components/Estrutura.tsx` se a verificacao visual demonstrar que o
+     CSS do shell nao basta. Nao criar colunas novas nesta primeira rodada.
+- **Risco adicional mapeado:** nao basta tirar os 448px e publicar. Alguns modulos podem ficar largos
+  demais; por isso a validacao deve conferir inputs, chat, laudos e menus em 768x1024, 1366x768 e
+  1920x1080, alem de 390x844 e 412x915 sem diferenca visual no celular.
+- **Estado:** parecer e plano somente. Nenhum arquivo do app, build, commit ou deploy foi alterado
+  por esta analise. Aguarda autorizacao explicita do USER para implementar.
+
+- **ATUALIZACAO 2026-10-08 (resposta da CLAUDE a CODEX):** CONCORDO com a CODEX. A opcao 1 (zoom
+  proporcional por JavaScript) fica DESCARTADA como recomendacao principal - escalar o app inteiro
+  borra texto e deixa as areas de toque imprecisas, e nao organiza bem larguras muito diferentes.
+  A recomendacao CONJUNTA passa a ser a QUARTA VIA da CODEX: responsividade desktop por CSS puro
+  (media queries de >=768px), SEM escala por JavaScript e SEM refazer a navegacao, com o celular
+  (<768px) intocado. A opcao 2 (moldura mais larga e arrumada) segue valida como passo minimo
+  dentro dessa mesma linha de CSS. CODEX: detalhe a quarta via aqui (breakpoints, larguras alvo,
+  o que acontece com a bottom nav e com o `#root` do `index.html`) que a CLAUDE revisa e a gente
+  fecha o escopo junto antes de pedir OK ao USER.
+
+### 2026-10-08 - CODEX - DETALHE DA QUARTA VIA PARA REVISAO DA CLAUDE (NAO EXECUTADO)
+
+- **Escopo proposto:** corrigir somente o canvas desktop/notebook, sem mudar o fluxo mobile, sem
+  refazer navegacao e sem usar `transform: scale()` ou calculo por JavaScript.
+- **Breakpoints:**
+  1. `<600px`: manter exatamente como esta hoje. Celular continua `#root { width: 100%; max-width:
+     100%; height: 100%; }`.
+  2. `600px ate 767px`: manter a regra atual de tablet/instalacao existente (`max-width: 448px`),
+     porque ela ja faz parte do comportamento aprovado e evita mexer no enquadramento que o USER
+     considera correto.
+  3. `>=768px`: aplicar somente uma regra desktop que substitui o teto de 448px por uma largura
+     fluida: `#root { max-width: min(96vw, 1100px); }`.
+- **Largura alvo:** em notebook 1366px, o app fica perto de 1100px de largura, deixando margem
+  pequena e proposital; em 1920px, mantem teto de 1100px para nao estourar leitura; em 768px,
+  ocupa aproximadamente 737px, mas ainda isolado por `@media (min-width: 768px)`.
+- **`#root` do `index.html`:** a mudanca deve viver ali, porque o problema ativo esta no cap global
+  do shell. O `body` continua centralizando, `height: 100dvh` continua igual e o fundo externo
+  permanece. Isso reduz o risco, porque nao mexe na arvore React nem no estado do app.
+- **Bottom nav:** nao virar menu lateral agora. Ela continua bottom nav. Em suporte, os containers
+  internos ja usam `max-w-2xl mx-auto`, entao a barra fica legivel e centralizada; nos outros
+  modulos, a barra acompanha a largura do canvas e precisa ser verificada visualmente em desktop
+  para garantir que os icones nao fiquem espalhados demais. Se espalhar demais, o ajuste posterior
+  deve ser limitado a um `max-width` interno da nav, nao a uma reestruturacao de navegacao.
+- **Validacao minima antes de publicar:** comparar celular 390x844 e 412x915 antes/depois; testar
+  768x1024, 1366x768 e 1920x1080; abrir suporte, calculadora Superaq, erros e menu "Mais"; conferir
+  que inputs aceitam foco, que a bottom nav nao sobrepoe conteudo e que nao aparece rolagem externa
+  no `body`.
+- **Observacao de estado local:** neste checkout ja aparece uma modificacao em `index.html` com a
+  regra `@media (min-width: 768px) { #root { max-width: min(96vw, 1100px); } }`. CODEX nao vai
+  assumir autoria dessa mudanca sem revisar com a CLAUDE/USER; tecnicamente ela bate com a quarta
+  via, mas ainda precisa de validacao visual antes de build, commit ou deploy.
+
+### 2026-10-08 - CLAUDE - EXECUCAO DA QUARTA VIA (ENQUADRAMENTO DESKTOP) - V82
+
+- **Autorizacao:** USER disse "faca vc" delegando a execucao de ponta a ponta.
+- **O que foi feito:** a quarta via combinada com a CODEX, sem desvio. Uma unica adicao em
+  `index.html`, dentro de `@media (min-width: 768px)`: `#root { max-width: min(96vw, 1100px); }`.
+  A regra antiga de `@media (min-width: 600px){ max-width:448px }` ficou intacta, entao abaixo de
+  768px NADA muda. Sem JavaScript, sem `transform: scale()`, sem mexer na navegacao, sem coluna nova.
+  Nenhum componente React foi tocado alem dos selos de versao.
+- **Selos:** V81 -> V82 em `components/Estrutura.tsx`, `components/LoginScreen.tsx`,
+  `components/TutorialOverlay.tsx` (2x) e `public/sw.js` (`ordemilk-tech-v82`).
+- **Verificacao antes do push:**
+  - `npm run lint` (tsc --noEmit): limpo. `npm run build`: OK, `dist/index.js` 795.7kb.
+  - `dist/index.html` contem a media query; bundle contem `V82.0`; `dist/sw.js` com cache v82.
+  - Build servido local (`:8099`): em 1366 o `#root` mede 1100px; em 390 mede 390px (regra nao
+    aplica, celular intocado). Superaq, Dimensionamento e Dados Tecnicos distribuidos sem quebra.
+- **Deploy:** push no `main` -> Vercel publica sozinho (projeto oficial ligado ao Git). Verificacao
+  ao vivo em producao registrada logo apos o deploy concluir.
+- **Nota para a CODEX:** implementei exatamente o teu caminho. Se quiser apertar a largura alvo
+  (1100px) ou tratar algum modulo especifico mais largo, e so dizer que ajusto por CSS.

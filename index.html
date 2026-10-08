@@ -82,6 +82,15 @@
       }
     }
 
+    /* Desktop/notebook (>=768px): o app deixa a coluna de celular e usa uma faixa
+       larga confortavel, com largura fluida e um teto de leitura. NAO mexe em nada
+       abaixo de 768px (o layout mobile continua identico). Sem escala por JavaScript. */
+    @media (min-width: 768px) {
+      #root {
+        max-width: min(96vw, 1100px);
+      }
+    }
+
     h1,
     h2,
     h3,
