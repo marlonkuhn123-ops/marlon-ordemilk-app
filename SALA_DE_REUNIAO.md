@@ -16,7 +16,7 @@
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **56/56** (botao de status dentro do app) |
 | **Verificacao em producao** | V82 conferida ao vivo em 2026-10-08: desktop `#root`=1100px, celular `#root`=390px (intocado), selo V82.0, suporte 3-flash HTTP 200 (CLAUDE) |
-| **Pendencias abertas** | 4 bugs de "resultado velho na tela" (21/09) + modelo do soft-starter Danfoss |
+| **Pendencias abertas** | 4 bugs de "resultado velho na tela" (21/09); modelo do soft-starter Danfoss; BUG NOVO (08/10): a "Rota do esquema" do agitador vaza para respostas de refrigeracao nas continuacoes (detalhe na entrada do fim da sala) |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
 **Ultima atualizacao (o que mudou na V82) - ENQUADRAMENTO EM DESKTOP/NOTEBOOK:**
@@ -2808,3 +2808,36 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   Vercel publicou em ~15s. Em producao: login e selo "TECH V82"/V82.0; desktop 1366 com `#root`=1100px
   (faixa larga, nao mais a tira de 448px); celular 390 com `#root`=390px (identico ao anterior);
   suporte respondeu `gemini-3-flash-preview` HTTP 200. Nenhuma regressao. V82 estavel no ar.
+
+### 2026-10-08 - CLAUDE - TESTE AO VIVO DO SUPORTE (V81) + BUG ENCONTRADO (NAO CORRIGIDO)
+
+- **Contexto:** antes do trabalho de layout, o USER pediu para testar o app e ver como anda o
+  funcionamento. Teste ao vivo em `https://ordemilk.vercel.app` (ainda V81), 3 perguntas encadeadas
+  no Suporte, capturando modelo, HTTP e resposta.
+- **O que esta SAUDAVEL:**
+  - Deploy certo (`index.js` V81), console so com o aviso conhecido do Tailwind CDN.
+  - Cadencia de modelos correta: 1a resposta `gemini-3-flash-preview`, continuacoes
+    `gemini-3.1-pro-preview`. **Todas HTTP 200** (creditos ativos, IA respondendo de verdade).
+  - Diagnosticos bons: (1) agitador 10 mil -> rota YE -> RL6/RL18 -> contatora -> DM -> A1/A2;
+    (2) R-404A com Sup.Aque 18 / Sub.Res 2 e succao baixa -> falta de fluido/vazamento, mandou NAO
+    mexer na valvula de expansao (certo pela matriz); (3) contatora chaveando -> ligou o curto-ciclo
+    ao pressostato de baixa por falta de gas e ainda deu a alternativa eletrica (queda de tensao).
+
+- **BUG ENCONTRADO (confirmado no codigo, AINDA NAO CORRIGIDO):**
+  Nas respostas 2 e 3 (refrigeracao, continuacoes) apareceu grudado no fim o bloco deterministico
+  **"Rota do esquema: CLP Panasonic saida YE -> ... -> motor do agitador"**, que e a rota ELETRICA
+  do AGITADOR. Nessas perguntas (carga de R-404A e compressor) isso nao tem nada a ver e confunde.
+  - **Causa raiz:** em `services/geminiService.ts:658`, o stream chama
+    `ensureElectricalSchematicRoute(contractedText, fullConversationText, mode, diagnosticContext)`.
+    O 2o argumento e a CONVERSA INTEIRA. Nas continuacoes ela ainda contem a pergunta 1 (agitador,
+    eletrica), entao `analyzeSupportCase` detecta "sinal eletrico" e reanexa a rota do agitador em
+    TODA resposta seguinte, mesmo nas puramente frigorificas. Numa conversa so de refrigeracao, do
+    zero, o bug nao aparece - so depois de uma pergunta eletrica na mesma conversa.
+  - **Correcao sugerida (nao executada):** analisar SO o turno atual do tecnico (ou o texto da
+    resposta atual) em vez de `fullConversationText`, anexando a rota apenas quando a pergunta/
+    resposta daquele momento for de fato eletrica. Travar com um caso novo em `services/testSuite.ts`.
+  - **Impacto:** contido - nao quebra nada, nao gasta credito a mais; so suja a resposta. Fica como
+    PENDENCIA para decisao do USER (quem corrige: CLAUDE ou CODEX).
+
+- **Estado:** somente teste e registro. Nenhuma alteracao de codigo foi feita por esta pauta (o
+  trabalho de layout V82 registrado acima e outra coisa, e foi autorizado em separado).
