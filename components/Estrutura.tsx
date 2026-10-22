@@ -65,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({ isOnline, onStartTutorial, compa
                             aria-label="Status do sistema"
                         >
                             {compact && <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-[#18e07a]' : 'bg-red-200'}`}></span>}
-                            <span className="text-[9px] font-black leading-none">{compact ? 'V83.0' : (isOnline ? 'ON' : 'OFF')}</span>
+                            <span className="text-[9px] font-black leading-none">{compact ? 'V84.0' : (isOnline ? 'ON' : 'OFF')}</span>
                             {!compact && <span className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full border border-[#263243] ${isOnline ? 'bg-[#00ff88]' : 'bg-red-200'}`}></span>}
                         </button>
                     </div>
@@ -131,7 +131,6 @@ export const BottomNav: React.FC<{ activeView: ViewState; setView: (view: ViewSt
                     <NavItem id={ViewState.DIAGNOSTIC} icon="fa-solid fa-headset" label="Suporte" isActive={activeView === ViewState.DIAGNOSTIC} onClick={(v) => { setView(v); setIsMenuOpen(false); }} compact={compact} />
                     <NavItem id={ViewState.ERRORS} icon="fa-solid fa-triangle-exclamation" label="Erros" isActive={activeView === ViewState.ERRORS} onClick={(v) => { setView(v); setIsMenuOpen(false); }} compact={compact} />
                     <NavItem id={ViewState.CALCULATOR} icon="fa-solid fa-calculator" label="Superaq" isActive={activeView === ViewState.CALCULATOR} onClick={(v) => { setView(v); setIsMenuOpen(false); }} compact={compact} />
-                    <NavItem id={ViewState.COURSE} icon="fa-solid fa-chalkboard-user" label="Curso" isActive={activeView === ViewState.COURSE} onClick={(v) => { setView(v); setIsMenuOpen(false); }} compact={compact} />
 
                     <button
                         onClick={() => setIsMenuOpen(!isMenuOpen)}

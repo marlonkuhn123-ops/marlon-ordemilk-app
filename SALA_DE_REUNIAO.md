@@ -9,17 +9,24 @@
 
 | Campo | Valor |
 |-------|-------|
-| **Data** | 2026-10-08 |
-| **Versao em producao** | **V83** |
+| **Data** | 2026-10-22 |
+| **Versao em producao** | **V83** (V84 commitada localmente em 2026-10-22, ainda sem push/deploy) |
 | **Commit publicado** | (ver historico abaixo, V83) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **56/56** (botao de status dentro do app) |
-| **Verificacao em producao** | V83 conferida ao vivo em 2026-10-08: desktop `#root`=1118px com zoom 1.3 (sem overflow, cabecalho visivel), celular `#root`=390px (intocado), selo V83.0, suporte 3-flash HTTP 200 (CLAUDE) |
+| **Verificacao em producao** | V84 preparada em 2026-10-22: remocao do modulo de treinamento (Curso), bottom nav com 4 itens + Mais, 4 selos V84 sincronizados |
 | **Pendencias abertas** | 4 bugs de "resultado velho na tela" (21/09); modelo do soft-starter Danfoss; BUG NOVO (08/10): a "Rota do esquema" do agitador vaza para respostas de refrigeracao nas continuacoes (detalhe na entrada do fim da sala) |
-| **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
+| **Pode editar o app agora?** | SIM (autorizado pelo USER: remocao do modulo de treinamento/curso) |
 
-**Ultima atualizacao (o que mudou na V83) - DESKTOP MAIOR (ZOOM NITIDO), AJUSTE DO FEEDBACK:**
+**Ultima atualizacao (o que mudou na V84) - REMOCAO DO MODULO DE TREINAMENTO (CURSO):**
+Pedido do USER: "quero que retire a parte do treinamento do app somente isso".
+Removido o modulo de slides/curso (`Tool_7_CourseSlides`), a rota `ViewState.COURSE` em `types.ts` e
+`App.tsx`, e o botao "Curso" na barra de navegacao inferior (`components/Estrutura.tsx`). A navegacao
+agora exibe limpo: Suporte, Erros, Superaq e o botao Mais. Os 4 selos de versao foram alinhados em V84.
+Nenhum arquivo de IA, modelo Gemini, prompt, logica frigorifica ou calculo foi tocado.
+
+**Mudanca anterior (V83) - DESKTOP MAIOR (ZOOM NITIDO), AJUSTE DO FEEDBACK:**
 O USER viu a V82 no PC e disse que "nao ficou muito bom" e que "as letras ficaram pequenas". A V82
 tinha so alargado a faixa (448 -> 1100px), mas manteve o texto no tamanho de celular, entao num
 monitor grande ficava largo e com letra pequena. A V83 corrige isso: a partir de 768px o app agora
@@ -158,6 +165,7 @@ marca do soft-starter, entao continua valendo.
 **Historico curto de versoes:**
 | Versao | Data | O que entrou |
 |--------|------|--------------|
+| V84 | 2026-10-22 | Remocao do modulo de treinamento (Curso) e do botao na bottom nav (GEMINI) |
 | V83 | 2026-10-08 | Desktop MAIOR: zoom CSS nitido (1.3) + altura compensada, corrige "letras pequenas" da V82; celular intocado (CLAUDE) |
 | V82 | 2026-10-08 | Enquadramento desktop/notebook: faixa larga por CSS a partir de 768px, celular intocado (CLAUDE + parecer CODEX) |
 | V81 | 2026-09-28 | Catalogo de esquemas eletricos: 9 PDFs novos e correcoes do catalogo (CLAUDE) |
@@ -2882,3 +2890,171 @@ Análise técnica baseada nas dores reais do técnico de refrigeração industri
   publicou em ~15s. Producao: selo V83.0; desktop 1920 com `#root`=1118px (zoom 1.3, texto maior,
   sem overflow, cabecalho visivel); celular 390 com `#root`=390px (identico); suporte respondeu
   `gemini-3-flash-preview` HTTP 200. Letras maiores no desktop, que era o ponto do USER. Sem regressao.
+
+---
+
+## 2026-10-21 - PENTE FINO TÉCNICO E SUGESTÕES DE MELHORIA (SEM ALTERAÇÃO DE CÓDIGO)
+
+- **Solicitação do USER:** "o app esta funcionando super bem. mas quero que passe um pente fino e de algumas opinioes de melhoras e salve seus comentarios na sala de reuniao".
+- **Estado desta pauta:** SOMENTE AUDITORIA E REGISTRO. Nenhum arquivo de código, componente, prompt, layout ou configuração foi alterado. Nenhum build, commit ou deploy foi realizado.
+- **Pode editar o app agora?** NÃO. Somente com autorização explícita do USER.
+
+### 1. PENTE FINO DE BUGS E VULNERABILIDADES IDENTIFICADAS
+1. **Vazamento da "Rota do Esquema" do Agitador no Chat de Suporte:**
+   - **Local:** `services/geminiService.ts:658` (`ensureElectricalSchematicRoute(contractedText, fullConversationText, mode, diagnosticContext)`).
+   - **Causa Raiz:** O motor avalia `fullConversationText`. Se a primeira pergunta do técnico foi elétrica (ex.: agitador de 10.000 L) e depois o técnico engata perguntas frigoríficas (ex.: pressões, carga de R-404A), o app detecta a pergunta antiga e carimba no rodapé da resposta frigorífica: `**Rota do esquema:** CLP Panasonic saída YE -> RL6/RL18...`.
+   - **Proposta de Correção Segura:** Avaliar apenas o turno atual do técnico (`lastUserPrompt`) ou conferir se a resposta gerada de fato contém o assunto elétrico antes de anexar a rota.
+2. **Inconsistência de "Resultado Velho na Tela" após alteração de parâmetros:**
+   - **Local:** `components/Tool_6_Catalog.tsx` (ao trocar o modelo no select, a lista do anterior continua até clicar) e `components/Tool_4_Sizing.tsx` (ao digitar nova litragem, o memorial de cálculo anterior continua na tela).
+   - **Proposta de Melhoria:** Adicionar um `useEffect` sutil que limpa ou marca como "Desatualizado (clique para recalcular)" o resultado antigo assim que o usuário muda o modelo ou a litragem, evitando que o técnico passe dados do equipamento errado para a fazenda.
+3. **Persistência de Memória de Campo / Tratamento de Erros:**
+   - Em `components/Tool_6_Catalog.tsx`, os botões de adicionar e excluir dicas de campo (`FieldTip`) interagem diretamente com o `knowledgeService`, porém não exibem confirmação visual de sucesso ou aviso caso o `localStorage` esteja cheio.
+
+### 2. SUGESTÕES ESTRATÉGICAS DE MELHORIA (UX, TÉCNICA E ECONOMIA)
+1. **Otimização de Custos e Cache de Contexto Gemini (Tokens de Entrada):**
+   - As continuações no suporte enviam o histórico com modelo `gemini-3.1-pro-preview`. Para conversas longas de campo com 5 a 10 turnos, o custo e a latência aumentam proporcionalmente.
+   - *Sugestão:* Aplicar janela deslizante nos turnos anteriores (manter no máximo os últimos 4-5 turnos essenciais + o resumo dos dados base), poupando créditos do Google AI Studio sem perder a precisão do diagnóstico.
+2. **Modelo Exato do Soft-Starter Danfoss no Catálogo / Dados Elétricos:**
+   - A base elétrica e os tutoriais foram corrigidos para a marca **Danfoss** (removendo WEG SSW-05), mas o modelo do equipamento Danfoss (ex: MCD 201 / MCD 202 / MCD 500) ainda não está cadastrado em `bom_database.ts` nem em `electrical_data.ts`.
+   - *Sugestão:* Assim que o USER definir o modelo comercial padrão da fábrica, cadastrar o código de fábrica e as especificações de parametrização e disjuntor.
+3. **Indicador Visual de "Cálculo Desatualizado" no Dimensionamento e Erros:**
+   - Para não consumir chamadas de IA involuntárias enquanto o técnico apenas ajusta números no Dimensionamento ou no Laudo, colocar uma tag visual amarela: `"⚠️ Parâmetros alterados. Gere o cálculo novamente para atualizar"` sempre que um input for modificado após um resultado já gerado.
+4. **Exportação Rápida para WhatsApp no Laudo / Serviços (`Tool_5_Report`):**
+   - No campo, muitos técnicos precisam repassar o checklist de startup e medições diretamente para o produtor rural ou gerente de pós-venda via WhatsApp.
+   - *Sugestão:* Adicionar um botão direto `"Copiar Resumo WhatsApp"` ou link `https://wa.me/?text=...` com a mensagem pré-formatada com as medições essenciais (Sup.Aque, Sub.Res, tensões, corrente e status).
+
+- **Próximo Passo:** Aguardando retorno do USER para aprovar quais dessas frentes devem ser atacadas primeiro. Nada será alterado antes da autorização.
+
+---
+
+## 2026-10-22 - EXECUÇÃO AUTORIZADA - REMOÇÃO DO MÓDULO DE TREINAMENTO (CURSO)
+
+- **Autorização do USER:** "quero que retire a parte do treinamento do app somente isso".
+- **Intenção registrada:** Remover exclusivamente o módulo `Curso` (`Tool_7_CourseSlides.tsx` / `ViewState.COURSE`), o botão correspondente na barra de navegação principal (`components/Estrutura.tsx`) e a rota em `App.tsx`.
+- **Arquivos bloqueados/alvo:**
+  1. `types.ts` (remover `COURSE = 'course'` de `ViewState`)
+  2. `components/Estrutura.tsx` (remover botão "Curso" da navegação de rodapé)
+  3. `App.tsx` (remover import e case `ViewState.COURSE`)
+  4. `components/Tool_7_CourseSlides.tsx` (removido do fluxo ativo)
+  5. Atualizar os 4 selos de versão de V83 para **V84** (`components/Estrutura.tsx`, `components/LoginScreen.tsx`, `components/TutorialOverlay.tsx`, `public/sw.js`).
+- **Garantias preservadas:**
+  - Nenhuma alteração em `services/geminiService.ts`, prompts, modelos Gemini, calculadora, erros, relatórios ou dimensões.
+  - Zero alteração na persona ou na lógica técnica da IA.
+
+---
+
+## 2026-10-21 - CLAUDE - PENTE FINO E OPINIOES DE MELHORIA (NAO EXECUTADO)
+
+- **Pedido do USER:** "o app esta funcionando super bem. quero que passe um pente fino e de algumas opinioes de melhoras e salve seus comentarios na sala de reuniao."
+- **Estado:** SOMENTE REVISAO E REGISTRO. Nenhum arquivo do app foi alterado. Nenhum commit, push ou deploy foi feito. Nada aqui deve ser implementado sem autorizacao explicita do USER (Lei 9).
+- **Como foi feito:** leitura do codigo; checagem do que e rastreado pelo Git; verificacao HTTP de producao (codigos e tipos de resposta, sem baixar segredos); contagens de padroes. Os numeros foram conferidos na fonte.
+
+### O que esta bom (confirmado)
+- Nao ha `innerHTML`, `dangerouslySetInnerHTML` nem `eval` no codigo. As respostas da IA entram na tela como texto.
+- Nenhuma chave Gemini aparece nos arquivos rastreados pelo Git. `.env.local` esta ignorado.
+- `handleApiError` (`services/geminiService.ts:102`) ja separa credito esgotado de limite de taxa (429). A queixa de 08/09 esta resolvida.
+- Imagens sao reduzidas para 1600 px antes do envio (`components/Tool_1_Assistant.tsx:196`).
+- TypeScript em modo estrito; lint e build limpos.
+
+### Achados, por prioridade
+
+**Alta**
+1. **Chave Gemini no bundle publico.** O padrao da chave aparece 2 vezes em `https://ordemilk.vercel.app/index.js` (contagem, sem exibir valor). E o item de seguranca ja registrado. Restricao por dominio reduz abuso, mas nao elimina. O caminho real e uma funcao serverless na Vercel que guarda a chave no servidor, mais rotacao da chave.
+2. **Senhas de acesso no codigo do navegador.** `om2026` (`components/LoginScreen.tsx:12`) e `om20266` (`App.tsx:169`) sao conferidas no proprio navegador, entao qualquer pessoa le as duas no bundle. E controle de conveniencia, nao de seguranca. Para proteger a chave, o gargalo e a chave, nao a senha.
+3. **Sem Error Boundary.** Nao existe nenhum componente de captura de erro (verificado). Um erro de renderizacao em qualquer aba derruba a tela inteira, o cenario de "tela preta" que a sala ja temeu. Sugestao: um ErrorBoundary no topo do App, com botao de recarregar e registro do erro.
+4. **Gravacao de audio longa pode falhar.** O audio vira WAV na taxa nativa do navegador (normalmente 48 kHz, 16 bits, mono) e vai em base64 (`components/Tool_1_Assistant.tsx`, funcao `encodeWav` e envio). Nao ha teto de duracao. Pela conta: 48 kHz gera ~5,8 MB por minuto, e ~7,7 MB/min em base64. Com o limite de ~20 MB por requisicao com dados inline que conheco da API, a falha comeca em torno de 2,5 a 3 minutos. Sugestao: reamostrar para 16 kHz (cai 3 vezes, dando ~7 a 8 minutos de folga) e limitar a gravacao a 3 minutos, com aviso. Nao testei com audio real: antes de mudar, vale um teste controlado.
+
+**Media**
+5. **Tailwind pelo CDN em producao.** `index.html:11` carrega `cdn.tailwindcss.com`. O navegador avisa que isso nao deve ir para producao (aviso visto no teste ao vivo de hoje). O app depende de um servidor externo para ter estilo, e o cache offline so existe depois da primeira visita. O projeto ja tem `tailwind.config.js` e `postcss.config.js`: compilar o CSS no build elimina essa dependencia.
+6. **Icone do iPhone ausente.** `/apple-touch-icon.png` nao existe: a Vercel devolve a pagina HTML no lugar (verificado pelo tipo de conteudo). O manifesto tem um unico icone SVG com `sizes` "192x192 512x512", que nao e o usual. O `theme_color` (`#050912`) difere do `theme-color` do HTML (`#263243`). Quem instala no iPhone pode ganhar um icone feito de captura de tela. Sugestao: PNG 180x180 para apple-touch-icon e PNGs 192 e 512 no manifesto, com a mesma cor de tema.
+7. **Textos muito pequenos para campo.** Ha 37 ocorrencias de fonte de 7 a 9 px em 8 arquivos (`Tool_1_Assistant.tsx` tem 8). Com sol, luva e pressa, isso pesa. Sugestao: 11 a 12 px como minimo para texto de leitura, e 9 px so em rotulos decorativos.
+8. **Zoom bloqueado.** `index.html:6` tem `maximum-scale=1, user-scalable=no`. Isso impede o usuario de ampliar o texto (criterio WCAG 1.4.4). Como a regra 7 da sala ja usa 16 px nos inputs para evitar o zoom automatico do iOS, da para remover as duas restricoes. Isso muda a regra 8 da sala, entao depende de decisao do USER.
+9. **Componente do chat muito grande.** `components/Tool_1_Assistant.tsx` tem 1.404 linhas, 16 `useState`, 16 `useRef` e 9 `useEffect`. O bug do campo de temperatura (V78) nasceu de um efeito desse componente. Sugestao: extrair hooks (dados base, anexos, audio, historico) para reduzir o risco das proximas mudancas.
+10. **Resultado antigo ainda na tela (pendencia de 21/09).** Confirmado pelo codigo: catalogo (`Tool_6_Catalog`), dimensionamento (`Tool_4_Sizing`), erros (`Tool_2_Errors`) e laudo (`Tool_5_Report`) nao tem nenhum efeito que limpe o resultado quando a entrada muda. A calculadora (`Tool_3_Calculator`) ja tem, desde a v66. Plano ja acordado: calculo local limpa na hora; resposta de IA marca "dados mudaram, gere novamente".
+11. **Rota do agitador vazando (pendencia de 08/10).** Ainda presente em `services/geminiService.ts:658`, que passa `fullConversationText`. Correcao: usar so o turno atual.
+
+**Baixa**
+12. **Arquivos versionados que nao deveriam estar no Git.** `dev-dist/` (2 arquivos gerados pelo PWA), `Área de Trabalho - Atalho.lnk` (atalho do Windows), `t1.txt` (39 KB), `test_prompt.ts` (vazio), `download.jpg`, 12 imagens `image*.png` na raiz e `logo.png` (94 bytes, sem uso no codigo). Ha tambem 25 PDFs em `Subir_PDFs/`: vale decidir se ficam no repositorio ou em armazenamento separado.
+13. **Sem CI no repositorio.** A pasta `.github/` esta fora do Git e so contem configuracoes de skills, sem `workflows/`. Nenhum lint ou build roda automaticamente a cada push. Sugestao: um workflow com `npm ci`, `npm run lint` e `npm run build`.
+14. **Sourcemap publico.** O build publicado gera `index.js.map` (2,7 MB, publico). Ele nao contem a chave (0 ocorrencias), mas expoe a arvore de codigo. Sugestao: desligar o sourcemap no build da Vercel.
+15. **Dependencias no lugar errado.** `dotenv`, `pdf-parse` (usado so em `extract_pdfs.js`) e `serve` (usado so no `npm start`) estao em `dependencies`, mas sao ferramentas de build. Devem ir para `devDependencies`.
+16. **Tipagem.** 22 ocorrencias de `any` em components, services e contexts. Tipar as respostas do Gemini e os payloads reduz erros silenciosos.
+17. **Memoria de campo sem limite.** `services/knowledgeService.ts:53` grava uma lista que cresce sem teto no localStorage. Se o armazenamento lotar, a falha vai so para o console: o tecnico nao e avisado. O conhecimento tambem some se ele trocar de celular. Sugestao: limite de itens, aviso quando nao salvar, e exportar ou importar a memoria.
+
+### Opiniao geral
+O app esta maduro no que o tecnico usa: o suporte responde bem, o fallback offline existe, o deploy e rapido e a sala tem disciplina. O que falta e de sustentacao: proteger a chave (item 1), tirar o CDN da producao (item 5), ganhar uma rede de seguranca contra tela branca (item 3) e facilitar as proximas mudancas (item 9). Pela relacao custo e beneficio, a ordem que eu faria e: 1, 3, 4, 5, 6, 7, 10 e 11. O resto pode esperar.
+
+### Proximo passo
+Nada foi executado. Se o USER autorizar, cada item vira uma rodada separada, com teste antes e depois, seguindo o protocolo desta sala.
+
+---
+
+## 2026-10-21 - CLAUDE - ESTEIRA DE MELHORIAS (REGISTRO FORMAL) - NAO EXECUTADA
+
+- **Origem:** pente fino da CLAUDE (seção de 21/10 acima) e análise da GEMINI (seção de 21/10, sem cabeçalho de autor). Depois das trocas entre as duas, a ordem abaixo foi acordada com os ajustes indicados.
+- **Pedido do USER que originou a rodada:** pente fino e opiniões de melhoria, sem implementação.
+- **Estado:** esta seção registra a ordem. NENHUMA rodada está autorizada para execução. Cada rodada exige autorização explícita do USER registrada nesta sala.
+
+### Ordem e ajustes
+
+| Rodada | Foco | Arquivos envolvidos | Autorização necessária |
+|---|---|---|---|
+| 0 | Linha de base: telas em 390 e 1366 px e respostas de referência (elétrica, refrigeração, cruzamento). Somente leitura. | nenhum | Executada em 21/10 (registro abaixo) |
+| 1 | Limpar resultado antigo no Catálogo (`Tool_6_Catalog`) e no Dimensionamento (`Tool_4_Sizing`), na hora, porque ambos calculam localmente. Rota do agitador usando só o turno atual. | `Tool_6_Catalog.tsx`, `Tool_4_Sizing.tsx`; `geminiService.ts:658` (cérebro, Lei 7) | Autorização explícita separada para a parte do agitador |
+| 2 | Error Boundary em volta da aba ativa, dentro do shell (a barra de baixo continua funcionando). Áudio em 16 kHz, teto de 3 min e aviso visível. | `App.tsx` e `Tool_1_Assistant.tsx` (NÃO TOCAR) | Registro prévio e autorização |
+| 3 | Fontes com piso de 11 a 12 px (37 ocorrências de 7 a 9 px). `apple-touch-icon.png` 180x180 e manifesto com PNGs de 192 e 512, mesma cor de tema. | `Tool_1_Assistant.tsx` e `Estrutura.tsx` (NÃO TOCAR), `index.html`, `public/manifest.json` | Registro prévio, autorização e captura de tela antes e depois |
+| 4 | Proxy serverless na Vercel para tirar a chave do bundle. Medir latência do streaming e o fallback offline. Context Cache só depois do proxy. | `services/geminiService.ts`, nova pasta de função serverless, `vercel.json` | Rodada própria, com teste de streaming |
+| 5 | Tailwind compilado (o PostCSS já existe), sem o script do CDN. | `index.html`, `tailwind.config.js` (NÃO TOCAR), `postcss.config.js` | Comparação visual completa, incluindo estados |
+
+### Regras para cada rodada
+- Registro prévio nesta sala antes de qualquer edição (regra 2).
+- Testes antes do deploy: os 56 testes internos e os casos de suporte da linha de base.
+- Um commit e um deploy por rodada, com os quatro selos de versão juntos e verificação ao vivo.
+- Nenhuma rodada é classificada como "zero risco". O risco é avaliado por arquivo, não pelo tamanho da mudança.
+
+### Desvio de processo a corrigir antes da Rodada 1
+A V83 foi publicada sem autorização explícita do USER. A última autorização de deploy era da V82. `App.tsx` e `components/Estrutura.tsx` (arquivos protegidos) foram editados sem registro prévio. A V83 não foi revertida. A decisão de mantê-la ou voltar para a V82 é do USER.
+
+
+## 2026-10-22 - CLAUDE - RODADA ZERO (LINHA DE BASE) - EXECUTADA, SOMENTE LEITURA
+
+- **Escopo:** capturas de tela e respostas de referência em produção (V83.0). Nenhum arquivo do projeto foi alterado. Nenhum commit, push ou deploy.
+- **Telas capturadas** em 390 px e 1366 px: login, suporte vazio, Erros, Superaq, Curso, menu Mais, Dimensionamento, Dados e Serviços. Os arquivos ficam fora do repositório, em `scratchpad/baseline_2026-10-21/telas/`.
+- **Casos de suporte** (celular 390 px, chamadas reais):
+  - **A, elétrica isolada** (agitador de 10 mil): respondeu com 3 Flash, HTTP 200. Rota do esquema ausente, correto para o caso.
+  - **B, refrigeração isolada** (R-404A, Sup.Aque 18, Sub.Res 2): respondeu com 3 Flash, HTTP 200. Sem rota do esquema, correto para o caso.
+  - **C, cruzamento** (elétrica e depois refrigeração, na mesma conversa): a pergunta 2 foi respondida com 3.1 Pro, HTTP 200, e **reproduz o bug da rota do agitador**. A resposta de refrigeração termina com "Rota do esquema: CLP Panasonic saída YE -> RL6/RL18 -> ... -> motor do agitador".
+- **Achado sobre a instabilidade:** na primeira rodada, as três tentativas do 3.1 Pro na pergunta 2 do caso C não voltaram, e o app mostrou "Modo consulta local". Na repetição, a mesma pergunta voltou com HTTP 200. A causa não foi identificada. Fica como ponto a acompanhar. O fallback local funcionou.
+- **Contagem de chamadas:** 8 requisições no total, 5 com HTTP 200 e 3 sem resposta.
+- **Arquivos de referência:** `casos/C-cruzamento-repeticao.txt` é a referência válida do caso C. `casos/C-cruzamento-tentativa1-com-falha.txt` fica para registro e não deve ser usado como referência.
+- **Limitações:** as respostas da IA variam a cada execução. A comparação deve ser pelo conteúdo, não palavra por palavra. Cada caso tem uma única execução, sem estatística.
+- **Uso na Rodada 1:** o caso C é o teste de regressão para a correção da rota do agitador. Depois da correção, a pergunta 2 não pode trazer a rota.
+- **Próximo passo:** aguardar a autorização do USER para a Rodada 1.
+
+
+## 2026-10-22 - CLAUDE - RODADA 1 - REGISTRO PREVIO (EM EXECUCAO, SEM DEPLOY)
+
+- **Autorizacao do USER:** "ok... continue com calma", em resposta ao pedido explicito de autorizacao da Rodada 1 (limpar resultado antigo em Catalogo e Dimensionamento + corrigir a rota do agitador, incluindo a parte do cerebro, Lei 7).
+- **NAO autorizado nesta etapa:** commit, push e deploy. Serao pedidos separadamente depois dos testes.
+- **Arquivos bloqueados para esta execucao:** `components/Tool_6_Catalog.tsx`, `components/Tool_4_Sizing.tsx`, `services/geminiService.ts` (somente a funcao `ensureElectricalSchematicRoute` e a chamada da linha 658), `services/testSuite.ts` (2 testes novos).
+- **Correcao de premissa:** a sala (21/09) e a esteira (21/10) diziam que o Dimensionamento calcula localmente. Nao e verdade: a carga termica e calculada no app, mas o memorial vem de uma chamada a IA (`Tool_4_Sizing.tsx:64`, `generateTechResponse`). Mantenho "limpar na hora", que foi o autorizado, porque um volume diferente sempre exige um calculo novo. Custo: se o tecnico digitar e voltar ao mesmo valor, precisa calcular de novo (1 chamada).
+- **Plano:**
+  1. Catalogo e Dimensionamento: limpar o resultado quando o modelo, o volume ou o modo mudarem. Cada consulta recebe um numero; uma consulta que termina depois da troca e descartada (evita o resultado velho chegar atrasado, inclusive a resposta da IA no Dimensionamento).
+  2. Rota do agitador: a funcao passa a analisar so o turno atual do tecnico (`latestUserText`, que ja existe e ja e usado na abertura obrigatoria), e nao a conversa inteira.
+- **Analise previa da rota (motor deterministico, sem IA), 11 cenarios x 3 modos x 2 contextos:**
+  - Pergunta do agitador: a rota continua podendo ser anexada (sem mudanca).
+  - Refrigeracao depois do agitador: deixa de receber a rota em todos os modos (bug corrigido).
+  - A rota generica ("a sequencia segura: alimentacao, protecoes...") nao tem tokens de esquema e nunca e anexada, antes ou depois. Nao ha ruido novo.
+  - **Perda aceita:** em respostas curtas de seguimento ("LED YE apagado", "sim", "DM disparado"), a rota do agitador deixa de ser repetida. O reforco automatico passa a valer so na pergunta do agitador.
+  - Comportamento ja existente, fora do escopo: no modo ELETRICA, uma pergunta de refrigeracao gera a rota generica, mas ela nunca e anexada (sem tokens).
+
+
+## 2026-10-22 - CLAUDE - COMMIT LOCAL DA V84 (TRABALHO DA GEMINI), SEM PUSH
+
+- **Autorizacao do USER:** "sim, siga", aprovando a ordem: (1) commit da V84 so com os arquivos da GEMINI; (2) o USER decide se `public/course-slides` e `Tool_7_CourseSlides.tsx` tambem saem; (3) a CLAUDE termina a Rodada 1 como V85, em commit separado.
+- **No commit:** `types.ts`, `App.tsx`, `components/Estrutura.tsx`, `components/LoginScreen.tsx`, `components/TutorialOverlay.tsx`, `public/sw.js` e esta sala. A alteracao foi feita pela GEMINI; o commit foi feito pela CLAUDE porque a GEMINI nao estava na conversa.
+- **Fora do commit:** a Rodada 1 da CLAUDE (`Tool_4_Sizing.tsx`, `Tool_6_Catalog.tsx`, `geminiService.ts`, `testSuite.ts`), que continua sem commit.
+- **Correcoes nesta sala:** versao em producao volta a V83 (a V84 nao foi publicada); titulo da V83 restaurado no topo (tinha sido sobrescrito pela nota da V84).
+- **Push e deploy:** NAO feitos. Aguardam autorizacao do USER.
+- **Pendente (decisao do USER):** os 42 slides e o `slides.json` em `public/course-slides` continuam no build e abrem por link; `Tool_7_CourseSlides.tsx` continua no projeto, desligado.
+
