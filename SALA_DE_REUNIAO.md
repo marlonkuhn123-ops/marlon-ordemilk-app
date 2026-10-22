@@ -10,13 +10,13 @@
 | Campo | Valor |
 |-------|-------|
 | **Data** | 2026-10-22 |
-| **Versao em producao** | **V83** (V84 e V85 commitadas localmente em 2026-10-22, ainda sem push/deploy) |
-| **Commit publicado** | (ver historico abaixo, V83) |
+| **Versao em producao** | **V85** (publicada em 2026-10-22, com a V84 junto) |
+| **Commit publicado** | `b46f9bf` (V85) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
 | **Autoteste interno** | **59/59** na V85 (56 na V84) (botao de status dentro do app) |
-| **Verificacao em producao** | Producao segue V83. V84 e V85 verificadas so localmente (lint, build, autoteste e teste de tela com IA simulada) |
-| **Pendencias abertas** | 2 bugs de "resultado velho na tela" (Erros e Servicos/laudo, 21/09); legenda do desenho "PM - TANQUE 5 COMP" diverge do PE (engenharia Ordemilk); decisao do USER sobre apagar `public/course-slides` e `Tool_7_CourseSlides.tsx`. Corrigidos na V85, aguardando deploy: rota do agitador vazando, resultado velho no Catalogo e no Dimensionamento, base eletrica que nao carregava com termos sem acento, modelo do soft-starter |
+| **Verificacao em producao** | V85 conferida ao vivo em 2026-10-22 com perguntas reais: 28/28 apos seguimento (autoteste 59/59, barra sem Curso, rota do agitador corrigida, soft-starter certo) (CLAUDE) |
+| **Pendencias abertas** | 2 bugs de "resultado velho na tela" (Erros e Servicos/laudo, 21/09); legenda do desenho "PM - TANQUE 5 COMP" diverge do PE (engenharia Ordemilk); decisao do USER sobre apagar `public/course-slides` e `Tool_7_CourseSlides.tsx`. Corrigidos e publicados na V85: rota do agitador vazando, resultado velho no Catalogo e no Dimensionamento, base eletrica que nao carregava com termos sem acento, modelo do soft-starter |
 | **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
 **Ultima atualizacao (o que mudou na V85) - RODADA 1 + SOFT-STARTER + BASE ELETRICA SEM ACENTO:**
@@ -3114,4 +3114,24 @@ A V83 foi publicada sem autorização explícita do USER. A última autorizaçã
 - **Verificacao local:** lint OK; build OK; autoteste interno 59/59; teste de tela com IA simulada 14/14; selo V85.0 no bundle; build final refeito sem chave.
 - **Nao verificado ainda:** comportamento com a IA real (caso C da Rodada Zero e uma pergunta sobre o soft-starter), que depende do deploy.
 - **Aguardando o USER:** autorizacao de push e deploy (V84 e V85); decisao sobre apagar `public/course-slides` e `Tool_7_CourseSlides.tsx`.
+
+
+## 2026-10-22 - CLAUDE - V84 + V85 PUBLICADAS E TESTADAS AO VIVO
+
+- **Autorizacao do USER:** "REVISE TUDO NOVAMENTE, TESTE COM PERGUNTAS E DEPOIS PODE FAZER O DEPLOY".
+- **Revisao:** diff completo dos dois commits relido linha a linha; sem pendencia de codigo.
+- **Teste antes do deploy com a IA real: nao foi possivel.** Nao ha chave do Gemini nesta pasta e a previa da Vercel (ramo `teste-v85`, ja apagado) exige login da Vercel. A logica ja tinha passado com IA simulada (14/14, e 9/14 no codigo antigo). Por isso: deploy e teste real logo em seguida, com plano de desfazer.
+- **Deploy:** push `54d38e5..b46f9bf` no `main`; V85 no ar em ~15 s (`index.js` V85.0, cache `ordemilk-tech-v85`).
+- **Teste ao vivo com perguntas reais (celular 390 px, conversa nova por caso):**
+  - Agitador 10 mil: 3 Flash HTTP 200, cita CLP, YE e RL6/RL18.
+  - Refrigeracao (R-404A) depois do agitador: 3.1 Pro HTTP 200, **sem "Rota do esquema"** (bug de 08/10 corrigido em producao); falta de fluido/vazamento; nao mexer na valvula de expansao.
+  - Refrigeracao isolada (R-22): sem rota, sem siglas SH/SC/VET/TXV.
+  - Eletrica sem acento ("o rele ... nao fecha ... tensao ..."): base eletrica entrou no prompt (regressao da V71 corrigida); rota DM2 -> A1/A2 de K2 correta.
+  - Soft-starter 5 compressores 380V: "5 x MCD 202 22 kW 48A, codigo 3043" ja na 1a resposta.
+  - Soft-starter 20 mil 380V e 220V: na 1a resposta a IA perguntou "4 ou 5 compressores?" (cadencia aprovada: hipotese + 2 perguntas). No seguimento "4 compressores" respondeu certo: 380V = 4 x MCD 202 22 kW 48A (3043); 220V = 4 x MCD 202 37 kW 75A (3560, ref. 175G5214), com o aviso do "MDC 202" no desenho.
+  - Barra Suporte/Erros/Superaq/Mais (sem Curso); selo V85.0; autoteste do app **59/59**.
+  - Catalogo limpa ao trocar modelo; Dimensionamento gerou memorial real (3 Flash 200) e limpa ao mudar o volume.
+  - Placar: 24/28 na 1a passada (as 4 falhas eram a pergunta de volta na 1a resposta) e 4/4 no seguimento.
+- **Observacao, nao corrigida (cerebro, Lei 7):** na 1a resposta sobre soft-starter a IA chutou "geralmente MT160" para o compressor do tanque de 20 mil; o catalogo diz MT125. Nao afeta o modelo do soft-starter. Fica registrado para o USER decidir se vale ajustar.
+- **Pendente do USER:** apagar ou nao `public/course-slides` e `Tool_7_CourseSlides.tsx` (as 42 imagens ainda abrem por link).
 
