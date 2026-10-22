@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, SectionTitle, Button, Select, Input, AIOutputBox } from './UI'; 
 import { knowledgeService } from "../services/knowledgeService";
 import { FieldTip } from "../types";
@@ -10,6 +10,15 @@ export const Tool_Catalog: React.FC = () => {
     const [selectedModel, setSelectedModel] = useState(Object.keys(BOM_DATABASE)[0] || '');
     const [result, setResult] = useState('');
     const [loading, setLoading] = useState(false);
+    // Cada consulta recebe um número. Trocar o modelo invalida a consulta anterior,
+    // para a ficha de um modelo nunca aparecer sob o título de outro.
+    const requestIdRef = useRef(0);
+
+    useEffect(() => {
+        requestIdRef.current += 1;
+        setResult('');
+        setLoading(false);
+    }, [selectedModel]);
 
     // Memória de Campo
     const [tips, setTips] = useState<FieldTip[]>([]);
@@ -20,10 +29,12 @@ export const Tool_Catalog: React.FC = () => {
     }, []);
 
     const fetchData = async () => {
+        const requestId = ++requestIdRef.current;
         setLoading(true);
         // Pequeno delay para simular consulta à biblioteca segura
         await new Promise(r => setTimeout(r, 600));
-        
+        if (requestId !== requestIdRef.current) return;
+
         const bomData = BOM_DATABASE[selectedModel];
         if (bomData) {
             const formatted = bomData.map(item => 

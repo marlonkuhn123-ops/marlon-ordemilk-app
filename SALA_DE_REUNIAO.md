@@ -10,16 +10,30 @@
 | Campo | Valor |
 |-------|-------|
 | **Data** | 2026-10-22 |
-| **Versao em producao** | **V83** (V84 commitada localmente em 2026-10-22, ainda sem push/deploy) |
+| **Versao em producao** | **V83** (V84 e V85 commitadas localmente em 2026-10-22, ainda sem push/deploy) |
 | **Commit publicado** | (ver historico abaixo, V83) |
 | **Endereco** | https://ordemilk.vercel.app |
 | **Repositorio / branch** | `marlonkuhn123-ops/marlon-ordemilk-app` / `main` |
-| **Autoteste interno** | **56/56** (botao de status dentro do app) |
-| **Verificacao em producao** | V84 preparada em 2026-10-22: remocao do modulo de treinamento (Curso), bottom nav com 4 itens + Mais, 4 selos V84 sincronizados |
-| **Pendencias abertas** | 4 bugs de "resultado velho na tela" (21/09); modelo do soft-starter Danfoss; BUG NOVO (08/10): a "Rota do esquema" do agitador vaza para respostas de refrigeracao nas continuacoes (detalhe na entrada do fim da sala) |
-| **Pode editar o app agora?** | SIM (autorizado pelo USER: remocao do modulo de treinamento/curso) |
+| **Autoteste interno** | **59/59** na V85 (56 na V84) (botao de status dentro do app) |
+| **Verificacao em producao** | Producao segue V83. V84 e V85 verificadas so localmente (lint, build, autoteste e teste de tela com IA simulada) |
+| **Pendencias abertas** | 2 bugs de "resultado velho na tela" (Erros e Servicos/laudo, 21/09); legenda do desenho "PM - TANQUE 5 COMP" diverge do PE (engenharia Ordemilk); decisao do USER sobre apagar `public/course-slides` e `Tool_7_CourseSlides.tsx`. Corrigidos na V85, aguardando deploy: rota do agitador vazando, resultado velho no Catalogo e no Dimensionamento, base eletrica que nao carregava com termos sem acento, modelo do soft-starter |
+| **Pode editar o app agora?** | Somente com autorizacao explicita do USER |
 
-**Ultima atualizacao (o que mudou na V84) - REMOCAO DO MODULO DE TREINAMENTO (CURSO):**
+**Ultima atualizacao (o que mudou na V85) - RODADA 1 + SOFT-STARTER + BASE ELETRICA SEM ACENTO:**
+1. Catalogo e Dimensionamento limpam o resultado quando o modelo, o volume ou o modo mudam; resposta
+   que chega depois da mudanca e descartada (`Tool_6_Catalog.tsx`, `Tool_4_Sizing.tsx`).
+2. A "Rota do esquema" do agitador analisa so o turno atual do tecnico e nao vaza mais para respostas
+   de refrigeracao (`geminiService.ts`, `ensureElectricalSchematicRoute`).
+3. Soft-starter tirado dos esquemas: 20000L 220V = 4 x MCD 202 37 kW 75A (cod. 3560); 20000L 380V =
+   4 x MCD 202 22 kW 48A (cod. 3043); 5 compressores 380V = 5 x MCD 202 22 kW 48A. Um por compressor
+   (`data/schematics_data.ts`, `data/electrical_data.ts`). Lista de pecas (BOM) nao alterada.
+4. Regressao da V71 corrigida: a lista que carrega a base eletrica e os esquemas tinha perdido as formas
+   sem acento (ELETRICA, TENSAO, RELE, FUSIVEL, LIGACAO, TRIFASICO, MONOFASICO). Quem digitava sem
+   acento nao recebia os esquemas. Formas restauradas iguais a antes da V71, mais o termo SOFT.
+   Custo: essas perguntas voltam a carregar a base eletrica (~7,9 mil tokens), como era antes da V71.
+Autoteste 56 -> 59. Selos V84 -> V85.
+
+**Mudanca anterior (V84) - REMOCAO DO MODULO DE TREINAMENTO (CURSO):**
 Pedido do USER: "quero que retire a parte do treinamento do app somente isso".
 Removido o modulo de slides/curso (`Tool_7_CourseSlides`), a rota `ViewState.COURSE` em `types.ts` e
 `App.tsx`, e o botao "Curso" na barra de navegacao inferior (`components/Estrutura.tsx`). A navegacao
@@ -165,6 +179,7 @@ marca do soft-starter, entao continua valendo.
 **Historico curto de versoes:**
 | Versao | Data | O que entrou |
 |--------|------|--------------|
+| V85 | 2026-10-22 | Rodada 1 (resultado velho no Catalogo/Dimensionamento, rota do agitador), soft-starter MCD 202 nos esquemas, base eletrica volta a carregar sem acento (CLAUDE) |
 | V84 | 2026-10-22 | Remocao do modulo de treinamento (Curso) e do botao na bottom nav (GEMINI) |
 | V83 | 2026-10-08 | Desktop MAIOR: zoom CSS nitido (1.3) + altura compensada, corrige "letras pequenas" da V82; celular intocado (CLAUDE) |
 | V82 | 2026-10-08 | Enquadramento desktop/notebook: faixa larga por CSS a partir de 768px, celular intocado (CLAUDE + parecer CODEX) |
@@ -3057,4 +3072,46 @@ A V83 foi publicada sem autorização explícita do USER. A última autorizaçã
 - **Correcoes nesta sala:** versao em producao volta a V83 (a V84 nao foi publicada); titulo da V83 restaurado no topo (tinha sido sobrescrito pela nota da V84).
 - **Push e deploy:** NAO feitos. Aguardam autorizacao do USER.
 - **Pendente (decisao do USER):** os 42 slides e o `slides.json` em `public/course-slides` continuam no build e abrem por link; `Tool_7_CourseSlides.tsx` continua no projeto, desligado.
+
+
+## 2026-10-22 - CLAUDE - RODADA 1 - TESTES CONCLUIDOS (SEM COMMIT, SEM DEPLOY)
+
+- **Implementado (4 arquivos, ainda sem commit):**
+  - `components/Tool_6_Catalog.tsx`: trocar o modelo limpa a ficha; consulta que termina depois da troca e descartada.
+  - `components/Tool_4_Sizing.tsx`: mudar o volume ou o modo limpa o memorial; resposta da IA que chega depois da mudanca e descartada.
+  - `services/geminiService.ts`: `ensureElectricalSchematicRoute` analisa so o turno atual (`latestUserText`); funcao exportada para teste.
+  - `services/testSuite.ts`: 2 testes novos (rota anexada na pergunta do agitador; rota NAO anexada quando o turno atual e de refrigeracao, nos 3 modos).
+- **Resultados:**
+  - Lint OK, build OK, autoteste interno **58/58** (56 + 2 novos).
+  - Prova direta na funcao: com a conversa inteira (codigo antigo) a rota vaza; com o turno atual, nao vaza.
+  - Teste de tela com IA simulada (build local com chave falsa so nesta maquina, nenhuma chamada real): **14/14**.
+  - Controle: o mesmo teste no codigo sem a Rodada 1 deu **9/14**. Falham exatamente os 5 pontos corrigidos (ficha velha no Catalogo x2, memorial velho no Dimensionamento x2, rota vazando para refrigeracao). Isso prova que o teste detecta os bugs.
+  - V84 isolada (commit local `085a092`, sem a Rodada 1): lint OK, build OK, 56/56, barra Suporte/Erros/Superaq/Mais, zero erro de JavaScript em 390 e 1366 px.
+- **Nao testado ainda:** caso C da Rodada Zero com a IA real (so depois de publicar).
+- **Estado:** V84 commitada localmente, sem push. Rodada 1 sem commit.
+- **Aguardando o USER:** (1) autorizar push e deploy; (2) decidir se `public/course-slides` e `Tool_7_CourseSlides.tsx` saem; (3) confirmar os 3 pontos do soft-starter; (4) decidir se a Rodada 1 sai sozinha como V85 ou junto com o soft-starter.
+
+
+## 2026-10-22 - CLAUDE - SOFT-STARTER DANFOSS: MODELO TIRADO DOS ESQUEMAS - REGISTRO PREVIO
+
+- **Pedido do USER:** enviou a lista de itens ("CHAVE PARTIDA SOFT STARTER MDC202 22KW 200-440V 48A", cod. 3043; "... MDC202 37KW 200-440V 75A", cod. 3560, ref. 175G5214) e pediu: "leia nos esquemas eletricos qual se encaixa".
+- **Leitura dos PDFs em `Subir_PDFs/` (pdftotext):**
+  - **Nome:** os desenhos escrevem dos dois jeitos. A pagina de forca diz "MDC 202"; a pagina de comando diz "MCD - 202"; o desenho de montagem mostra a etiqueta do aparelho, "Compact Starter MCD 202". O nome certo e **MCD 202** (Danfoss). "MDC" e erro de digitacao no desenho e na lista.
+  - **PE 20000L 220V (4 compressores):** SOFT-01 a SOFT-04 (K1 a K4), cada um "MDC 202 - 75A 37KW". **4 x MCD 202 37 kW 75A** (cod. 3560).
+  - **PE 20000L 380V (4 compressores):** SOFT-01 a SOFT-04, cada um "MDC 202 - 48A 22KW". **4 x MCD 202 22 kW 48A** (cod. 3043).
+  - **PE 5 COMP (capa: "5 unidades remotas, 20000L a 40000L, trifasico 380V"; disjuntor geral 125 A; DM1 e DM2 de 20 A):** SOFT-01 a SOFT-05, cada um "MDC 202 - 48A 22KW". **5 x MCD 202 22 kW 48A** (cod. 3043). Erro no desenho: a pagina 2 escreve "K3" duas vezes (o quarto deveria ser K4).
+  - **Um soft-starter por compressor** em todos os casos. Nenhum outro desenho (6000L, 2 unidades, CIP) tem soft-starter: esses partem direto.
+  - **Divergencia:** o "PM - TANQUE 5 COMP" tem capa "Tanque 20.000 LTS, 4 compressores, 3~380 VCA" e a legenda lista 4 soft-starters **75A** e disjuntor-motor MS495 80/100A. Isso contradiz o PE 20000L 380V (48A). O catalogo ja classifica esse PM como "EM REVISAO, confianca baixa". Nao usar o PM para dimensionar soft-starter. **Pendencia para a engenharia Ordemilk:** corrigir a legenda do PM.
+- **Lista de pecas (Dados Tecnicos):** NAO sera alterada. O BOM dos tanques de 20 mil nao tem nenhum componente de painel (nem disjuntores nem contatoras) e a tela se apresenta como "Base V35 (Engenharia), dados oficiais de fabrica". Incluir o soft-starter ali seria criar dado de fabrica. Nao existe modelo de 5 compressores no BOM.
+- **Codigo 175G5214I:** o "I" final nao aparece nos esquemas. Registro como 175G5214, com essa observacao.
+- **Arquivos alvo:** `data/schematics_data.ts` (observacao_tecnica dos 3 PEs e do PM 5 COMP) e `data/electrical_data.ts` (linha do tanque 20000L 220V). Sem mudanca de prompt, persona, modelo ou logica.
+
+
+## 2026-10-22 - CLAUDE - V85 COMMITADA LOCALMENTE (SEM PUSH, SEM DEPLOY)
+
+- **Conteudo:** Rodada 1 (Catalogo, Dimensionamento, rota do agitador) + soft-starter MCD 202 nos esquemas + correcao da lista de palavras que carrega a base eletrica (regressao da V71). Detalhes no topo da sala.
+- **Regressao da V71, registro honesto:** a correcao de acentos da V71 (feita pela CLAUDE) acentuou 7 termos que existiam de proposito sem acento na lista de `getElectricalContext` (`services/geminiService.ts`). A comparacao ali nao remove acento, entao desde a V71 quem digitava "rele", "tensao", "eletrica", "fusivel", "ligacao", "trifasico" ou "monofasico" nao recebia a base eletrica nem os esquemas. O registro da V71 dizia que os `includes()` do geminiService tinham ficado sem acento; para esta lista isso estava errado. Conferido: so esta lista foi atingida (o motor de diagnostico e o modo offline estao intactos). Lista restaurada igual a de antes da V71, mais "SOFT". Contraprova: com a lista antiga, 8 de 8 perguntas digitadas sem acento nao carregavam a base.
+- **Verificacao local:** lint OK; build OK; autoteste interno 59/59; teste de tela com IA simulada 14/14; selo V85.0 no bundle; build final refeito sem chave.
+- **Nao verificado ainda:** comportamento com a IA real (caso C da Rodada Zero e uma pergunta sobre o soft-starter), que depende do deploy.
+- **Aguardando o USER:** autorizacao de push e deploy (V84 e V85); decisao sobre apagar `public/course-slides` e `Tool_7_CourseSlides.tsx`.
 

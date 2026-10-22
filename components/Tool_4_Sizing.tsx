@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, SectionTitle, Button, Input, AIOutputBox } from './UI';
 import { generateTechResponse } from '../services/geminiService';
 
@@ -11,6 +11,15 @@ export const Tool_Sizing: React.FC = () => {
 
     const [inputMode, setInputMode] = useState<'ordenha' | 'tanque'>('ordenha');
     const [inputRaw, setInputRaw] = useState('');
+    // Cada cálculo recebe um número. Mudar o volume ou o modo invalida o cálculo
+    // anterior, inclusive um que ainda esteja esperando a resposta da IA.
+    const requestIdRef = useRef(0);
+
+    useEffect(() => {
+        requestIdRef.current += 1;
+        setResult('');
+        setLoading(false);
+    }, [volumeOrdenha, inputMode]);
 
     const handleInputChange = (val: string) => {
         setInputRaw(val);
@@ -25,6 +34,7 @@ export const Tool_Sizing: React.FC = () => {
 
     const run = async () => {
         if (!volumeOrdenha) return;
+        const requestId = ++requestIdRef.current;
         setLoading(true);
         
         try {
@@ -62,9 +72,11 @@ export const Tool_Sizing: React.FC = () => {
             `;
 
             const text = await generateTechResponse(prompt, "SIZING");
+            if (requestId !== requestIdRef.current) return;
             setResult(text);
-            
-        } catch (error) { 
+
+        } catch (error) {
+            if (requestId !== requestIdRef.current) return;
             const errorMessage = error instanceof Error ? error.message : "Falha ao processar dimensionamento.";
             setResult(`ERRO NO CÁLCULO: ${errorMessage}`); 
         }

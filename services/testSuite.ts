@@ -7,6 +7,7 @@ import {
     prependRequiredSupportOpening
 } from './supportDiagnosticEngine';
 import { localSupportService, normalizeSupportFieldTerminology } from './localSupportService';
+import { ensureElectricalSchematicRoute, needsElectricalContext } from './geminiService';
 import { Refrigerant } from '../types';
 import { KNOWLEDGE_BASE } from '../data/knowledge_base';
 import { getRefrigerationReferenceContext, getTypicalPressureWindow, REFRIGERATION_SUPPORT_REFERENCE_CONTEXT } from '../data/refrigeration_support_reference';
@@ -506,6 +507,46 @@ export const runSystemDiagnostics = () => {
         assert(Boolean(combined.includes("RL6") && combined.includes("RL18")), `Deveria citar RL6/RL18. Recebido: ${combined}`);
         assert(Boolean(combined.includes("painel geral")), `Deveria guiar pela interligação/painel geral. Recebido: ${combined}`);
         assert(!combined.includes("Ageon") && !combined.includes("Full Gauge"), `Tanque 10 mil não deve usar Ageon/Full Gauge. Recebido: ${combined}`);
+    });
+
+    test("Suporte: Rota do esquema continua anexada quando a IA esquece RL6/RL18 do agitador", () => {
+        const pergunta = "O agitador do tanque de 10000 litros nao liga quando aperto o botao. Por onde comeco a testar?";
+        const resposta = "Hipótese: falha entre a saída YE do CLP Panasonic e a contatora do agitador.";
+        const final = ensureElectricalSchematicRoute(resposta, pergunta, "AUTO", {});
+
+        assert(final.includes("Rota do esquema"), `A rota do agitador deveria ser anexada. Recebido: ${final}`);
+        assert(final.includes("RL6") && final.includes("RL18"), `A rota anexada deveria citar RL6/RL18. Recebido: ${final}`);
+    });
+
+    test("Suporte: Rota do esquema não é anexada quando o turno atual é de refrigeração", () => {
+        // Bug de 08/10: depois de uma pergunta do agitador, a resposta de refrigeração
+        // recebia a rota elétrica. A rota tem de olhar só o turno atual do técnico.
+        const turnoAtual = "O fluido e R-404A. A succao esta baixa, o superaquecimento deu 18 e o subresfriamento deu 2. O que esta acontecendo?";
+        const resposta = "Causa provável: falta de fluido refrigerante. Não mexa na válvula de expansão.";
+
+        for (const mode of ["AUTO", "REF", "ELEC"] as const) {
+            const final = ensureElectricalSchematicRoute(resposta, turnoAtual, mode, {});
+            assert(final === resposta, `Modo ${mode}: resposta de refrigeração não deveria receber rota do esquema. Recebido: ${final}`);
+        }
+    });
+
+    test("Suporte: Base elétrica carrega com termos digitados sem acento e com soft-starter", () => {
+        // A correção de acentos da V71 tinha acentuado as formas sem acento desta lista,
+        // e quem digitava sem acento deixava de receber a base elétrica e os esquemas.
+        const devemCarregar = [
+            "o rele nao fecha",
+            "tensao de 190 na entrada",
+            "fusivel queimado",
+            "ligacao do motor invertida",
+            "tanque trifasico 220",
+            "tanque monofasico",
+            "problema na parte eletrica",
+            "qual soft starter vai no tanque de 20 mil 380v"
+        ];
+        for (const pergunta of devemCarregar) {
+            assert(needsElectricalContext(pergunta), `Deveria carregar a base elétrica para: "${pergunta}"`);
+        }
+        assert(!needsElectricalContext("succao baixa no R-404A, superaquecimento 18"), "Pergunta só de refrigeração não deveria carregar a base elétrica");
     });
 
     test("Suporte: Fallback local deve responder com português acentuado", () => {

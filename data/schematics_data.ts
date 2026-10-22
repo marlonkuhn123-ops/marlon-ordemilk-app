@@ -83,7 +83,7 @@ Arquivo: PE - TANQUE 20000L LIMPEZA AUTOMATICA - TRIFÁSICO 220V
 - arquivo_principal_da_familia: Sim
 - substitui_qual: TANQUE 20.000 LTS TRIFÁSICO 220V
 - versao_do_documento: Atual
-- observacao_tecnica: Disjuntor Geral 200A, Soft Starter Danfoss 75A, Disjuntores Motor 44A.
+- observacao_tecnica: Disjuntor Geral 200A, Disjuntores Motor 44A. Partida por 4 soft-starters Danfoss MCD 202 37 kW 75A, um por compressor (SOFT-01 a SOFT-04, K1 a K4). Código interno 3560, referência Danfoss 175G5214. No desenho de força aparece escrito "MDC 202"; o nome certo é MCD 202.
 - confianca_da_classificacao: Alta
 
 Arquivo: TANQUE 20.000 LTS TRIFÁSICO 220V
@@ -116,7 +116,7 @@ Arquivo: PE - TANQUE 20000L LIMPEZA AUTOMATICA - TRIFÁSICO 380V
 - arquivo_principal_da_familia: Sim
 - substitui_qual: N/A
 - versao_do_documento: Atual
-- observacao_tecnica: Disjuntor Geral 160A, Soft Starter Danfoss 48A, Disjuntores Motor 30,5A.
+- observacao_tecnica: Disjuntor Geral 160A, Disjuntores Motor 30,5A. Partida por 4 soft-starters Danfoss MCD 202 22 kW 48A, um por compressor (SOFT-01 a SOFT-04, K1 a K4). Código interno 3043. No desenho de força aparece escrito "MDC 202"; o nome certo é MCD 202.
 - confianca_da_classificacao: Alta
 
 --- FAMÍLIA: 20000L a 40000L, 5 UNIDADES REMOTAS, 5 COMPRESSORES, LIMPEZA AUTOMÁTICA, TRIFÁSICO 380 V ---
@@ -133,7 +133,7 @@ Arquivo: PE - TANQUE 5 COMP LIMPEZA AUTOMATICA - TRIFÁSICO 380V - V1.0
 - arquivo_principal_da_familia: Sim
 - substitui_qual: N/A
 - versao_do_documento: V1.0
-- observacao_tecnica: Possui referências dedicadas a compressor 05, ventilador 05, pressostato 05, válvula solenóide 05, sobrecarga do compressor 05 e soft-starter 05. Disjuntor Geral 125A.
+- observacao_tecnica: Possui referências dedicadas a compressor 05, ventilador 05, pressostato 05, válvula solenóide 05, sobrecarga do compressor 05 e soft-starter 05. Disjuntor Geral 125A. Partida por 5 soft-starters Danfoss MCD 202 22 kW 48A, um por compressor (SOFT-01 a SOFT-05). Código interno 3043. No desenho de força aparece escrito "MDC 202"; o nome certo é MCD 202. A página 2 do desenho escreve "K3" duas vezes; o quarto soft-starter é o K4.
 - confianca_da_classificacao: Alta
 
 Arquivo: PM - TANQUE 5 COMP LIMPEZA AUTOMATICA - TRIFÁSICO 380V - V1.0.0
@@ -149,7 +149,7 @@ Arquivo: PM - TANQUE 5 COMP LIMPEZA AUTOMATICA - TRIFÁSICO 380V - V1.0.0
 - arquivo_principal_da_familia: Não
 - substitui_qual: N/A
 - versao_do_documento: V1.0.0
-- observacao_tecnica: O nome do arquivo indica 5 compressores, porém o conteúdo interno visível ainda aparenta base de 4 compressores. Não pode substituir automaticamente nem o modelo de 4 compressores nem o modelo novo PE de 5 compressores.
+- observacao_tecnica: O nome do arquivo indica 5 compressores, porém o conteúdo interno visível ainda aparenta base de 4 compressores. Não pode substituir automaticamente nem o modelo de 4 compressores nem o modelo novo PE de 5 compressores. A capa diz "Tanque 20.000 LTS, 4 compressores, 3~380 VCA" e a legenda lista 4 soft-starters de 75A, o que contradiz o PE de 20000L 380V (48A). Não usar este arquivo para dimensionar o soft-starter: vale o PE.
 - confianca_da_classificacao: Baixa
 
 --- FAMÍLIA: 2 UNIDADES REMOTAS, 2 COMPRESSORES (linha "PE", desenhos novos de 2026) ---

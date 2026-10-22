@@ -130,17 +130,25 @@ const getDynamicBrandContext = (userPrompt: string) => {
 let cachedElectricalData: string | null = null;
 let cachedSchematicsData: string | null = null;
 
-const getElectricalContext = async (userPrompt: string) => {
-  const keywords = [
+// A comparacao e feita sobre o texto do tecnico em maiusculas, SEM remover acento. Por isso
+// cada termo acentuado precisa tambem da forma sem acento: o tecnico digita dos dois jeitos.
+// NAO acentuar as formas sem acento (a correcao de acentos da V71 fez isso por engano).
+const ELECTRICAL_CONTEXT_KEYWORDS = [
     // Termos diretos de elétrica
-    "ELÉTRICA", "ELÉTRICA", "ESQUEMA", "FIO", "BORNE", "LIGAÇÃO", "LIGAÇÃO", "DISJUNTOR", "CONTATORA", "CABO", "TENSÃO", "TENSÃO", "VOLT", "AMPER", "CORRENTE", "TRIFÁSICO", "TRIFÁSICO", "MONOFÁSICO", "MONOFÁSICO", "CONTROLADOR", "AGEON", "FULL GAUGE", "CLP", "PANASONIC",
+    "ELÉTRICA", "ELETRICA", "ESQUEMA", "FIO", "BORNE", "LIGAÇÃO", "LIGACAO", "DISJUNTOR", "CONTATORA", "CABO", "TENSÃO", "TENSAO", "VOLT", "AMPER", "CORRENTE", "TRIFÁSICO", "TRIFASICO", "MONOFÁSICO", "MONOFASICO", "CONTROLADOR", "AGEON", "FULL GAUGE", "CLP", "PANASONIC",
     // Componentes exclusivos de painel/comando
-    "RELÉ", "RELÉ", "COMANDO", "PAINEL", "QUADRO", "FUSÍVEL", "FUSÍVEL",
+    "RELÉ", "RELE", "COMANDO", "PAINEL", "QUADRO", "FUSÍVEL", "FUSIVEL", "SOFT",
     // Sintomas característicos de falha elétrica/comando
     "NÃO LIGA", "NAO LIGA", "NÃO PARTE", "NAO PARTE", "NÃO ACIONA", "NAO ACIONA", "DESARMA", "CAINDO", "CURTO", "QUEIMOU"
-  ];
+];
+
+export const needsElectricalContext = (userPrompt: string) => {
   const upper = userPrompt.toUpperCase();
-  if (keywords.some(k => upper.includes(k))) {
+  return ELECTRICAL_CONTEXT_KEYWORDS.some(k => upper.includes(k));
+};
+
+const getElectricalContext = async (userPrompt: string) => {
+  if (needsElectricalContext(userPrompt)) {
     // Carrega as bases apenas se necessário (Lazy Loading) com cache
     if (!cachedElectricalData) {
       const { ELECTRICAL_DATABASE } = await import("../data/electrical_data");
@@ -527,9 +535,9 @@ const collectRouteTokens = (route: string) => {
   return [...new Set(tokens.map(token => normalizeText(token)))];
 };
 
-const ensureElectricalSchematicRoute = (
+export const ensureElectricalSchematicRoute = (
   text: string,
-  userPrompt: string,
+  currentUserTurn: string,
   mode: 'AUTO' | 'REF' | 'ELEC',
   diagnosticContext: SupportDiagnosticContext
 ) => {
@@ -538,7 +546,9 @@ const ensureElectricalSchematicRoute = (
   // A rota do esquema so e anexada quando ha decisao eletrica (sinal eletrico forte no
   // texto). Em REF puro isso nao dispara, mas se o tecnico citar comando/contatora/CLP,
   // o cruzamento acontece tambem no modo REF.
-  const analysis = analyzeSupportCase(userPrompt, mode, diagnosticContext).electrical;
+  // Analisa SO o turno atual do tecnico. Com a conversa inteira, uma pergunta eletrica
+  // antiga fazia a rota do agitador aparecer em respostas de refrigeracao (bug de 08/10).
+  const analysis = analyzeSupportCase(currentUserTurn, mode, diagnosticContext).electrical;
   if (!analysis) return text;
 
   const route = extractRouteFromAction(analysis.action);
@@ -655,7 +665,7 @@ export const generateChatResponseStream = async (
     }
 
     const contractedText = renderSupportText(fullText);
-    const finalText = ensureElectricalSchematicRoute(contractedText, fullConversationText, mode, diagnosticContext);
+    const finalText = ensureElectricalSchematicRoute(contractedText, latestUserText, mode, diagnosticContext);
     if (!finalText.trim()) throw new Error(EMPTY_RESPONSE_ERROR);
 
     if (onFinished) onFinished(finalText, sources.length > 0 ? sources : undefined);
